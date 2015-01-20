@@ -36,7 +36,7 @@ statusMovedToPermanentStorage=8
 # TODO: MOVE to config file (puppet)
 #flow3_applicationUrl="http://etc/"
 #flow3_applicationUrl="http://node-164.dev.socialhistoryservices.org/service/folders"
-flow3_applicationUrl="http://10.0.2.2" # gcu local
+flow3_applicationUrl="http://10.0.0.100:8080" # gcu local
 
 # TODO: MOVE to config file (puppet)
 flow3_ingestLocation=/tmp
@@ -67,7 +67,7 @@ do
 	echo "DEBUG: chown -R $owner $flow3_ingestLocation"
 	chown -R "$owner" "$flow3_ingestLocation/$pid"
 
-	# does the directory already exist
+	# check if the directory already exists
 	if [ -d "$flow3_ingestLocation/$pid" ];
 	then
 		# directory exists
@@ -75,13 +75,13 @@ do
 
 		# Update the status using the 'status' web service
 		echo "DEBUG: curl --data pid=$pid&status=$statusFolderCreated&failure=false $flow3_applicationUrl/service/status"
-		#curl --data "pid=$pid&status=$statusFolderCreated&failure=false" "$flow3_applicationUrl/service/status"
+		curl --data "pid=$pid&status=$statusFolderCreated&failure=false" "$flow3_applicationUrl/service/status"
 	else
 		# directory doesn't exist
 		echo "DEBUG: Directory does not exists: $flow3_ingestLocation/$pid"
 
 		# Update the status using the 'status' web service
 		echo "DEBUG: curl --data pid=$pid&status=$statusFolderCreated&failure=true $flow3_applicationUrl/service/status"
-		#curl --data "pid=$pid&status=$statusFolderCreated&failure=true" "$flow3_applicationUrl/service/status"
+		curl --data "pid=$pid&status=$statusFolderCreated&failure=true" "$flow3_applicationUrl/service/status"
 	fi
 done
