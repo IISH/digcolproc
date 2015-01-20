@@ -5,7 +5,9 @@
 # Collects all folders from the acquisition database API that need to be created in the main local folder.
 #
 
-source "${digcolproc_home}setup.sh" $0 "$@"
+# TODO: enable the source line
+###digcolproc_home="../../../"   # test
+#source "${digcolproc_home}setup.sh" $0 "$@"
 
 # No folder created yet
 statusNewDigitalMaterialCollection=1
@@ -31,8 +33,16 @@ statusUploadingToPermanentStorage=7
 # Digital material has been moved to permanent storage
 statusMovedToPermanentStorage=8
 
-flow3_applicationUrl="http://etc/"
+# TODO: MOVE to config file (puppet)
+#flow3_applicationUrl="http://etc/"
+#flow3_applicationUrl="http://node-164.dev.socialhistoryservices.org/service/folders"
+flow3_applicationUrl="http://10.0.2.2" # gcu local
 
+# TODO: MOVE to config file (puppet)
+flow3_ingestLocation=/tmp
+
+# TODO: MOVE to config file (puppet)
+owner="root:root"
 
 # Call the 'folders' web service and extract the PIDs from the resulting JSON
 pidsEval="curl '$flow3_applicationUrl/service/folders' | jq .pids[]"
@@ -45,18 +55,33 @@ do
 	pid="${pid%\"}"
 	pid="${pid#\"}"
 
-	# Create a folder for the PID
-	mkdir -pm 764 "$flow3_ingestLocation/$pid"
-	chown -R "$owner" "$flow3_ingestLocation"
+	echo "DEBUG: \$pid = $pid"
 
-	# Update the status using the 'status' web service
-	if [ -d "$ingestLocation/$pid" ]
+	# Create a folder for the PID
+#	echo "DEBUG: mkdir -pm 764 $flow3_ingestLocation/$pid"
+#	mkdir -pm 764 "$flow3_ingestLocation/$pid"
+	echo "DEBUG: mkdir -p $flow3_ingestLocation/$pid"
+	mkdir -p "$flow3_ingestLocation/$pid"
+	echo "DEBUG: chmod -R 764 $flow3_ingestLocation/$pid"
+	chmod -R 764 "$flow3_ingestLocation/$pid"
+	echo "DEBUG: chown -R $owner $flow3_ingestLocation"
+	chown -R "$owner" "$flow3_ingestLocation/$pid"
+
+	# does the directory already exist
+	if [ -d "$flow3_ingestLocation/$pid" ];
 	then
-		curl --data "pid=$pid&status=$statusFolderCreated&failure=false" "flow3_applicationUrl/service/status"
+		# directory exists
+		echo "DEBUG: Directory created: $flow3_ingestLocation/$pid"
+
+		# Update the status using the 'status' web service
+		echo "DEBUG: curl --data pid=$pid&status=$statusFolderCreated&failure=false $flow3_applicationUrl/service/status"
+		#curl --data "pid=$pid&status=$statusFolderCreated&failure=false" "$flow3_applicationUrl/service/status"
 	else
-		curl --data "pid=$pid&status=$statusFolderCreated&failure=true" "flow3_applicationUrl/service/status"
+		# directory doesn't exist
+		echo "DEBUG: Directory does not exists: $flow3_ingestLocation/$pid"
+
+		# Update the status using the 'status' web service
+		echo "DEBUG: curl --data pid=$pid&status=$statusFolderCreated&failure=true $flow3_applicationUrl/service/status"
+		#curl --data "pid=$pid&status=$statusFolderCreated&failure=true" "$flow3_applicationUrl/service/status"
 	fi
 done
-
-
-

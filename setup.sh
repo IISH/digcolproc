@@ -6,10 +6,19 @@
 #
 # Usage: setup.sh [full path of the scripts that called this file] [the fileSet without a trailing slash] [the flow]
 
+echo "\$0 = $0"
+echo "\$1 = $1"
+echo "\$2 = $2"
+echo "\$3 = $3"
+echo "\$4 = $4"
 event=$(dirname $1)			    # Gets the parent folder of the application script
+echo "\$event = $event"
 fileSet=$2                      # The fileSet
 flow=$3                         # The flow ( flow1, flow2, etc )
+echo "dirname \$fileSet = dirname $fileSet"
 fs_parent=$(dirname $fileSet)	# Gets the parent folder
+echo "\$fs_parent = $fs_parent"
+
 na=$(basename $fs_parent)		# Now proceeds to the naming authority
 cd "$event"					    # Make it the current directory
 event=$(basename $event)	    # Now proceeds to the actual command
