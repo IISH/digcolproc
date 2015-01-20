@@ -4,9 +4,9 @@
 #
 # Load and setup environmental variables.
 
-flows_home=
+digcolproc_home=
 HOMEPATH=
-global_home=$flows_home/src/main/global
+global_home=$digcolproc_home/src/main/global
 
 # Dynamic keys
 flow_keys=letter share client autoIngestValidInstruction notificationEMail

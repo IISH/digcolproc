@@ -1,5 +1,0 @@
-source $FLOWS_HOME/config.sh
-NET USE $flow5_share
-source $FLOWS_HOME/src/main/global/setup.sh /opt/iish-flows/src/main/flow5/remove/run.sh /cygdrive/$flow5_letter/FLOW5/10622/2014-06-27 flow5
-cd /opt/iish-flows/src/main/flow5/remove/
-source ./run.sh 
