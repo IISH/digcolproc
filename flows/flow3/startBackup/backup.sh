@@ -37,18 +37,30 @@ statusMovedToPermanentStorage=8
 
 # Load the PID
 pid=$1
+echo "DEBUG: \$pid = $pid (2)"
 
-echo "XXX DEBUG: \$pid = $pid"
+# generate random value
+randomvalue=$(shuf -i1000-9999 -n1)
 
 # TODO: MOVE to config file
 ingestLocation="/tmp"
+
+# TODO: MOVE to config file
+logfile="/tmp/lftplogfile"
 
 #
 backupLocation="$ingestLocation/$pid"
 #chown -R root "$backupLocation"    # TODO: waarom?
 
+# TODO: MOVE to config file
+ftp_connection="ftp://testgcu:testgcu123abc@ftp.iisg.nl"
+
+# TODO: create put/get command, set local and remote directory
+# format: putgetcommand="mirror --reverse --verbose /LOCAL /REMOTE"
+putgetcommand="mirror --reverse --verbose /testgculocal /"
+
 # Do the backup ...
-"${digcolproc_home}/util/ftpnew.sh" "/tmp/aaa" "PUT_HERE_PUT_COMMAND" "PUT_HERE_FTP_CONNECTION" "PUT_HERE_LOGFILE_NAME"
+"${digcolproc_home}/util/ftpnew.sh" "/tmp/lftpscriptfile.${randomvalue}" "${putgetcommand}" "${ftp_connection}" "${logfile}"
 success=$?   # What is the exit code of the backup?
 
 #chown -R "$owner" "$backupLocation"    # TODO: waarom?

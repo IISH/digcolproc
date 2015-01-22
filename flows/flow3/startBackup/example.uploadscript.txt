@@ -1,0 +1,4 @@
+debug 10
+open ftp://LOGINNAME:PASSWORD@FTPSERVER
+mirror --reverse --verbose /LOCAL /REMOTE
+bye
