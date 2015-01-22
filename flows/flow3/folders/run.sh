@@ -5,9 +5,8 @@
 # Collects all folders from the acquisition database API that need to be created in the main local folder.
 #
 
-# TODO: enable the source line
-###digcolproc_home="../../../"   # test
-#source "${digcolproc_home}setup.sh" $0 "$@"
+# TODO: enable the config line
+#source "${digcolproc_home}config.sh" $0 "$@"
 
 # No folder created yet
 statusNewDigitalMaterialCollection=1

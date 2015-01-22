@@ -5,7 +5,8 @@
 # Usage:
 # run.sh [na] [folder name]
 
-source "${digcolproc_home}setup.sh" $0 "$@"
+# TODO: enable the config line
+#source "${digcolproc_home}config.sh" $0 "$@"
 
 ftp_script_base=$work/ftp.$archiveID.$datestamp
 
