@@ -14,8 +14,8 @@ fi
 digcolproc_home=$digcolproc_home
 
 global_home=$digcolproc_home/src/main/global
-if [ ! -d "$global_home" ] ; then
-    echo "global_home folder should point to: $global_home"
+if [ ! -d "${DIGCOLPROC_HOME}util" ] ; then
+    echo "global_home folder should point to: ${DIGCOLPROC_HOME}util"
     exit -1
 fi
 

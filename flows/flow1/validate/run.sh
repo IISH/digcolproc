@@ -6,7 +6,7 @@
 # Add Instruction
 # Prepare a mets document
 
-source "${digcolproc_home}setup.sh" $0 "$@"
+source "${DIGCOLPROC_HOME}setup.sh" $0 "$@"
 
 report=$work/report.txt
 
@@ -31,7 +31,7 @@ echo "Done validate.">>$log
 
 body="/tmp/report.txt"
 echo "Rapportage op $report">$body
-groovy -cp "$(cygpath --windows "$HOMEPATH\.m2\repository\javax\mail\javax.mail-api\1.5.0\javax.mail-api-1.5.0.jar");$(cygpath --windows "$HOMEPATH\.m2\repository\javax\mail\mail\1.4.7\mail-1.4.7.jar")" $(cygpath --windows "$global_home/mail.groovy") $(cygpath --windows "$body") $flow_client "$flow_notificationEMail" "flow1 validation" $mailrelay >>$log
+groovy -cp "$(cygpath --windows "$HOMEPATH\.m2\repository\javax\mail\javax.mail-api\1.5.0\javax.mail-api-1.5.0.jar");$(cygpath --windows "$HOMEPATH\.m2\repository\javax\mail\mail\1.4.7\mail-1.4.7.jar")" $(cygpath --windows "${DIGCOLPROC_HOME}util/mail.groovy") $(cygpath --windows "$body") $flow_client "$flow_notificationEMail" "flow1 validation" $mailrelay >>$log
 rm $body
 
 exit $?

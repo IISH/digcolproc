@@ -6,7 +6,7 @@
 # declare and bind our ObjId PIDs
 #
 
-source "${digcolproc_home}setup.sh" $0 "$@"
+source "${DIGCOLPROC_HOME}setup.sh" $0 "$@"
 
 echo "Start preparing ingest...">>$log
 cf=$fileSet/.validate/concordanceValidWithPID.csv

@@ -6,7 +6,7 @@
 #
 # Usage: run.sh [na] [fileSet] [work directory]
 
-source "${digcolproc_home}setup.sh" $0 "$@"
+source "${DIGCOLPROC_HOME}setup.sh" $0 "$@"
 
 targetLevel=level2
 originals_folder=$fileSet/.level1
@@ -137,7 +137,7 @@ do
 done
 
 echo "Upload files...">>$log
-$global_home/ftp.sh "$ftp_script" "synchronize remote -mirror -criteria=size $fileSet_windows\.$targetLevel $archiveID/.$targetLevel" "$flow_ftp_connection" "$log"
+${DIGCOLPROC_HOME}util/ftp.sh "$ftp_script" "synchronize remote -mirror -criteria=size $fileSet_windows\.$targetLevel $archiveID/.$targetLevel" "$flow_ftp_connection" "$log"
 rc=$?
 if [[ $rc != 0 ]] ; then
     exit -1

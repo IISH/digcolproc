@@ -27,7 +27,7 @@ done < $cf
 echo "</list>" >> $archiveIDs
 
 eadReport=$work/ead.report.html
-groovy $global_home/ead.groovy "$eadFile" "$archiveIDs" $eadReport >> $log
+groovy ${DIGCOLPROC_HOME}util/ead.groovy "$eadFile" "$archiveIDs" $eadReport >> $log
 if [ -f $eadReport ] ; then
     echo "See the EAD validation for inventarisnummer and unitid matches at" >> $log
     echo $eadReport >> $log

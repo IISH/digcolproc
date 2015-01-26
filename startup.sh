@@ -4,15 +4,9 @@
 #
 # Iterates over all application folders and starts the startup.sh routine.
 
-config=/etc/digcolproc/config.sh
-if [ -f $config ] ; then
-    source $config
-else
-    echo "Cannot find the configuration file at ${config}"
-    exit -1
-fi
+source "${DIGCOLPROC_HOME}config.sh"
 
-for flow in "${digcolproc_home}flows/*"
+for flow in ${DIGCOLPROC_HOME}flows/*
 do
     flow_folder=$(basename $flow)
     for run_folder in $flow/*
@@ -24,15 +18,14 @@ do
             for hotfolder in $hotfolders
             do
 				if [ -d "$hotfolder" ] ; then
-                    for na in $hotfolder/*
+                    for na in $hotfolder*
                     do
                         for fileSet in $na/*
                         do
                             if [ -d "$fileSet" ] ; then
-                                echo $fileSet
                                 event="$fileSet/$(basename $run_folder).txt"
                                 if [ -f "$event" ] ; then
-                                    echo "$event">>/tmp/event.txt
+                                    echo "$event > ${run_script} ${fileSet} ${flow_folder}">>/tmp/event.txt
                                     $run_script "$fileSet" "$flow_folder" &
                                 fi
                             fi

@@ -21,7 +21,7 @@ if [ ! -f $archiveIDs ] ; then
 fi
 
 ead=$work/$archiveID.xml
-groovy $global_home/ead.groovy "$eadFile" "$archiveIDs" $ead >> $log
+groovy ${DIGCOLPROC_HOME}util/ead.groovy "$eadFile" "$archiveIDs" $ead >> $log
 if [ -f $ead ] ; then
     echo "See the EAD with added daoloc elements at" >> $log
     $ead >> $log

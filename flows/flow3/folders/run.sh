@@ -6,7 +6,7 @@
 #
 
 # TODO: enable the config line
-#source "${digcolproc_home}config.sh" $0 "$@"
+#source "${DIGCOLPROC_HOME}config.sh" $0 "$@"
 
 # No folder created yet
 statusNewDigitalMaterialCollection=1

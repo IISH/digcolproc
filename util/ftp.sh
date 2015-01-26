@@ -1,35 +1,35 @@
-#!/bin/bash
+#!/bin/sh
 #
 # ftp.sh
 #
 # ftp with the desired action
 #
-# Usage: ftp.sh [script name] [put command] [log file]
-ftp_script=$1
+# Usage: ftp.sh [script name] [put command] [connection] [logfile name]
+ftp_scriptfile=$1
 put=$2
 ftp_connection=$3
-log=$4
+logfile=$4
 
-echo "option batch continue">$ftp_script
-echo "option confirm off">>$ftp_script
-echo "option transfer binary">>$ftp_script
-echo "option reconnecttime 5">>$ftp_script
-echo "open ${ftp_connection} -explicittls -passive">>$ftp_script
-echo "$put">>$ftp_script
-echo "close">>$ftp_script
-echo "exit">>$ftp_script
+echo "debug 10" > $ftp_scriptfile
+echo "set xfer:log true" >> $ftp_scriptfile
+echo "set xfer:log-file \"${logfile}\"" >> $ftp_scriptfile
+echo "set ssl:verify-certificate false">> $ftp_scriptfile
+echo "open ${ftp_connection}" >> $ftp_scriptfile
+echo "$put" >> $ftp_scriptfile
+echo "bye" >> $ftp_scriptfile
 
 to=10
 for i in $(seq 1 $to)
 do
-    echo "Ftp files... attempt $i of $to">>$log
-    WinSCP /console /script="$(cygpath --windows $ftp_script)" /log:"$(cygpath --windows $log)"
+    echo "Ftp files... attempt $i of $to">>$logfile
+    lftp -f $ftp_scriptfile --log=$logfile
     rc=$?
     if [[ $rc == 0 ]] ; then
-        exit 0
+        echo exit 0
     fi
 done
 
-echo "FTP failed for $to times in a row.">>$log
-rm -f "$ftp_script"
-exit -1
+echo "FTP failed" >> $logfile
+rm -f "$ftp_scriptfile"
+
+echo exit 1

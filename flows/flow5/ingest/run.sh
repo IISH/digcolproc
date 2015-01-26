@@ -5,7 +5,7 @@
 # Usage:
 # run.sh [na] [folder name]
 
-source "${digcolproc_home}setup.sh" $0 "$@"
+source "${DIGCOLPROC_HOME}setup.sh" $0 "$@"
 ftp_script_base=$work/ftp.$archiveID.$datestamp
 
 file_instruction=$fileSet/instruction.xml
@@ -46,7 +46,7 @@ if [[ $count == 0 ]] ; then
 fi
 
 ftp_script=$ftp_script_base.instruction.txt
-$global_home/ftp.sh "$ftp_script" "put $fileSet_windows\instruction.xml $archiveID/instruction.xml" "$flow_ftp_connection" "$log"
+${DIGCOLPROC_HOME}util/ftp.sh "$ftp_script" "put $fileSet_windows\instruction.xml $archiveID/instruction.xml" "$flow_ftp_connection" "$log"
 rc=$?
 if [[ $rc != 0 ]] ; then
     exit -1

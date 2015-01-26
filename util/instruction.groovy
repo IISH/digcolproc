@@ -11,6 +11,8 @@ import java.security.MessageDigest
  * The procedure iterates recursively through the fileset;
  * For each file the md5 sum is calculated.
  * The extension of the file is compared to the mimeRepository table and the probably content type is retrieved.
+ * Add an access status should be find it in the public API
+ * Throw an error if the file is zero bytes.
  *
  */
 
@@ -30,7 +32,7 @@ class SorInstruction {
         println(orAttributes)
         recurse = (Boolean.parseBoolean(orAttributes.recurse))
 
-        def file = new File(System.getenv("digcolproc_home"), "src/main/global/contenttype.txt")
+        def file = new File(System.getenv("DIGCOLPROC_HOME"), "util/contenttype.txt")
         assert file.exists()
         file.eachLine {
             final String[] split = it.split(",")

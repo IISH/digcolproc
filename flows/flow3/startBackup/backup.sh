@@ -6,7 +6,7 @@
 #
 
 # TODO: enable the config line
-#source "${digcolproc_home}config.sh" $0 "$@"
+#source "${DIGCOLPROC_HOME}config.sh" $0 "$@"
 
 # TODO: MOVE to config file
 digcolproc_home=/usr/bin/digcolproc
@@ -60,7 +60,7 @@ ftp_connection="ftp://testgcu:testgcu123abc@ftp.iisg.nl"
 putgetcommand="mirror --reverse --verbose /testgculocal /"
 
 # Do the backup ...
-"${digcolproc_home}/util/ftpnew.sh" "/tmp/lftpscriptfile.${randomvalue}" "${putgetcommand}" "${ftp_connection}" "${logfile}"
+"${DIGCOLPROC_HOME}/util/ftpnew.sh" "/tmp/lftpscriptfile.${randomvalue}" "${putgetcommand}" "${ftp_connection}" "${logfile}"
 success=$?   # What is the exit code of the backup?
 
 #chown -R "$owner" "$backupLocation"    # TODO: waarom?

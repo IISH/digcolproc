@@ -19,7 +19,7 @@
 # Usage:
 # file.sh [na] [folder name] [log]
 
-source "${digcolproc_home}setup.sh" $0 "$@"
+source "${DIGCOLPROC_HOME}setup.sh" $0 "$@"
 
 GiB=$(echo "(2^30)" | bc)
 BlockLimit=128
@@ -77,29 +77,29 @@ done
 
 # Upload the files
 ftp_script=$ftp_script_base.files.txt
-$global_home/ftp.sh "$ftp_script" "synchronize remote -mirror -criteria=size -filemask=\"*.iso|/\" $fileSet_windows $archiveID" "$flow_ftp_connection" "$log"
+${DIGCOLPROC_HOME}util/ftp.sh "$ftp_script" "synchronize remote -mirror -criteria=size -filemask=\"*.iso|/\" $fileSet_windows $archiveID" "$flow_ftp_connection" "$log"
 rc=$?
 if [[ $rc != 0 ]] ; then
     exit -1
 fi
-$global_home/ftp.sh "$ftp_script" "synchronize remote -mirror -criteria=size $fileSet_windows\\.level1 $archiveID/.level1" "$flow_ftp_connection" "$log"
+${DIGCOLPROC_HOME}util/ftp.sh "$ftp_script" "synchronize remote -mirror -criteria=size $fileSet_windows\\.level1 $archiveID/.level1" "$flow_ftp_connection" "$log"
 if [[ $rc != 0 ]] ; then
     exit -1
 fi
-$global_home/ftp.sh "$ftp_script" "synchronize remote -mirror -criteria=size $fileSet_windows\\.level2 $archiveID/.level2" "$flow_ftp_connection" "$log"
+${DIGCOLPROC_HOME}util/ftp.sh "$ftp_script" "synchronize remote -mirror -criteria=size $fileSet_windows\\.level2 $archiveID/.level2" "$flow_ftp_connection" "$log"
 if [[ $rc != 0 ]] ; then
     exit -1
 fi
-$global_home/ftp.sh "$ftp_script" "synchronize remote -mirror -criteria=size $fileSet_windows\\.level3 $archiveID/.level3" "$flow_ftp_connection" "$log"
+${DIGCOLPROC_HOME}util/ftp.sh "$ftp_script" "synchronize remote -mirror -criteria=size $fileSet_windows\\.level3 $archiveID/.level3" "$flow_ftp_connection" "$log"
 rc=$?
 if [[ $rc != 0 ]] ; then
     exit -1
 fi
 
 # Produce instruction and upload it
-groovy $(cygpath --windows "$global_home/instruction.groovy") -na $na -fileSet "$fileSet_windows" -autoIngestValidInstruction $flow_autoIngestValidInstruction -label "$datestamp UDF image $archiveID $flow_client" -notificationEMail $flow_notificationEMail -plan "StagingfileIngestLevel3,StagingfileIngestLevel2,StagingfileIngestLevel1,StagingfileBindPIDs,StagingfileIngestMaster">>$log
+groovy $(cygpath --windows "${DIGCOLPROC_HOME}util/instruction.groovy") -na $na -fileSet "$fileSet_windows" -autoIngestValidInstruction $flow_autoIngestValidInstruction -label "$datestamp UDF image $archiveID $flow_client" -notificationEMail $flow_notificationEMail -plan "StagingfileIngestLevel3,StagingfileIngestLevel2,StagingfileIngestLevel1,StagingfileBindPIDs,StagingfileIngestMaster">>$log
 ftp_script=$ftp_script_base.instruction.txt
-$global_home/ftp.sh "$ftp_script" "put $fileSet_windows\instruction.xml $archiveID/instruction.xml" "$log"
+${DIGCOLPROC_HOME}util/ftp.sh "$ftp_script" "put $fileSet_windows\instruction.xml $archiveID/instruction.xml" "$log"
 rc=$?
 if [[ $rc != 0 ]] ; then
     exit -1

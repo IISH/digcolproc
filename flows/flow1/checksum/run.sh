@@ -6,7 +6,7 @@
 #
 # Usage: run.sh [na] [fileSet] [work directory]
 
-source "${digcolproc_home}setup.sh" $0 "$@"
+source "${DIGCOLPROC_HOME}setup.sh" $0 "$@"
 
 # Remove DOS \r
 file=$fileSet/checksum.md5

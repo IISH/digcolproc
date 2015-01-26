@@ -5,12 +5,12 @@
 # Usage:
 # validate.sh [na] [folder name]
 
-source "${digcolproc_home}setup.sh" $0 "$@"
+source "${DIGCOLPROC_HOME}setup.sh" $0 "$@"
 
-cd "${digcolproc_home}flow4/validate"
+cd "${DIGCOLPROC_HOME}flow4/validate"
 source ./run.sh
 
-cd "${digcolproc_home}ingest"
+cd "${DIGCOLPROC_HOME}ingest"
 source ./run.sh
 
 exit 0

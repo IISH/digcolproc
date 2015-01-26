@@ -10,7 +10,7 @@ script="$(readlink -f ${BASH_SOURCE[0]})"
 scriptLocation="$(dirname ${script})"
 
 # TODO: enable the config line
-#source "${digcolproc_home}config.sh" $0 "$@"
+#source "${DIGCOLPROC_HOME}config.sh" $0 "$@"
 
 # TODO: MOVE to config file
 #flow3_applicationUrl="http://etc/"

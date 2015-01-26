@@ -2,5 +2,5 @@
 #
 # Perform removal in flow2
 
-cd "${digcolproc_home}remove"
+cd "${DIGCOLPROC_HOME}remove"
 source ./run.sh

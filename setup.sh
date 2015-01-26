@@ -6,6 +6,8 @@
 #
 # Usage: setup.sh [full path of the scripts that called this file] [the fileSet without a trailing slash] [the flow]
 
+source "${DIGCOLPROC_HOME}config.sh"
+
 echo "\$0 = $0"
 echo "\$1 = $1"
 echo "\$2 = $2"
@@ -23,6 +25,8 @@ na=$(basename $fs_parent)		# Now proceeds to the naming authority
 cd "$event"					    # Make it the current directory
 event=$(basename $event)	    # Now proceeds to the actual command
 work=$fileSet/.$event		    # The Working directory for logging and reports
+
+
 
 if [ -z "$fs_parent" ] ; then
     echo "Parent of the fileset not set."
@@ -58,8 +62,9 @@ mkdir -p $work
 rm -f "$fileSet/$event.txt"
 
 archiveID=$(basename $fileSet)
-fileSet_windows=$(cygpath --windows $fileSet)
+datestamp=$(date +"%Y-%m-%d")
 log=$work/$datestamp.log
+echo "log: ${log}"
 echo "date: $(date)">$log
 echo "na: $na">>$log
 echo "fileSet: $fileSet">>$log

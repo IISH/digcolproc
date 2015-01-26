@@ -7,7 +7,7 @@
 # Iterates over all application folders and starts the startup.sh routine.
 # if a filename is given, only folders that contain the filename will be processed.
 
-source "${digcolproc_home}config.sh"
+source "${DIGCOLPROC_HOME}config.sh"
 flow=$1
 event=$2
 fileName=$3
