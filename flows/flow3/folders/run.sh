@@ -60,16 +60,17 @@ do
             # Remove the quotes around the PID
             pid="${pid%\"}"
             pid="${pid#\"}"
-            pid=$(basename $pid) # And remove the prefix
+            id=$(basename $pid) # And remove the prefix
 
             echo "\$pid = $pid">>$log
-            if [ -z "$pid" ] ; then
-                echo "Empty value for pid"  >>$log
+            echo "\$id = $id">>$log
+            if [ -z "$id" ] ; then
+                echo "Empty value for id"  >>$log
                 exit -1
             fi
 
             # Create a folder for the PID
-            folder=$offloader/$pid
+            folder=$offloader/$id
             echo "mkdir -p $folder">>$log
             mkdir -p "$folder"
             chmod -R 775 "$folder"
