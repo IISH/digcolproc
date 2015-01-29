@@ -1,34 +1,46 @@
 #!/bin/bash
 #
-# run.sh
+# startup.sh
 #
-# Iterates over all application folders and starts the startup.sh routine.
+# Iterates over all application folders and starts the run.sh routine.
+
 
 source "${DIGCOLPROC_HOME}config.sh"
 
-for flow in ${DIGCOLPROC_HOME}flows/*
+for flow in ${DIGCOLPROC_HOME}flows/* # Find all potential script folders in /flows/
 do
     flow_folder=$(basename $flow)
     for run_folder in $flow/*
     do
-        run_script=$run_folder/run.sh
+        run_script=$run_folder/run.sh # See if there is a /flows/flow[n]/run.sh file
         if [ -f $run_script ] ; then
             key=$flow_folder"_hotfolders"
             hotfolders=$(eval "echo \$$key")
-            for hotfolder in $hotfolders
+            for hotfolder in $hotfolders # Iterate through all hotfolders where the run.sh can be applied to.
             do
+                # The offloader hotfolder convention is:
+                # /[one or more directories]/[na]/[offloader account name]/[folder to apply the run.sh to]
+                #
+                # E.g. hotfolder for flow3 is '/offloader/flow3/'
+
+                # The procedure will find content when it is delivered as:
+                # /offloader/flow3/10622/offloader1-flow1-acc/BULK12345
+
 				if [ -d "$hotfolder" ] ; then
-                    for na in $hotfolder*
+                    for na in $hotfolder* # E.g. na=10622
                     do
-                        for fileSet in $na/*
+                        for offloader in $na/* # E.g. offloader1-flow1-acc
                         do
-                            if [ -d "$fileSet" ] ; then
-                                event="$fileSet/$(basename $run_folder).txt"
-                                if [ -f "$event" ] ; then
-                                    echo "$event > ${run_script} ${fileSet} ${flow_folder}">>/tmp/event.txt
-                                    $run_script "$fileSet" "$flow_folder" &
+                            for fileSet in $offloader/* #E.g. fileSet=BULK12345
+                            do
+                                if [ -d "$fileSet" ] ; then
+                                    trigger="$fileSet/.work/$(basename $run_folder).txt"
+                                    if [ -f "$trigger" ] ; then
+                                        echo "${run_script} \"${trigger}\" \"${fileSet}\"">>/tmp/event.txt
+                                        $run_script "$trigger" "$fileSet"
+                                    fi
                                 fi
-                            fi
+                            done
                         done
                     done
                 fi

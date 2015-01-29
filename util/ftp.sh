@@ -18,18 +18,20 @@ echo "open ${ftp_connection}" >> $ftp_scriptfile
 echo "$put" >> $ftp_scriptfile
 echo "bye" >> $ftp_scriptfile
 
+echo "ftp_scriptfile:" >> $logfile
+cat $ftp_scriptfile >> $logfile
+
 to=10
 for i in $(seq 1 $to)
 do
     echo "Ftp files... attempt $i of $to">>$logfile
     lftp -f $ftp_scriptfile --log=$logfile
     rc=$?
+    rm -f "$ftp_scriptfile"
     if [[ $rc == 0 ]] ; then
-        echo exit 0
+        exit 0
     fi
 done
 
 echo "FTP failed" >> $logfile
-rm -f "$ftp_scriptfile"
-
-echo exit 1
+exit 1

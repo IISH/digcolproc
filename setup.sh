@@ -4,29 +4,29 @@
 
 # Initiate and check our variables.
 #
-# Usage: setup.sh [full path of the scripts that called this file] [the fileSet without a trailing slash] [the flow]
+# Usage: setup.sh [calling script: run.sh file] [event] [fileSet]
 
 source "${DIGCOLPROC_HOME}config.sh"
 
-echo "\$0 = $0"
 echo "\$1 = $1"
 echo "\$2 = $2"
 echo "\$3 = $3"
-echo "\$4 = $4"
-event=$(dirname $1)			    # Gets the parent folder of the application script
-echo "\$event = $event"
-fileSet=$2                      # The fileSet
-flow=$3                         # The flow ( flow1, flow2, etc )
-echo "dirname \$fileSet = dirname $fileSet"
-fs_parent=$(dirname $fileSet)	# Gets the parent folder
-echo "\$fs_parent = $fs_parent"
-
-na=$(basename $fs_parent)		# Now proceeds to the naming authority
-cd "$event"					    # Make it the current directory
-event=$(basename $event)	    # Now proceeds to the actual command
-work=$fileSet/.$event		    # The Working directory for logging and reports
+event=$(dirname $1)			     # Gets the parent folder of the application script
+trigger=$2                       # Trigger file, E.g. /flow3/10622/offloader-3/BULK12345/.work/ingest.txt
+fileSet=$3                       # The fileSet, E.g. /flow3/10622/offloader-3/BULK12345
+archiveID=$(basename $fileSet)   # E.g. BULK012345
+fs_parent=$(dirname $fileSet)	 # Gets the parent folder, E.g. /flow3/10622/offloader-3
+offloader=$(basename $fs_parent) # The offloader name, E.g. offloader-3
+fs_parent=$(dirname $fs_parent)	 # Gets the parent folder, E.g. /flow3/10622/
+na=$(basename $fs_parent)        # Now proceeds to the naming authority
+fs_parent=$(dirname $fs_parent)	 # Gets the parent folder, E.g. /flow3
+flow=$(basename $fs_parent)      # The flow ( flow1, flow2, etc )
+fs_parent=$(dirname $fileSet)
 
 
+cd "$event"					     # Make where we have the run.sh file the current directory
+event=$(basename $event)	     # Now proceeds to the actual command
+work=$fileSet/.work/$event       # The Working directory for logging and reports
 
 if [ -z "$fs_parent" ] ; then
     echo "Parent of the fileset not set."
@@ -59,14 +59,17 @@ if [ -z "$flow_keys" ] ; then
 fi
 
 mkdir -p $work
-rm -f "$fileSet/$event.txt"
+rm -f "$trigger"
 
-archiveID=$(basename $fileSet)
 datestamp=$(date +"%Y-%m-%d")
 log=$work/$datestamp.log
-echo "log: ${log}"
-echo "date: $(date)">$log
+echo "log: ${log}">$log
+echo "trigger: ${trigger}">>$log
+echo "date: $(date)">>$log
+echo "datestamp: $datestamp">>$log
+echo "offloader: $offloader">>$log
 echo "na: $na">>$log
+echo "archiveID: $archiveID">>$log
 echo "fileSet: $fileSet">>$log
 echo "flow: $flow">>$log
 echo "event: $event">>$log

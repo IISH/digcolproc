@@ -17,7 +17,7 @@ fi
 
 # Upload the files
 ftp_script=$ftp_script_base.files.txt
-bash ${DIGCOLPROC_HOME}util/ftp.sh "$ftp_script" "mirror --reverse --verbose ${fileSet} /" "$flow_ftp_connection" "$log"
+bash ${DIGCOLPROC_HOME}util/ftp.sh "$ftp_script" "mirror --reverse --verbose --exclude .work/ ${fileSet} /${archiveID}" "$flow_ftp_connection" "$log"
 rc=$?
 if [[ $rc != 0 ]] ; then
     exit -1
@@ -33,7 +33,7 @@ fi
 
 # Upload the instruction
 ftp_script=$ftp_script_base.instruction.txt
-bash ${DIGCOLPROC_HOME}util/ftp.sh "$ftp_script" "put $fileSet/instruction.xml $archiveID/instruction.xml" "$flow_ftp_connection" "$log"
+bash ${DIGCOLPROC_HOME}util/ftp.sh "$ftp_script" "put -O /${archiveID} ${fileSet}/instruction.xml" "$flow_ftp_connection" "$log"
 rc=$?
 if [[ $rc != 0 ]] ; then
     exit -1
