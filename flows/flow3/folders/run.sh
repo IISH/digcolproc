@@ -60,6 +60,7 @@ do
             # Remove the quotes around the PID
             pid="${pid%\"}"
             pid="${pid#\"}"
+            pid=$(basename $pid) # And remove the prefix
 
             echo "\$pid = $pid">>$log
             if [ -z "$pid" ] ; then
