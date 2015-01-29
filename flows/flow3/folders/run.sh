@@ -5,7 +5,9 @@
 # Collects all folders from the acquisition database API that need to be created in the main local folder.
 #
 
-source "${DIGCOLPROC_HOME}setup.sh" $0 "$@"
+source "${DIGCOLPROC_HOME}config.sh"
+
+log=/tmp/event.flow3.log
 
 # We only accept folders
 
@@ -33,55 +35,68 @@ statusUploadingToPermanentStorage=7
 # Digital material has been moved to permanent storage
 statusMovedToPermanentStorage=8
 
-# TODO: MOVE to config file (puppet)
-#flow3_applicationUrl="http://etc/"
-#flow3_applicationUrl="http://node-164.dev.socialhistoryservices.org/service/folders"
-flow3_applicationUrl="http://10.0.0.100:8080" # gcu local
 
-# TODO: MOVE to config file (puppet)
-flow3_ingestLocation=/tmp
+if [ ! -d $flow3_hotfolders ] ; then
+    echo "No hotfolder found: ${flow3_hotfolders}">>$log
+    exit 1
+fi
 
-# TODO: MOVE to config file (puppet)
-owner="root:root"
-
-# Call the 'folders' web service and extract the PIDs from the resulting JSON
-pidsEval="curl '$flow3_applicationUrl/service/folders' | jq .pids[]"
-pids=$(eval ${pidsEval})
-
-# Create a folder for each PID
-for pid in ${pids}
+for na in $flow3_hotfolders*
 do
-	# Remove the quotes around the PID
-	pid="${pid%\"}"
-	pid="${pid#\"}"
+    for offloader in $na/*
+    do
+        owner=$(basename $offloader)
+        na=$(basename $na)
+        echo "owner=${owner}:${na}">>$log
 
-	echo "DEBUG: \$pid = $pid"
+        # Call the 'folders' web service and extract the PIDs from the resulting JSON
+        request="curl --insecure '$ad/service/folders' | jq .pids[]"
+        echo "request=${request}"
+        pids=$(eval ${request})
 
-	# Create a folder for the PID
-#	echo "DEBUG: mkdir -pm 764 $flow3_ingestLocation/$pid"
-#	mkdir -pm 764 "$flow3_ingestLocation/$pid"
-	echo "DEBUG: mkdir -p $flow3_ingestLocation/$pid"
-	mkdir -p "$flow3_ingestLocation/$pid"
-	echo "DEBUG: chmod -R 764 $flow3_ingestLocation/$pid"
-	chmod -R 764 "$flow3_ingestLocation/$pid"
-	echo "DEBUG: chown -R $owner $flow3_ingestLocation"
-	chown -R "$owner" "$flow3_ingestLocation/$pid"
+        # Create a folder for each PID
+        for pid in ${pids}
+        do
+            # Remove the quotes around the PID
+            pid="${pid%\"}"
+            pid="${pid#\"}"
 
-	# check if the directory already exists
-	if [ -d "$flow3_ingestLocation/$pid" ];
-	then
-		# directory exists
-		echo "DEBUG: Directory created: $flow3_ingestLocation/$pid"
+            echo "\$pid = $pid">>$log
+            if [ -z "$pid" ] ; then
+                echo "Empty value for pid"  >>$log
+                exit -1
+            fi
 
-		# Update the status using the 'status' web service
-		echo "DEBUG: curl --data pid=$pid&status=$statusFolderCreated&failure=false $flow3_applicationUrl/service/status"
-		curl --data "pid=$pid&status=$statusFolderCreated&failure=false" "$flow3_applicationUrl/service/status"
-	else
-		# directory doesn't exist
-		echo "DEBUG: Directory does not exists: $flow3_ingestLocation/$pid"
+            # Create a folder for the PID
+            folder=$offloader/$pid
+            echo "mkdir -p $folder">>$log
+            mkdir -p "$folder"
+            chmod -R 775 "$folder"
+            chown -R $owner:$na "$folder"
 
-		# Update the status using the 'status' web service
-		echo "DEBUG: curl --data pid=$pid&status=$statusFolderCreated&failure=true $flow3_applicationUrl/service/status"
-		curl --data "pid=$pid&status=$statusFolderCreated&failure=true" "$flow3_applicationUrl/service/status"
-	fi
+            # check if the directory already exists
+            if [ -d "$folder" ];
+            then
+                # directory exists
+                echo "Directory created: $folder">>$log
+
+                # Update the status using the 'status' web service
+                request_data="pid=$pid&status=$statusFolderCreated&failure=false"
+                echo "request_data=${request_data}">>$log
+                curl --insecure --data "$request_data" "$ad/service/status"
+            else
+                # directory doesn't exist
+                echo "Directory does not exists. Failed to create: $folder" >>$log
+
+                # Update the status using the 'status' web service
+                request_data="pid=$pid&status=$statusFolderCreated&failure=true"
+                echo "request_data=${request_data}">>$log
+                curl --insecure --data "$request_data" "$ad/service/status"
+            fi
+        done
+    done
+    break # we only handle one offloader folder.
 done
+
+
+exit 0
