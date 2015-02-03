@@ -34,10 +34,11 @@ do
                             for fileSet in $offloader/* #E.g. fileSet=BULK12345
                             do
                                 if [ -d "$fileSet" ] ; then
-                                    trigger="$fileSet/.work/$(basename $run_folder).txt"
+                                    trigger="$fileSet/$(basename $run_folder).txt"
+                                    echo $trigger
                                     if [ -f "$trigger" ] ; then
                                         echo "${run_script} \"${trigger}\" \"${fileSet}\"">>/tmp/event.txt
-                                        $run_script "$trigger" "$fileSet"
+                                        $run_script "$trigger" "$fileSet" &
                                     fi
                                 fi
                             done

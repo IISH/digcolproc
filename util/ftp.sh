@@ -18,8 +18,11 @@ echo "open ${ftp_connection}" >> $ftp_scriptfile
 echo "$put" >> $ftp_scriptfile
 echo "bye" >> $ftp_scriptfile
 
-echo "ftp_scriptfile:" >> $logfile
-cat $ftp_scriptfile >> $logfile
+# We do not want to log credentials here unless we have to.
+if [ ! -z "$DIGCOLPROC_DEBUG" ] ; then
+    echo "ftp_scriptfile:" >> $logfile
+    cat $ftp_scriptfile >> $logfile
+fi
 
 to=10
 for i in $(seq 1 $to)

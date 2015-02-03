@@ -27,15 +27,18 @@ hotfolders=$(eval "echo \$$key")
 for hotfolder in $hotfolders
 do
 	if [ -d "$hotfolder" ] ; then
-        for na in $hotfolder/*
+        for na in $hotfolder*
         do
-            for fileSet in $na/*
+            for offloader in $na/* # E.g. offloader1-flow1-acc
             do
-                if [ -d $fileSet ] ; then
-                    if [[ -z "$fileName" ]] || [[ -e $fileSet/$fileName ]] ; then
-                        echo $(date)>$fileSet/$event
+                for fileSet in $offloader/*
+                do
+                    if [ -d $fileSet ] ; then
+                        if [[ -z "$fileName" ]] || [[ -e $fileSet/$fileName ]] ; then
+                            echo $(date)>$fileSet/$event
+                        fi
                     fi
-                fi
+                done
             done
         done
     fi

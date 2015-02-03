@@ -2,6 +2,7 @@ import groovy.xml.StreamingMarkupBuilder
 import org.xml.sax.SAXException
 
 import java.security.MessageDigest
+import java.util.regex.Pattern
 
 /**
  * SorInstruction
@@ -25,12 +26,16 @@ class SorInstruction {
     private boolean recurse = false
     private static access_stati = ['open', 'restricted', 'closed', 'irsh']
     private static String ACCESS_DEFAULT = 'closed'
+    private boolean use_objd_seq_pid_from_file = false
+    static Pattern objd_seq_pid_from_file = Pattern.compile('^([a-zA-Z0-9]+)\\.([a-zA-Z0-9]+)\$|^([a-zA-Z0-9]+)\\.([0-9]+)\\.([a-zA-Z0-9]+)\$')
+
 
     public SorInstruction(def args) {
         orAttributes = args
         println("Loaded instruction class with arguments:")
         println(orAttributes)
         recurse = (Boolean.parseBoolean(orAttributes.recurse))
+        use_objd_seq_pid_from_file = (Boolean.parseBoolean(orAttributes.use_objd_seq_pid_from_file))
 
         def file = new File(System.getenv("DIGCOLPROC_HOME"), "util/contenttype.txt")
         assert file.exists()
@@ -65,9 +70,9 @@ class SorInstruction {
         if (folder.name[0] != '.') {
             for (File file : folder.listFiles()) {
                 if (file.isFile()) {
-					out << writeFile(file, location)
+                    out << writeFile(file, location)
                 } else {
-					if ( recurse ) getFolders(file, location + "/" + file.name, out)
+                    if (recurse) getFolders(file, location + "/" + file.name, out)
                 }
             }
         }
@@ -77,7 +82,7 @@ class SorInstruction {
 
         if (f.name.equals("instruction.xml")) return
         if (f.name[0] == '.') return
-        if ( f.size() == 0) {
+        if (f.size() == 0) {
             println("Fatal: file " + f.absolutePath + " has zero bytes.")
             System.exit(1)
         }
@@ -90,16 +95,40 @@ class SorInstruction {
         files++
         String _location = folder + "/" + f.name
 
-        String barcode = f.name.replaceFirst(~/\.[^\.]+$/, '').toUpperCase() // we make the PID the file name
-        assert barcode
+        final String candidate = f.name.toUpperCase()
+        final String barcode
+        String _objid = null
+        int _seq = 0
+        if (use_objd_seq_pid_from_file) {
+
+            def matcher = objd_seq_pid_from_file.matcher(candidate)
+            if (!matcher.matches()) {
+                println("Fatal: file pattern " + f.absolutePath + " does not match pattern " + objd_seq_pid_from_file.pattern())
+                System.exit(1)
+            }
+
+            if (matcher.group(1)) { // match for filename.extension
+                _objid = matcher.group(1)// the aaa in aaa.bbb
+                _seq = 1
+            } else {
+                _objid = matcher.group(3) // the aaa in aaa.12345.ccc null null aaa 12345 ccc
+                _seq = matcher.group(4).toInteger()  // the 12345 in aaa.12345.ccc null null aaa 12345 ccc
+            }
+            barcode = _objid + '.' + _seq
+        } else {
+            barcode = candidate.replaceFirst(~/\.[^\.]+$/, '') // the aaa in aaa.bbb
+        }
+
         String _pid = orAttributes.na + "/" + barcode
 
-        final String _access = getAccessStatus("marc.852\$p=\"${barcode}\"")
+        final String _access = getAccessStatus("marc.852\$p=\"${candidate}\"")
         println('\t' + _access)
 
         return {
             stagingfile {
                 pid _pid
+                if (_objid) objid _objid
+                if (_seq) seq _seq
                 location _location
                 contentType _contentType
                 md5 _md5
