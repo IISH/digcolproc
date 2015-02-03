@@ -35,9 +35,14 @@ if [ -d $app ] ; then
     rm -rf $app
 fi
 
-chmod 744 startup.sh
 
 rsync -av --exclude='.git' --exclude='.gitignore' --exclude='make.sh' . $app
+# set permissions
+for f in $(find "$app" -type f  -name "*.sh" )
+do
+    chmod 744 $f
+done
+
 echo $revision>$app/revision.txt
 tar -zcvf $expect $app
 rm -rf $app
