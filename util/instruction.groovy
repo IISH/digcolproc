@@ -24,6 +24,7 @@ class SorInstruction {
     private def mimeRepository = [:]
     private MessageDigest digest = MessageDigest.getInstance("MD5")
     private boolean recurse = false
+    private boolean uuid_to_pid = false
     private static access_stati = ['open', 'restricted', 'closed', 'irsh']
     private static String ACCESS_DEFAULT = 'closed'
     private boolean use_objd_seq_pid_from_file = false
@@ -35,6 +36,7 @@ class SorInstruction {
         println("Loaded instruction class with arguments:")
         println(orAttributes)
         recurse = (Boolean.parseBoolean(orAttributes.recurse))
+        uuid_to_pid = (Boolean.parseBoolean(orAttributes.uuid_to_pid))
         use_objd_seq_pid_from_file = (Boolean.parseBoolean(orAttributes.use_objd_seq_pid_from_file))
 
         def file = new File(System.getenv("DIGCOLPROC_HOME"), "util/contenttype.txt")
@@ -99,24 +101,29 @@ class SorInstruction {
         final String barcode
         String _objid = null
         int _seq = 0
-        if (use_objd_seq_pid_from_file) {
-
-            def matcher = objd_seq_pid_from_file.matcher(candidate)
-            if (!matcher.matches()) {
-                println("Fatal: file pattern " + f.absolutePath + " does not match pattern " + objd_seq_pid_from_file.pattern())
-                System.exit(1)
-            }
-
-            if (matcher.group(1)) { // match for filename.extension
-                _objid = matcher.group(1)// the aaa in aaa.bbb
-                _seq = 1
-            } else {
-                _objid = matcher.group(3) // the aaa in aaa.12345.ccc null null aaa 12345 ccc
-                _seq = matcher.group(4).toInteger()  // the 12345 in aaa.12345.ccc null null aaa 12345 ccc
-            }
-            barcode = _objid + '.' + _seq
+        if ( uuid_to_pid ) {
+            barcode = UUID.randomUUID().toString()
+            _objid = orAttributes.objid
         } else {
-            barcode = candidate.replaceFirst(~/\.[^\.]+$/, '') // the aaa in aaa.bbb
+            if (use_objd_seq_pid_from_file) {
+
+                def matcher = objd_seq_pid_from_file.matcher(candidate)
+                if (!matcher.matches()) {
+                    println("Fatal: file pattern " + f.absolutePath + " does not match pattern " + objd_seq_pid_from_file.pattern())
+                    System.exit(1)
+                }
+
+                if (matcher.group(1)) { // match for filename.extension
+                    _objid = matcher.group(1)// the aaa in aaa.bbb
+                    _seq = 1
+                } else {
+                    _objid = matcher.group(3) // the aaa in aaa.12345.ccc null null aaa 12345 ccc
+                    _seq = matcher.group(4).toInteger()  // the 12345 in aaa.12345.ccc null null aaa 12345 ccc
+                }
+                barcode = _objid + '.' + _seq
+            } else {
+                barcode = candidate.replaceFirst(~/\.[^\.]+$/, '') // the aaa in aaa.bbb
+            }
         }
 
         String _pid = orAttributes.na + "/" + barcode

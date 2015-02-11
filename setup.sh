@@ -98,3 +98,29 @@ if [[ ! -d "$fileSet" ]] ; then
     echo "Does the folder or share exist ?">>$log
     exit -1
 fi
+
+
+# flow3 settings
+# No folder created yet
+statusNewDigitalMaterialCollection=1
+
+# A folder has been created
+statusFolderCreated=2
+
+# Digital material has been uploaded
+statusMaterialUploaded=3
+
+# A backup of the digital material is being made
+statusBackupRunning=4
+
+# A backup of the digital material has been created
+statusBackupFinished=5
+
+# Digital material is ready for permanent storage
+statusReadyForPermanentStorage=6
+
+# Digital material is being uploaded to permanent storage
+statusUploadingToPermanentStorage=7
+
+# Digital material has been moved to permanent storage
+statusMovedToPermanentStorage=8

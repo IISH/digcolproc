@@ -28,9 +28,8 @@ to=10
 for i in $(seq 1 $to)
 do
     echo "Ftp files... attempt $i of $to">>$logfile
-    lftp -f $ftp_scriptfile --log=$logfile
+    lftp -f "$ftp_scriptfile"
     rc=$?
-    rm -f "$ftp_scriptfile"
     if [[ $rc == 0 ]] ; then
         exit 0
     fi

@@ -137,7 +137,7 @@ do
 done
 
 echo "Upload files...">>$log
-${DIGCOLPROC_HOME}util/ftp.sh "$ftp_script" "synchronize remote -mirror -criteria=size $fileSet_windows\.$targetLevel $archiveID/.$targetLevel" "$flow_ftp_connection" "$log"
+${DIGCOLPROC_HOME}util/ftp.sh "$ftp_script" "synchronize remote -mirror --delete -criteria=size $fileSet_windows\.$targetLevel $archiveID/.$targetLevel" "$flow_ftp_connection" "$log"
 rc=$?
 if [[ $rc != 0 ]] ; then
     exit -1

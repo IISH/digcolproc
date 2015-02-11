@@ -2,107 +2,137 @@
 
 # run.sh
 #
-# Collects all folders under the fileSet.
-# For each folder creates a manifest and UDF image
-#
-# Example:
-# /a/b/BULK23456/1/files and folders
-# /a/b/BULK23456/2/files and folders
-#
-# Will produce:
-# /a/b/BULK23456/.level2/BULK23456.1.csv
-# /a/b/BULK23456/BULK23456.1.iso
-# /a/b/BULK23456/.level2/BULK23456.2.csv
-# /a/b/BULK23456/BULK23456.2.iso
-# /a/b/BULK23456/instruction.xml
-#
 # Usage:
-# file.sh [na] [folder name] [log]
+# run.sh [na] [folder name]
+#
+# This script ingests a fileSet
+# /a/b/c/10622/offloader/BULK12345
 
 source "${DIGCOLPROC_HOME}setup.sh" $0 "$@"
 
-GiB=$(echo "(2^30)" | bc)
-BlockLimit=128
-ftp_script_base=$work/ftp.$archiveID.$datestamp
 
-ok=true
-for d in $fileSet/*
-do
-    size=$(du $d -s | cut -d '/' -f 1)
-    blocks=$(echo "$size / $GiB" | bc)
-    if [[ $blocks -gt $BlockLimit ]] ; then
-        echo "The folder $d with size $size is larger then the allowed size of $GiB x $BlockLimit">>$log
-	    ok=false
+# call_api_status
+# Call the web service to PUT the status
+function call_api_status() {
+    pid=$1
+    status=$2
+    failure=$3
+
+    # Update the status using the 'status' web service
+    method="${ad}/service/status"
+    request_data="pid=$pid&status=$status&failure=$failure"
+    echo "method=${method}">>$log
+    echo "request_data=${request_data}">>$log
+    curl --insecure --data "$request_data" "$method" >> $log
+    if [[ $rc != 0 ]] ; then
+        # api failure ?
+        echo "The api gave an error response." >> $log
+        #exit 1
     fi
-done
-if [ $ok == false ] ; then
-    exit -1
+    return 0
+}
+
+
+file_instruction=$fileSet/instruction.xml
+if [ -f "$file_instruction" ] ; then
+	echo "Instruction already present: $file_instruction">>$log
+	echo "This may indicate the SIP is staged or the ingest is already in progress. This is not an error.">>$log
+	exit 0
 fi
 
-echo "Start a droid analysis">>$log
-p=$(pwd)
-for d in $fileSet/*
-do
-    if [ -d $d ] ; then
-		mkdir -p "$fileSet/.level2"
-		subfolder=$(basename $d)
-        profile=$(cygpath --windows "$d/profile.droid")
-        manifest="$fileSet/.level2/$archiveID.$subfolder.csv"
-		cd $(cygpath $DROID_HOME)
-        droid.bat -p "$profile" -a $(cygpath --windows "$d") -R>>$log
-        droid.bat -p "$profile" -e "$(cygpath --windows "$manifest")">>$log
-		rm "$d/profile.droid"
-        cd "$p"
-		groovy removePath.groovy "$manifest" $(cygpath --windows "$d")
-		cp "$manifest" $d/
-    fi
-done
 
-echo "Create the UDF 1.02 images">>$log
-for d in $fileSet/*
-do
-    if [ -d $d ] ; then
-        subfolder=$(basename $d)
-		source=$(cygpath --windows "$d")
-		target=$(cygpath --windows "$fileSet/$archiveID.$subfolder.iso")
-        # See Oscdimg Command-Line Options at technet.microsoft.com/en-us/library/cc749036(v=ws.10).aspx
-		oscdimg.exe -udfver102 -u2 -l$archiveID.$subfolder -h -w4 $source $target>>$log
-        rc=$?
-        if [[ $rc != 0 ]] ; then
-            echo "There were errors when creating the image for $d">>$log
-            exit -1
-        fi
-    fi
-done
+# Tell what we are doing
+pid=$na/$archiveID
+call_api_status $pid $statusUploadingToPermanentStorage false
 
+
+# Lock the folder and it's contents
+chown -R root:root $fileSet
+
+
+# Produce a droid analysis so we have our manifest
+manifest=$fileSet/manifest.csv
+rm $manifest
+profile=$work/profile.droid
+echo "Begin droid analysis for profile ${profile}" >> $log
+droid --quiet -p $profile -a $fileSet -R >> $log
+rc=$?
+if [[ $rc != 0 ]] ; then
+    echo "Droid profiling threw an error." >> $log
+    call_api_status $pid $statusBackupRunning true
+    exit $rc
+fi
+
+
+# produce a report.
+profile_csv=$profile.csv
+droid --quiet -p $profile -e $profile_csv
+if [[ $rc != 0 ]] ; then
+    echo "Droid reporting threw an error." >> $log
+    call_api_status $pid $statusBackupRunning true
+    exit $rc
+fi
+if [ ! -f $profile_csv ] ; then
+    echo "Unable to create a droid profile: ${profile_csv}" >> $log
+    call_api_status $pid $statusBackupRunning true
+    exit $rc
+fi
+
+
+# Now extend the report with two columns: a md5 checksum and a persistent identifier
+python droid_extend_csv.py --sourcefile $profile_csv --targetfile $manifest --na $na --fileset $fileSet >> $log
+if [[ $rc != 0 ]] ; then
+    echo "Failed to extend the droid report to the manifest.">>$log
+    exit 1
+fi
+
+
+# The droid analysis does not include itself, so we add it to the manifest
+md5_hash=$(md5sum $manifest | cut -d ' ' -f 1)
+echo ""","1","file:/${archivalID}/","/${archivalID}/manifest.csv","manifest.csv","METHOD","STATUS","SIZE","File","csv","","EXTENSION_MISMATCH","${md5_hash}","FORMAT_COUNT","PUID","text/csv","Comma Separated Values","FORMAT_VERSION", "${pid}"">>$manifest
+
+
+# Now start the reverse mirror
 # Upload the files
+ftp_script_base=$work/ftp.$archiveID.$datestamp
 ftp_script=$ftp_script_base.files.txt
-${DIGCOLPROC_HOME}util/ftp.sh "$ftp_script" "synchronize remote -mirror -criteria=size -filemask=\"*.iso|/\" $fileSet_windows $archiveID" "$flow_ftp_connection" "$log"
+bash ${DIGCOLPROC_HOME}util/ftp.sh "$ftp_script" "mirror --reverse --delete --verbose ${fileSet} /${archiveID}" "$flow_ftp_connection" "$log"
 rc=$?
 if [[ $rc != 0 ]] ; then
-    exit -1
-fi
-${DIGCOLPROC_HOME}util/ftp.sh "$ftp_script" "synchronize remote -mirror -criteria=size $fileSet_windows\\.level1 $archiveID/.level1" "$flow_ftp_connection" "$log"
-if [[ $rc != 0 ]] ; then
-    exit -1
-fi
-${DIGCOLPROC_HOME}util/ftp.sh "$ftp_script" "synchronize remote -mirror -criteria=size $fileSet_windows\\.level2 $archiveID/.level2" "$flow_ftp_connection" "$log"
-if [[ $rc != 0 ]] ; then
-    exit -1
-fi
-${DIGCOLPROC_HOME}util/ftp.sh "$ftp_script" "synchronize remote -mirror -criteria=size $fileSet_windows\\.level3 $archiveID/.level3" "$flow_ftp_connection" "$log"
-rc=$?
-if [[ $rc != 0 ]] ; then
-    exit -1
+    call_api_status $pid $statusBackupRunning true
+    exit $rc
 fi
 
-# Produce instruction and upload it
-groovy $(cygpath --windows "${DIGCOLPROC_HOME}util/instruction.groovy") -na $na -fileSet "$fileSet_windows" -autoIngestValidInstruction $flow_autoIngestValidInstruction -label "$datestamp UDF image $archiveID $flow_client" -notificationEMail $flow_notificationEMail -plan "StagingfileIngestLevel3,StagingfileIngestLevel2,StagingfileIngestLevel1,StagingfileBindPIDs,StagingfileIngestMaster">>$log
-ftp_script=$ftp_script_base.instruction.txt
-${DIGCOLPROC_HOME}util/ftp.sh "$ftp_script" "put $fileSet_windows\instruction.xml $archiveID/instruction.xml" "$log"
+
+# Produce instruction from the report.
+instruction=$fileSet/instruction.xml
+python droid_to_instruction.py --sourcefile $manifest --targetfile $instruction --objid "$pid" --access $flow_access --submission_date=$(date) ---autoIngestValidInstruction "$flow_autoIngestValidInstruction" --label "$archiveID $flow_client" --action add --notificationEMail "$flow_notificationEMail" >> $log
 rc=$?
 if [[ $rc != 0 ]] ; then
-    exit -1
+    echo "Failed to produce an instruction." >> $log
+    call_api_status $pid $statusUploadingToPermanentStorage true
+    exit $rc
 fi
+if [ ! -f $instruction ] ; then
+    call_api_status $pid $statusUploadingToPermanentStorage true
+    echo "Failed to create an instruction."
+    exit 1
+fi
+
+
+# Upload the instruction
+ftp_script=$ftp_script_base.instruction.txt
+bash ${DIGCOLPROC_HOME}util/ftp.sh "$ftp_script" "put -O /${archiveID} ${instruction}" "$flow_ftp_connection" "$log"
+rc=$?
+if [[ $rc != 0 ]] ; then
+    call_api_status $pid $statusUploadingToPermanentStorage true
+    exit $rc
+fi
+
+
+echo "Done. ALl went well at this side." >> $log
+call_api_status $pid $statusMovedToPermanentStorage true
+
+
 
 exit 0
