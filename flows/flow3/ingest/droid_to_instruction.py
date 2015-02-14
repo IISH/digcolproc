@@ -10,6 +10,7 @@ import csv
 import getopt
 from xml.sax.saxutils import XMLGenerator
 
+_attributes = {u'xmlns':'http://objectrepository.org/instruction/1.0/'}
 
 class XmlInstruction:
     def __init__(self, output, encoding='utf-8'):
@@ -48,11 +49,12 @@ class XmlInstruction:
         return
 
 
-def parse_csv(sourcefile, targetfile, objid, access):
+def parse_csv(sourcefile, targetfile):
+
     manifest = open(targetfile, 'wb')
     xl = XmlInstruction(manifest)
 
-    xl.open_entry( u'instruction', {u'xmlns':'http://objectrepository.org/instruction/1.0/', u'objid': objid, u'access': access})
+    xl.open_entry( u'instruction', _attributes)
 
     with open(sourcefile, 'rb') as csvfile:
         reader = csv.reader(csvfile, delimiter=',', quotechar='"')
@@ -74,21 +76,18 @@ def usage():
 
 
 def main(argv):
-    sourcefile = objid = targetfile = 0
-    access = 'closed'
+    sourcefile = objid = targetfile = access = 0
 
     try:
-        opts, args = getopt.getopt(argv, 'o:s:t:a:hd', ['objid=', 'sourcefile=', 'targetfile=', 'access=', 'help', 'debug'])
+        opts, args = getopt.getopt(argv, 'o:s:t:a:h', ['objid=', 'sourcefile=', 'targetfile=', 'access=', 'help'])
     except getopt.GetoptError:
         usage()
         sys.exit(2)
     for opt, arg in opts:
+        if opt.startswith('--'): _attributes[opt[2:]] = arg
         if opt in ('-h', '--help'):
             usage()
             sys.exit()
-        elif opt == '-d':
-            global _debug
-            _debug = 1
         elif opt in ('-s', '--sourcefile'):
             sourcefile = arg
         elif opt in ('-t', '--targetfile'):
@@ -101,13 +100,14 @@ def main(argv):
     assert sourcefile
     assert targetfile
     assert objid
+    assert access
 
     print('sourcefile=' + sourcefile)
     print('targetfile=' + targetfile)
     print('objid=' + objid)
     print('access=' + access)
 
-    parse_csv(sourcefile, targetfile, objid, access)
+    parse_csv(sourcefile, targetfile)
     return
 
 

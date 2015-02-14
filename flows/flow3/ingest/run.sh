@@ -51,9 +51,9 @@ chown -R root:root $fileSet
 
 
 # Produce a droid analysis so we have our manifest
-manifest=$fileSet/manifest.csv
-rm $manifest
 profile=$work/profile.droid
+profile_csv=$profile.csv
+profile_extended_csv=$profile.extended.csv
 echo "Begin droid analysis for profile ${profile}" >> $log
 droid --quiet -p $profile -a $fileSet -R >> $log
 rc=$?
@@ -65,7 +65,6 @@ fi
 
 
 # produce a report.
-profile_csv=$profile.csv
 droid --quiet -p $profile -e $profile_csv
 if [[ $rc != 0 ]] ; then
     echo "Droid reporting threw an error." >> $log
@@ -80,16 +79,11 @@ fi
 
 
 # Now extend the report with two columns: a md5 checksum and a persistent identifier
-python droid_extend_csv.py --sourcefile $profile_csv --targetfile $manifest --na $na --fileset $fileSet >> $log
+python droid_extend_csv.py --sourcefile $profile_csv --targetfile $profile_extended_csv --na $na --fileset $fileSet >> $log
 if [[ $rc != 0 ]] ; then
     echo "Failed to extend the droid report to the manifest.">>$log
     exit 1
 fi
-
-
-# The droid analysis does not include itself, so we add it to the manifest
-md5_hash=$(md5sum $manifest | cut -d ' ' -f 1)
-echo ""","1","file:/${archivalID}/","/${archivalID}/manifest.csv","manifest.csv","METHOD","STATUS","SIZE","File","csv","","EXTENSION_MISMATCH","${md5_hash}","FORMAT_COUNT","PUID","text/csv","Comma Separated Values","FORMAT_VERSION", "${pid}"">>$manifest
 
 
 # Now start the reverse mirror
@@ -106,7 +100,7 @@ fi
 
 # Produce instruction from the report.
 instruction=$fileSet/instruction.xml
-python droid_to_instruction.py --sourcefile $manifest --targetfile $instruction --objid "$pid" --access $flow_access --submission_date=$(date) ---autoIngestValidInstruction "$flow_autoIngestValidInstruction" --label "$archiveID $flow_client" --action add --notificationEMail "$flow_notificationEMail" >> $log
+python droid_to_instruction.py -s $manifest -t $instruction --objid "$pid" --access $flow_access --submission_date=$(date) --autoIngestValidInstruction "$flow_autoIngestValidInstruction" --label "$archiveID $flow_client" --action add --notificationEMail "$flow_notificationEMail"  -plan "StagingfileBindPIDs,StagingfileIngestMaster" >> $log
 rc=$?
 if [[ $rc != 0 ]] ; then
     echo "Failed to produce an instruction." >> $log
