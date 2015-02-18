@@ -72,7 +72,7 @@ def parse_csv(sourcefile, targetfile):
 
 
 def usage():
-    print('Usage: droid_to_instruction.py -objid OBJID -f droid file.csv -s instruction')
+    print('Usage: droid_to_instruction.py --objid OBJID -s droid file.csv -t instruction')
 
 
 def main(argv):
@@ -84,11 +84,10 @@ def main(argv):
         usage()
         sys.exit(2)
     for opt, arg in opts:
-        if opt.startswith('--'): _attributes[opt[2:]] = arg
         if opt in ('-h', '--help'):
             usage()
             sys.exit()
-        elif opt in ('-s', '--sourcefile'):
+        if opt in ('-s', '--sourcefile'):
             sourcefile = arg
         elif opt in ('-t', '--targetfile'):
             targetfile = arg
@@ -96,6 +95,9 @@ def main(argv):
             objid = arg
         elif opt in ('-a', '--access'):
             access = arg
+
+        if opt.startswith('--'):
+            _attributes[opt[2:]] = arg
 
     assert sourcefile
     assert targetfile

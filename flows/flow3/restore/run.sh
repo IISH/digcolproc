@@ -9,27 +9,12 @@
 # /a/b/c/10622/offloader/BULK12345
 
 source "${DIGCOLPROC_HOME}setup.sh" $0 "$@"
-
-
-# call_api_status
-# Call the web service to PUT the status
-function call_api_status() {
-    pid=$1
-    status=$2
-    failure=$3
-
-    # Update the status using the 'status' web service
-    request_data="pid=$pid&status=$status&failure=$failure"
-    echo "request_data=${request_data}">>$log
-    curl --insecure --data "$request_data" "$ad/service/status"
-    return $?
-}
-
+source ../call_api_status.sh
 
 
 # Tell what we are doing
 pid=$na/$archiveID
-call_api_status $pid 0 false
+call_api_status $pid $UPLOADING_TO_PERMANENT_STORAGE
 
 
 # Lock the folder and it's contents
@@ -42,7 +27,8 @@ ftp_script=$ftp_script_base.files.txt
 bash ${DIGCOLPROC_HOME}util/ftp.sh "$ftp_script" "mirror --verbose --delete /${archiveID} ${fileSet}" "$flow_ftp_connection" "$log"
 rc=$?
 if [[ $rc != 0 ]] ; then
-    call_api_status $pid $statusUploadingToPermanentStorage true
+    msg="FTP error."
+    call_api_status $pid $RESTORE_RUNNING true "$msg"
     exit $rc
 fi
 
@@ -52,7 +38,7 @@ chown -R $offloader:$offloader $fileSet
 
 
 echo "Done. ALl went well at this side." >> $log
-call_api_status $pid $statusMovedToPermanentStorage true
+call_api_status $pid $RESTORE_FINISHED
 
 
 

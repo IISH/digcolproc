@@ -7,33 +7,12 @@
 #
 
 source "${DIGCOLPROC_HOME}setup.sh" $0 "$@"
-
-
-# call_api_status
-# Call the web service to PUT the status
-function call_api_status() {
-    pid=$1
-    status=$2
-    failure=$3
-
-    # Update the status using the 'status' web service
-    method="${ad}/service/status"
-    request_data="pid=$pid&status=$status&failure=$failure"
-    echo "method=${method}">>$log
-    echo "request_data=${request_data}">>$log
-    curl --insecure --data "$request_data" "$method" >> $log
-    if [[ $rc != 0 ]] ; then
-        # api failure ?
-        echo "The api gave an error response." >> $log
-        #exit 1
-    fi
-    return 0
-}
+source ../call_api_status.sh
 
 
 # Tell what we are doing
 pid=$na/$archiveID
-call_api_status $pid $statusBackupRunning false
+call_api_status $pid $BACKUP_RUNNING
 
 
 # Lock the folder and it's contents
@@ -46,8 +25,8 @@ echo "Begin droid analysis for profile ${profile}" >> $log
 droid --quiet -p $profile -a $fileSet -R
 rc=$?
 if [[ $rc != 0 ]] ; then
-    echo "Droid profiling threw an error." >> $log
-    call_api_status $pid $statusBackupRunning true
+    msg="Droid profiling threw an error."
+    call_api_status $pid $BACKUP_RUNNING true "$msg"
     exit $rc
 fi
 
@@ -56,8 +35,8 @@ fi
 droid_report=$fileSet/manifest.csv
 droid --quiet -p $profile -e $droid_report  >> $log
 if [[ $rc != 0 ]] ; then
-    echo "Droid reporting threw an error." >> $log
-    call_api_status $pid $statusBackupRunning true
+    msg="Droid reporting threw an error."
+    call_api_status $pid $BACKUP_RUNNING true "$msg"
     exit $rc
 fi
 
@@ -69,7 +48,8 @@ ftp_script=$ftp_script_base.files.txt
 bash ${DIGCOLPROC_HOME}util/ftp.sh "$ftp_script" "mirror --reverse --delete --verbose ${fileSet} /${archiveID}" "$flow_ftp_connection" "$log"
 rc=$?
 if [[ $rc != 0 ]] ; then
-    call_api_status $pid $statusBackupRunning true
+    msg="FTP error."
+    call_api_status $pid $BACKUP_RUNNING true "$msg"
     exit $rc
 fi
 
@@ -78,6 +58,6 @@ fi
 chown -R $offloader:$offloader $fileSet
 
 # Update the status
-call_api_status $pid $statusBackupFinished false
+call_api_status $pid $BACKUP_FINISHED
 
 exit 0

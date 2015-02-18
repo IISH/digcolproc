@@ -12,11 +12,9 @@ from xml.sax.saxutils import XMLGenerator
 
 _attributes = {u'xmlns:METS': 'http://www.loc.gov/METS/',
                u'xmlns:xlink': 'http://www.w3.org/1999/xlink',
-               'xmlns:epdcx': 'http://purl.org/eprint/epdcx/2006-11-16/',
-               'xmlns:oai_dc': 'http://www.openarchives.org/OAI/2.0/oai_dc/',
-               'xmlns:dc': 'http://purl.org/dc/elements/1.1/',
+               'xmlns:dcterms': 'http://purl.org/dc/terms/',
                'xmlns:xsi': 'http://www.w3.org/2001/XMLSchema-instance',
-               'xsi:schemaLocation': 'http://www.loc.gov/METS/ http://www.loc.gov/standards/mets/mets.xsd http://purl.org/eprint/epdcx/2006-11-16/ http://purl.org/eprint/epdcx/xsd/2006-11-16/epdcx.xsd http://www.openarchives.org/OAI/2.0/oai_dc/ http://www.openarchives.org/OAI/2.0/oai_dc.xsd'}
+               'xsi:schemaLocation': 'http://www.loc.gov/METS/ http://www.loc.gov/standards/mets/mets.xsd http://purl.org/dc/terms/ http://dublincore.org/schemas/xmls/qdc/2008/02/11/dcterms.xsd'}
 
 
 class MetsDocument:
@@ -81,14 +79,14 @@ def amdsec(xl, amd_sec_id='admSec-1', rights_md='rightsMD-1', access='closed'):
     xl.close_entry(6)
 
 
-def fileMD(xl, id, name):
+def fileMD(xl, id, title, date):
     return xl.elem('METS:file', {'ID': id, 'MIMETYPE': 'text/xml'}). \
         elem('METS:FContent'). \
         elem('METS:xmlData'). \
-        elem('oai_dc:dc', {'xmlns:oai_dc': 'http://www.openarchives.org/OAI/2.0/oai_dc/',
-                           'xmlns:dc': 'http://purl.org/dc/elements/1.1/'}). \
-        elem('dc:title', None, name). \
-        close_entry(5)
+        elem('dcterms:title', None, title).close_entry(). \
+        elem('dcterms:created', None, date+'Z').close_entry(). \
+        elem('dcterms:accessRights', None, 'closed').close_entry(). \
+        close_entry(3)
 
 
 # Create a fileSet. We will follow the same arrangement as in the Fedora example at
@@ -104,10 +102,10 @@ def create_filesec(xl, csvfile):
             name = file[Droid.NAME]
             if file[Droid.TYPE] == 'Folder':
                 xl.elem('METS:fileGrp')
-                fileMD(xl, id_dc, name).close_entry()
+                fileMD(xl, id_dc, name, file[Droid.LAST_MODIFIED]).close_entry()
             else:  # We have two fileGrp elements here. We can insert more metadata in future.
                 xl.elem('METS:fileGrp').elem('METS:fileGrp')
-                fileMD(xl, id_dc, name).elem('METS:file', {'CHECKSUM': file[Droid.HASH], 'CHECKSUMTYPE': 'MD5', 'CREATED': file[Droid.LAST_MODIFIED], 'ID': id, 'MIMETYPE': file[Droid.MIME_TYPE], 'SIZE': file[Droid.SIZE]}).  elem('METS:FLocat', {'LOCTYPE': 'HANDLE', 'xlink:href': 'http://hdl.handle.net/' + file[Droid.PID] + '?locatt=view:master', 'xlink:type': 'simple'}).close_entry(4)
+                fileMD(xl, id_dc, name, file[Droid.LAST_MODIFIED]).elem('METS:file', {'CHECKSUM': file[Droid.HASH], 'CHECKSUMTYPE': 'MD5', 'ID': id, 'MIMETYPE': file[Droid.MIME_TYPE], 'SIZE': file[Droid.SIZE]}).  elem('METS:FLocat', {'LOCTYPE': 'HANDLE', 'xlink:href': 'http://hdl.handle.net/' + file[Droid.PID] + '?locatt=view:master', 'xlink:type': 'simple'}).close_entry(4)
     csvfile.close()
     xl.close_entry()
     return xl
@@ -170,9 +168,9 @@ def parse_csv(sourcefile, targetfile):
 
     xl.elem(u'METS:mets', _attributes)
 
-    if 'dmdsec' in _attributes:
-        dmdsec(xl, 'dmd001', _attributes['dmdsec'])
-    amdsec(xl, 'admSec-1')
+    #if 'dmdsec' in _attributes:
+    #    dmdsec(xl, 'dmd001', _attributes['dmdsec'])
+    #amdsec(xl, 'admSec-1')
 
     create_filesec(xl, sourcefile)
     create_structmap(xl, sourcefile)

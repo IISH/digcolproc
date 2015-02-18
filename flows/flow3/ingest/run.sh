@@ -9,41 +9,20 @@
 # /a/b/c/10622/offloader/BULK12345
 
 source "${DIGCOLPROC_HOME}setup.sh" $0 "$@"
-
-
-# call_api_status
-# Call the web service to PUT the status
-function call_api_status() {
-    pid=$1
-    status=$2
-    failure=$3
-
-    # Update the status using the 'status' web service
-    method="${ad}/service/status"
-    request_data="pid=$pid&status=$status&failure=$failure"
-    echo "method=${method}">>$log
-    echo "request_data=${request_data}">>$log
-    curl --insecure --data "$request_data" "$method" >> $log
-    if [[ $rc != 0 ]] ; then
-        # api failure ?
-        echo "The api gave an error response." >> $log
-        #exit 1
-    fi
-    return 0
-}
-
-
-file_instruction=$fileSet/instruction.xml
-if [ -f "$file_instruction" ] ; then
-	echo "Instruction already present: $file_instruction">>$log
-	echo "This may indicate the SIP is staged or the ingest is already in progress. This is not an error.">>$log
-	exit 0
-fi
+source ../call_api_status.sh
 
 
 # Tell what we are doing
 pid=$na/$archiveID
-call_api_status $pid $statusUploadingToPermanentStorage false
+call_api_status $pid $UPLOADING_TO_PERMANENT_STORAGE
+
+
+file_instruction=$fileSet/instruction.xml
+if [ -f "$file_instruction" ] ; then
+	msg="Instruction already present: ${file_instruction}. This may indicate the SIP is staged or the ingest is already in progress."
+	call_api_status $pid $UPLOADING_TO_PERMANENT_STORAGE true "$msg"
+	exit 1
+fi
 
 
 # Lock the folder and it's contents
@@ -58,8 +37,8 @@ echo "Begin droid analysis for profile ${profile}" >> $log
 droid --quiet -p $profile -a $fileSet -R >> $log
 rc=$?
 if [[ $rc != 0 ]] ; then
-    echo "Droid profiling threw an error." >> $log
-    call_api_status $pid $statusBackupRunning true
+    msg="Droid profiling threw an error."
+    call_api_status $pid $UPLOADING_TO_PERMANENT_STORAGE true "$msg"
     exit $rc
 fi
 
@@ -67,13 +46,13 @@ fi
 # produce a report.
 droid --quiet -p $profile -e $profile_csv
 if [[ $rc != 0 ]] ; then
-    echo "Droid reporting threw an error." >> $log
-    call_api_status $pid $statusBackupRunning true
+    msg="Droid reporting threw an error."
+    call_api_status $pid $UPLOADING_TO_PERMANENT_STORAGE true "$msg"
     exit $rc
 fi
 if [ ! -f $profile_csv ] ; then
-    echo "Unable to create a droid profile: ${profile_csv}" >> $log
-    call_api_status $pid $statusBackupRunning true
+    msn="Unable to create a droid profile: ${profile_csv}"
+    call_api_status $pid $UPLOADING_TO_PERMANENT_STORAGE true "$msg"
     exit $rc
 fi
 
@@ -81,9 +60,29 @@ fi
 # Now extend the report with two columns: a md5 checksum and a persistent identifier
 python droid_extend_csv.py --sourcefile $profile_csv --targetfile $profile_extended_csv --na $na --fileset $fileSet >> $log
 if [[ $rc != 0 ]] ; then
-    echo "Failed to extend the droid report to the manifest.">>$log
+    msg="Failed to extend the droid report with a PID and md5 checksum."
+    call_api_status $pid $UPLOADING_TO_PERMANENT_STORAGE true "$msg"
     exit 1
 fi
+
+
+# Create a mets document
+manifest=$fileSet/manifest.xml
+python droid_to_mets.py --sourcefile $profile_extended_csv --targetfile $manifest --objid "$pid"
+rc=$?
+if [[ $rc != 0 ]] ; then
+    msg="Failed to create a mets document."
+    call_api_status $pid $UPLOADING_TO_PERMANENT_STORAGE true "$msg"
+    exit $rc
+fi
+if [ ! -f $manifest ] ; then
+    msg="Failed to find a mets file at ${manifest}"
+    call_api_status $pid $UPLOADING_TO_PERMANENT_STORAGE true "$msg"
+    exit 1
+fi
+
+
+# ToDo: Add the mets file to the record itself with as PID the $pid.
 
 
 # Now start the reverse mirror
@@ -93,23 +92,25 @@ ftp_script=$ftp_script_base.files.txt
 bash ${DIGCOLPROC_HOME}util/ftp.sh "$ftp_script" "mirror --reverse --delete --verbose ${fileSet} /${archiveID}" "$flow_ftp_connection" "$log"
 rc=$?
 if [[ $rc != 0 ]] ; then
-    call_api_status $pid $statusBackupRunning true
+    msg="FTP error with uploading the files."
+    call_api_status $pid $UPLOADING_TO_PERMANENT_STORAGE true "$msg"
     exit $rc
 fi
 
 
 # Produce instruction from the report.
-instruction=$fileSet/instruction.xml
-python droid_to_instruction.py -s $manifest -t $instruction --objid "$pid" --access $flow_access --submission_date=$(date) --autoIngestValidInstruction "$flow_autoIngestValidInstruction" --label "$archiveID $flow_client" --action add --notificationEMail "$flow_notificationEMail"  -plan "StagingfileBindPIDs,StagingfileIngestMaster" >> $log
+echo python droid_to_instruction.py -s $profile_extended_csv -t $file_instruction --objid "$pid" --access "$flow_access" --submission_date "$datestamp" --autoIngestValidInstruction "$flow_autoIngestValidInstruction" --label "$archiveID $flow_client" --action "add" --notificationEMail "$flow_notificationEMail" --plan "StagingfileBindPIDs,StagingfileIngestMaster"
+python droid_to_instruction.py -s $profile_extended_csv -t $file_instruction --objid "$pid" --access "$flow_access" --submission_date "$datestamp" --autoIngestValidInstruction "$flow_autoIngestValidInstruction" --label "$archiveID $flow_client" --action "add" --notificationEMail "$flow_notificationEMail" --plan "StagingfileBindPIDs,StagingfileIngestMaster" >> $log
 rc=$?
 if [[ $rc != 0 ]] ; then
-    echo "Failed to produce an instruction." >> $log
-    call_api_status $pid $statusUploadingToPermanentStorage true
+    rm $file_instruction
+    msg="Failed to create an instruction."
+    call_api_status $pid $UPLOADING_TO_PERMANENT_STORAGE true "$msg"
     exit $rc
 fi
-if [ ! -f $instruction ] ; then
-    call_api_status $pid $statusUploadingToPermanentStorage true
-    echo "Failed to create an instruction."
+if [ ! -f $file_instruction ] ; then
+    msg="Failed to find an instruction at ${file_instruction}"
+    call_api_status $pid $UPLOADING_TO_PERMANENT_STORAGE true "$msg"
     exit 1
 fi
 
@@ -119,14 +120,14 @@ ftp_script=$ftp_script_base.instruction.txt
 bash ${DIGCOLPROC_HOME}util/ftp.sh "$ftp_script" "put -O /${archiveID} ${instruction}" "$flow_ftp_connection" "$log"
 rc=$?
 if [[ $rc != 0 ]] ; then
-    call_api_status $pid $statusUploadingToPermanentStorage true
+    msg="FTP error with uploading the object repository instruction."
+    call_api_status $pid $UPLOADING_TO_PERMANENT_STORAGE true "$msg"
     exit $rc
 fi
 
 
 echo "Done. ALl went well at this side." >> $log
-call_api_status $pid $statusMovedToPermanentStorage true
-
+call_api_status $pid $MOVED_TO_PERMANENT_STORAGE
 
 
 exit 0

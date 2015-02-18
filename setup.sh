@@ -11,7 +11,7 @@ source "${DIGCOLPROC_HOME}config.sh"
 echo "\$1 = $1"
 echo "\$2 = $2"
 echo "\$3 = $3"
-flow_run_folder=$(dirname $1)	 # Gets the parent folder of the application script
+flow_run_folder=$(dirname $1)	 # Gets the parent folder of the application run.sh script
 trigger=$2                       # Trigger file, E.g. /flow3/10622/offloader-3/BULK12345/.work/ingest.txt
 fileSet=$3                       # The fileSet, E.g. /flow3/10622/offloader-3/BULK12345
 archiveID=$(basename $fileSet)   # E.g. BULK012345
@@ -63,7 +63,8 @@ fi
 mkdir -p $work
 rm -f "$trigger"
 
-log=$work/$datestamp.log
+time=$(date +"%H.%M")
+log="${work}/${datestamp}T${time}.log"
 echo "log: ${log}">$log
 echo "trigger: ${trigger}">>$log
 echo "date: $(date)">>$log
@@ -98,29 +99,3 @@ if [[ ! -d "$fileSet" ]] ; then
     echo "Does the folder or share exist ?">>$log
     exit -1
 fi
-
-
-# flow3 settings
-# No folder created yet
-statusNewDigitalMaterialCollection=1
-
-# A folder has been created
-statusFolderCreated=2
-
-# Digital material has been uploaded
-statusMaterialUploaded=3
-
-# A backup of the digital material is being made
-statusBackupRunning=4
-
-# A backup of the digital material has been created
-statusBackupFinished=5
-
-# Digital material is ready for permanent storage
-statusReadyForPermanentStorage=6
-
-# Digital material is being uploaded to permanent storage
-statusUploadingToPermanentStorage=7
-
-# Digital material has been moved to permanent storage
-statusMovedToPermanentStorage=8

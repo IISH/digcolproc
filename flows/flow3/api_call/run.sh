@@ -10,30 +10,14 @@
 #               This is the only odd-one-out of the run.sh scripts. Here there are no folders that have a trigger file placed in them.
 #               Rather is creates those folders for the offloader.
 
-source "${DIGCOLPROC_HOME}config.sh"
-
-log=/tmp/event.flow3.log
-
+mkdir -p "/tmp/dummy/dummy" # All log goes into this directory
+source "${DIGCOLPROC_HOME}setup.sh" "${DIGCOLPROC_HOME}/flows/flow3/api_call/run.sh" api_call "/tmp/dummy/dummy"
+source ../call_api_status.sh
 
 if [ ! -d $flow3_hotfolders ] ; then
     echo "No hotfolder found: ${flow3_hotfolders}">>$log
     exit 1
 fi
-
-
-# call_api_status
-# Call the web service to set the status
-function call_api_status() {
-    pid=$1
-    status=$2
-    failure=$3
-
-    # Update the status using the 'status' web service
-    request_data="pid=$pid&status=$status&failure=$failure"
-    echo "request_data=${request_data}">>$log
-    curl --insecure --data "$request_data" "$ad/service/status"
-    return $?
-}
 
 
 # call_api_folders
@@ -49,8 +33,8 @@ function call_api_folders {
             na=$(basename $na)
             echo "owner=${owner}:${na}">>$log
 
-
-            request="curl --insecure '$ad/service/folders' | jq .pids[]"
+            # get all pids with a status NEW_DIGITAL_MATERIAL_COLLECTION
+            request="curl --insecure ${acquisition_database}/service/folders?access_token=${acquisition_database_access_token} | jq .pids[]"
             echo "request=${request}">>$log
             pids=$(eval ${request})
 
@@ -65,12 +49,15 @@ function call_api_folders {
                 echo "\$pid = $pid">>$log
                 echo "\$id = $id">>$log
 
+                # Tell what we are doing
+                call_api_status $pid $FOLDER_CREATION_RUNNING
+
                 # Create a folder for the PID
                 folder=$offloader/$id
                 # check if the directory exists
                 if [ -d "$folder" ]; then
-                    echo "The folder ${folder} already exists."
-                    call_api_status $pid $statusFolderCreated true
+                    msg="The folder ${folder} already exists."
+                    call_api_status $pid $FOLDER_CREATED true "$msg"
                     continue
                 fi
 
@@ -86,13 +73,13 @@ function call_api_folders {
                     echo "Directory created: $folder">>$log
 
                     # Update the status using the 'status' web service
-                    call_api_status $pid $statusFolderCreated false
+                    call_api_status $pid $FOLDER_CREATED
                 else
                     # directory doesn't exist
-                    echo "Directory does not exists. Failed to create: $folder" >>$log
+                    msg="Directory does not exists. Failed to create: $folder"
 
                     # Update the status using the 'status' web service
-                    call_api_status $pid $statusFolderCreated true
+                    call_api_status $pid $FOLDER_CREATED true $msg
                 fi
             done
         done
@@ -105,9 +92,10 @@ function call_api_folders {
 # call_api_startBackup
 # Call the startBackup web service and extract the PIDs from the resulting JSON
 # Create a backup.txt event for each PID we find.
-function call_api_startBackup() {
+function call_api_backup() {
 
-    request="curl --insecure '$ad/service/startBackup' | jq .pids[]"
+    # Get all the PIDs with a status MATERIAL_UPLOADED
+    request="curl --insecure ${acquisition_database}/service/startBackup?access_token=${acquisition_database_access_token} | jq .pids[]"
     echo "request=${request}">>$log
     pids=$(eval ${request})
 
@@ -117,7 +105,10 @@ function call_api_startBackup() {
         pid="${pid%\"}"
         pid="${pid#\"}"
         id=$(basename $pid) # And remove the prefix
-        "${DIGCOLPROC_HOME}util/place_event.sh" flow3 backup.txt
+        call_api_status $pid $BACKUP_RUNNING
+        if [[ $? == 0 ]] ; then
+            "${DIGCOLPROC_HOME}util/place_event.sh" flow3 backup.txt
+        fi
     done
 
     return 0
@@ -127,18 +118,10 @@ function call_api_startBackup() {
 # call_api_restore
 # Call the restore web service and extract the PIDs from the resulting JSON
 # Create a backup.txt event for each PID we find.
-function call_api_startRestore() {
+function call_api_restore() {
 
-    return 0 # Not implemented
-}
-
-
-# call_api_ingest
-# Call the restore web service and extract the PIDs from the resulting JSON
-# Create a backup.txt event for each PID we find.
-function call_api_startIngest() {
-
-    request="curl --insecure '$ad/service/startIngest' | jq .pids[]"
+    # Get all the PIDs with a status READY_FOR_RESTORE
+    request="curl --insecure ${acquisition_database}/service/startRestore?access_token=${acquisition_database_access_token} | jq .pids[]"
     echo "request=${request}">>$log
     pids=$(eval ${request})
 
@@ -148,7 +131,36 @@ function call_api_startIngest() {
         pid="${pid%\"}"
         pid="${pid#\"}"
         id=$(basename $pid) # And remove the prefix
-        "${DIGCOLPROC_HOME}util/place_event.sh" flow3 ingest.txt
+        call_api_status $pid $RESTORE_RUNNING
+        if [[ $? == 0 ]] ; then
+            "${DIGCOLPROC_HOME}util/place_event.sh" flow3 restore.txt
+        fi
+    done
+
+    return 0
+}
+
+
+# call_api_ingest
+# Call the restore web service and extract the PIDs from the resulting JSON
+# Create a backup.txt event for each PID we find.
+function call_api_ingest() {
+
+    # Get all the PIDs with a status READY_FOR_PERMANENT_STORAGE
+    request="curl --insecure $acquisition_database/service/startIngest?access_token=${acquisition_database_access_token} | jq .pids[]"
+    echo "request=${request}">>$log
+    pids=$(eval ${request})
+
+    for pid in ${pids}
+    do
+        # Remove the quotes around the PID
+        pid="${pid%\"}"
+        pid="${pid#\"}"
+        id=$(basename $pid) # And remove the prefix
+        call_api_status $pid $UPLOADING_TO_PERMANENT_STORAGE
+        if [[ $? == 0 ]] ; then
+            "${DIGCOLPROC_HOME}util/place_event.sh" flow3 ingest.txt
+        fi
     done
 
     return 0
@@ -158,9 +170,9 @@ function call_api_startIngest() {
 function call_api(){
 
     call_api_folders
-    call_api_startBackup
-    call_api_startRestore
-    call_api_startIngest
+    call_api_backup
+    call_api_restore
+    call_api_ingest
 
     return 0
 }
