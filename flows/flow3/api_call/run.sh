@@ -34,7 +34,7 @@ function call_api_folders {
             echo "owner=${owner}:${na}">>$log
 
             # get all pids with a status NEW_DIGITAL_MATERIAL_COLLECTION
-            request="curl --insecure ${acquisition_database}/service/folders?access_token=${acquisition_database_access_token} | jq .pids[]"
+            request="curl --insecure ${acquisition_database}/service/folders?access_token=${acquisition_database_access_token} | /usr/sbin/jq .pids[]"
             echo "request=${request}">>$log
             pids=$(eval ${request})
 
@@ -95,7 +95,7 @@ function call_api_folders {
 function call_api_backup() {
 
     # Get all the PIDs with a status MATERIAL_UPLOADED
-    request="curl --insecure ${acquisition_database}/service/startBackup?access_token=${acquisition_database_access_token} | jq .pids[]"
+    request="curl --insecure ${acquisition_database}/service/startBackup?access_token=${acquisition_database_access_token} | /usr/sbin/jq .pids[]"
     echo "request=${request}">>$log
     pids=$(eval ${request})
 
@@ -121,7 +121,7 @@ function call_api_backup() {
 function call_api_restore() {
 
     # Get all the PIDs with a status READY_FOR_RESTORE
-    request="curl --insecure ${acquisition_database}/service/startRestore?access_token=${acquisition_database_access_token} | jq .pids[]"
+    request="curl --insecure ${acquisition_database}/service/startRestore?access_token=${acquisition_database_access_token} | /usr/sbin/jq .pids[]"
     echo "request=${request}">>$log
     pids=$(eval ${request})
 
@@ -147,7 +147,7 @@ function call_api_restore() {
 function call_api_ingest() {
 
     # Get all the PIDs with a status READY_FOR_PERMANENT_STORAGE
-    request="curl --insecure $acquisition_database/service/startIngest?access_token=${acquisition_database_access_token} | jq .pids[]"
+    request="curl --insecure $acquisition_database/service/startIngest?access_token=${acquisition_database_access_token} | /usr/sbin/jq .pids[]"
     echo "request=${request}">>$log
     pids=$(eval ${request})
 
