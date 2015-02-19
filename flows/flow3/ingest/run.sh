@@ -99,7 +99,6 @@ fi
 
 
 # Produce instruction from the report.
-echo python droid_to_instruction.py -s $profile_extended_csv -t $file_instruction --objid "$pid" --access "$flow_access" --submission_date "$datestamp" --autoIngestValidInstruction "$flow_autoIngestValidInstruction" --label "$archiveID $flow_client" --action "add" --notificationEMail "$flow_notificationEMail" --plan "StagingfileBindPIDs,StagingfileIngestMaster"
 python droid_to_instruction.py -s $profile_extended_csv -t $file_instruction --objid "$pid" --access "$flow_access" --submission_date "$datestamp" --autoIngestValidInstruction "$flow_autoIngestValidInstruction" --label "$archiveID $flow_client" --action "add" --notificationEMail "$flow_notificationEMail" --plan "StagingfileBindPIDs,StagingfileIngestMaster" >> $log
 rc=$?
 if [[ $rc != 0 ]] ; then
@@ -117,7 +116,7 @@ fi
 
 # Upload the instruction
 ftp_script=$ftp_script_base.instruction.txt
-bash ${DIGCOLPROC_HOME}util/ftp.sh "$ftp_script" "put -O /${archiveID} ${instruction}" "$flow_ftp_connection" "$log"
+bash ${DIGCOLPROC_HOME}util/ftp.sh "$ftp_script" "put -O /${archiveID} ${file_instruction}" "$flow_ftp_connection" "$log"
 rc=$?
 if [[ $rc != 0 ]] ; then
     msg="FTP error with uploading the object repository instruction."

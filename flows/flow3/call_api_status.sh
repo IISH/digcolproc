@@ -41,7 +41,13 @@ function call_api_status() {
 
     # Update the status using the 'status' web service
     request_data="pid=${pid}&status=${status}&failure=${failure}&access_token=${acquisition_database_access_token}&message=${message}"
+    endpoint="${acquisition_database}/service/status"
+    echo "endpoint=${endpoint}">>$log
     echo "request_data=${request_data}">>$log
-    curl --insecure --data "$request_data" "${acquisition_database}/service/status"
-    return $?
+    curl --insecure --data "$request_data" "$endpoint"
+    rc=$?
+    if [[ $rc != 0 ]] ; then
+        echo "Error when contacting ${endpoint} ">>$log
+    fi
+    return $rc
 }

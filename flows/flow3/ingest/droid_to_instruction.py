@@ -10,7 +10,8 @@ import csv
 import getopt
 from xml.sax.saxutils import XMLGenerator
 
-_attributes = {u'xmlns':'http://objectrepository.org/instruction/1.0/'}
+_attributes = {u'xmlns': 'http://objectrepository.org/instruction/1.0/'}
+
 
 class XmlInstruction:
     def __init__(self, output, encoding='utf-8'):
@@ -49,12 +50,14 @@ class XmlInstruction:
         return
 
 
-def parse_csv(sourcefile, targetfile):
+def parse_csv():
+    sourcefile = _attributes.get('sourcefile')
+    targetfile = _attributes.get('targetfile')
 
     manifest = open(targetfile, 'wb')
     xl = XmlInstruction(manifest)
 
-    xl.open_entry( u'instruction', _attributes)
+    xl.open_entry(u'instruction', _attributes)
 
     with open(sourcefile, 'rb') as csvfile:
         reader = csv.reader(csvfile, delimiter=',', quotechar='"')
@@ -76,40 +79,33 @@ def usage():
 
 
 def main(argv):
-    sourcefile = objid = targetfile = access = 0
-
     try:
-        opts, args = getopt.getopt(argv, 'o:s:t:a:h', ['objid=', 'sourcefile=', 'targetfile=', 'access=', 'help'])
-    except getopt.GetoptError:
+        opts, args = getopt.getopt(argv, 's:t:h',
+                                   ['help', 'objid=', 'access=', 'submission_date=', 'autoIngestValidInstruction=',
+                                    'label=', 'action=', 'notificationEMail=', 'plan='])
+    except getopt.GetoptError as e:
+        print("Opt error: " + e.msg)
         usage()
         sys.exit(2)
     for opt, arg in opts:
         if opt in ('-h', '--help'):
             usage()
             sys.exit()
-        if opt in ('-s', '--sourcefile'):
-            sourcefile = arg
-        elif opt in ('-t', '--targetfile'):
-            targetfile = arg
-        elif opt in ('-o', '--objid'):
-            objid = arg
-        elif opt in ('-a', '--access'):
-            access = arg
+        if opt in ('-s'):
+            _attributes['sourcefile'] = arg
+        elif opt in ('-t'):
+            _attributes['targetfile'] = arg
 
         if opt.startswith('--'):
             _attributes[opt[2:]] = arg
 
-    assert sourcefile
-    assert targetfile
-    assert objid
-    assert access
+    assert _attributes.get('sourcefile')
+    assert _attributes.get('targetfile')
+    assert _attributes.get('objid')
+    assert _attributes.get('access')
+    assert _attributes.get('plan')
 
-    print('sourcefile=' + sourcefile)
-    print('targetfile=' + targetfile)
-    print('objid=' + objid)
-    print('access=' + access)
-
-    parse_csv(sourcefile, targetfile)
+    parse_csv()
     return
 
 
