@@ -63,7 +63,7 @@ fi
 mkdir -p $work
 rm -f "$trigger"
 
-time=$(date +"%H.%M")
+time=$(date +"%H")
 log="${work}/${datestamp}T${time}.log"
 echo "log: ${log}">$log
 echo "trigger: ${trigger}">>$log
