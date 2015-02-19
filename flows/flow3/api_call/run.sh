@@ -172,7 +172,7 @@ function call_api(){
     call_api_folders
     call_api_backup
     call_api_restore
-    call_api_ingest
+    #call_api_ingest
 
     return 0
 }
