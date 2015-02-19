@@ -2,15 +2,15 @@
 #
 # place_event.sh
 #
-# useage: place_event [event] [optional 'filename']
+# useage: place_event [event] [optional 'pid']
 #
 # Iterates over all application folders and starts the startup.sh routine.
-# if a filename is given, only folders that contain the filename will be processed.
+# if a pid is given, only folders that contain the pid will be processed.
 
 source "${DIGCOLPROC_HOME}config.sh"
 flow=$1
 event=$2
-fileName=$3
+pid="$3"
 
 if [ -z "$flow" ] ; then
 	echo "No flow given"
@@ -34,7 +34,8 @@ do
                 for fileSet in $offloader/*
                 do
                     if [ -d $fileSet ] ; then
-                        if [[ -z "$fileName" ]] || [[ -e $fileSet/$fileName ]] ; then
+                        archivalID=$(basename $fileSet)
+                        if [[ -z "$pid" ]] || [[ "$archivalID" == "$pid" ]] || [[ -e $fileSet/$fileName ]] ; then
                             echo $(date)>$fileSet/$event
                         fi
                     fi

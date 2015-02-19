@@ -107,7 +107,7 @@ function call_api_backup() {
         id=$(basename $pid) # And remove the prefix
         call_api_status $pid $BACKUP_RUNNING
         if [[ $? == 0 ]] ; then
-            "${DIGCOLPROC_HOME}util/place_event.sh" flow3 backup.txt
+            "${DIGCOLPROC_HOME}util/place_event.sh" flow3 backup.txt $id
         fi
     done
 
@@ -133,7 +133,7 @@ function call_api_restore() {
         id=$(basename $pid) # And remove the prefix
         call_api_status $pid $RESTORE_RUNNING
         if [[ $? == 0 ]] ; then
-            "${DIGCOLPROC_HOME}util/place_event.sh" flow3 restore.txt
+            "${DIGCOLPROC_HOME}util/place_event.sh" flow3 restore.txt $id
         fi
     done
 
@@ -159,7 +159,7 @@ function call_api_ingest() {
         id=$(basename $pid) # And remove the prefix
         call_api_status $pid $UPLOADING_TO_PERMANENT_STORAGE
         if [[ $? == 0 ]] ; then
-            "${DIGCOLPROC_HOME}util/place_event.sh" flow3 ingest.txt
+            "${DIGCOLPROC_HOME}util/place_event.sh" flow3 ingest.txt $id
         fi
     done
 
