@@ -35,7 +35,7 @@ do
                 do
                     if [ -d $fileSet ] ; then
                         archivalID=$(basename $fileSet)
-                        if [[ -z "$pid" ]] || [[ "$archivalID" == "$pid" ]] || [[ -e $fileSet/$fileName ]] ; then
+                        if [[ -z "$pid" ]] || [[ "$archivalID" == "$pid" ]] || [[ -e $fileSet/$pid ]] ; then
                             echo $(date)>$fileSet/$event
                         fi
                     fi
