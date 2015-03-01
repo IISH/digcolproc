@@ -10,6 +10,7 @@ config.*
 *.sh~
 .ant-targets-build.xml
 work
+.work
 .level1
 .level2
 .level3

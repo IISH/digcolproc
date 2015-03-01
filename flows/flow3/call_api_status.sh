@@ -1,6 +1,10 @@
 #!/bin/bash
 
 
+
+#-----------------------------------------------------------------------------------------------------------------------
+# load environment variables
+#-----------------------------------------------------------------------------------------------------------------------
 NEW_DIGITAL_MATERIAL_COLLECTION=10
 FOLDER_CREATION_RUNNING=20
 FOLDER_CREATED=30
@@ -18,6 +22,11 @@ UPLOADING_TO_PERMANENT_STORAGE=110
 MOVED_TO_PERMANENT_STORAGE=120
 
 
+
+#-----------------------------------------------------------------------------------------------------------------------
+# call_api_status
+# Use the API to sent status and message updates
+#-----------------------------------------------------------------------------------------------------------------------
 function call_api_status() {
     pid=$1
     status=$2
@@ -44,10 +53,24 @@ function call_api_status() {
     endpoint="${acquisition_database}/service/status"
     echo "endpoint=${endpoint}">>$log
     echo "request_data=${request_data}">>$log
-    curl --insecure --data "$request_data" "$endpoint"
+    curl --insecure --max-time 5 --data "$request_data" "$endpoint"
     rc=$?
     if [[ $rc != 0 ]] ; then
         echo "Error when contacting ${endpoint} ">>$log
+        exit 1
     fi
     return $rc
+}
+
+
+#-----------------------------------------------------------------------------------------------------------------------
+# exit_error
+# Pass over an error
+#-----------------------------------------------------------------------------------------------------------------------
+function exit_error() {
+    pid=$1
+    status=$2
+    message=$3
+    call_api_status "$pid" "$status" true "$message"
+    exit 1
 }

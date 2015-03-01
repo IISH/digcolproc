@@ -4,71 +4,144 @@
 
 # Initiate and check our variables.
 #
-# Usage: setup.sh [calling script: run.sh file] [event] [fileSet]
+# Usage: setup.sh [calling script: run.sh file] [event]
+# E.g.
+# setup.sh /usr/bin/digcolproc/flows/flow3/ingest/run.sh /a/b/c/d/flow3/10622/offloader-3/BULK12345/ingest.txt
+#
+# The fileset is the full path, excluding the event. It consists of:
+# /[folders[n]]/[flow name]/[naming authority]/[offloader name]/[archival ID]/
 
+
+
+#-----------------------------------------------------------------------------------------------------------------------
+# load environment variables
+#-----------------------------------------------------------------------------------------------------------------------
 source "${DIGCOLPROC_HOME}config.sh"
 
-echo "\$1 = $1"
-echo "\$2 = $2"
-echo "\$3 = $3"
-flow_run_folder=$(dirname $1)	 # Gets the parent folder of the application run.sh script
-trigger=$2                       # Trigger file, E.g. /flow3/10622/offloader-3/BULK12345/.work/ingest.txt
-fileSet=$3                       # The fileSet, E.g. /flow3/10622/offloader-3/BULK12345
-archiveID=$(basename $fileSet)   # E.g. BULK012345
-fs_parent=$(dirname $fileSet)	 # Gets the parent folder, E.g. /flow3/10622/offloader-3
-offloader=$(basename $fs_parent) # The offloader name, E.g. offloader-3
-fs_parent=$(dirname $fs_parent)	 # Gets the parent folder, E.g. /flow3/10622/
-na=$(basename $fs_parent)        # Now proceeds to the naming authority
-fs_parent=$(dirname $fs_parent)	 # Gets the parent folder, E.g. /flow3
-flow=$(basename $fs_parent)      # The flow ( flow1, flow2, etc )
-fs_parent=$(dirname $fileSet)    # Parent folder of the fileSet
-datestamp=$(date +"%Y-%m-%d")    # YYYY-MM-DD current date
 
 
-cd "$flow_run_folder"		            # Make where we have the run.sh file the current directory
-event=$(basename $flow_run_folder)	    # Now proceeds to the actual command
-work=$fs_parent/.work/$archiveID/$event # The Working directory for logging and reports
-mkdir -p $work
+#-----------------------------------------------------------------------------------------------------------------------
+# flow_run_folder
+# Gets the parent folder of the application run.sh script.
+# E.g. /usr/bin/digcolproc/flows/flow3/ingest/
+# We enter the command path where we have the run.sh file
+#-----------------------------------------------------------------------------------------------------------------------
+flow_run_folder=$(dirname $1)
+cd "$flow_run_folder"
 
-if [ -z "$fs_parent" ] ; then
-    echo "Parent of the fileset not set."
-    exit -1
-fi
 
-if [ ! -d "$fs_parent" ] ; then
-    echo "Parent of the fileset not found: ${fs_parent}"
-    exit -1
-fi
 
-if [ -z "$event" ] ; then
-    echo "event not set."
-    exit -1
-fi
-
-if [ -z "$fileSet" ] ; then
-    echo "fileSet not set."
-    exit -1
-fi
-
-if [ -z "$flow" ] ; then
-    echo "flow not set."
-    exit -1
-fi
-
-if [ -z "$flow_keys" ] ; then
-    echo "flow_keys not set."
-    exit -1
-fi
-
-mkdir -p $work
+#-----------------------------------------------------------------------------------------------------------------------
+# trigger
+# The file whose presence was resppnsible for running the run.sh file
+# E.g. /flow3/10622/offloader-3/BULK12345/ingest.txt
+#-----------------------------------------------------------------------------------------------------------------------
+trigger=$2
 rm -f "$trigger"
 
+
+
+#-----------------------------------------------------------------------------------------------------------------------
+# fileSet
+# The fileSet that contains the submission package.
+# E.g. /flow3/10622/offloader-3/BULK12345
+#-----------------------------------------------------------------------------------------------------------------------
+fileSet=$(dirname $trigger)
+
+
+
+#-----------------------------------------------------------------------------------------------------------------------
+# archiveID
+# The name of the folder containing the data.
+# E.g. BULK012345
+#-----------------------------------------------------------------------------------------------------------------------
+archiveID=$(basename $fileSet)
+
+
+
+#-----------------------------------------------------------------------------------------------------------------------
+# fs_parent
+# Gets the parent folder of the fileSet
+# E.g. /flow3/10622/offloader-3
+#-----------------------------------------------------------------------------------------------------------------------
+fs_parent=$(dirname $fileSet)
+
+
+
+#-----------------------------------------------------------------------------------------------------------------------
+# offloader
+# The offloader user name. A linux account.
+# E.g. offloader-3
+#-----------------------------------------------------------------------------------------------------------------------
+offloader=$(basename $fs_parent)
+
+
+
+#-----------------------------------------------------------------------------------------------------------------------
+# na
+# The naming authority
+#-----------------------------------------------------------------------------------------------------------------------
+fs_parent=$(dirname $fs_parent) # fs_parent is transitional
+na=$(basename $fs_parent)
+
+
+
+#-----------------------------------------------------------------------------------------------------------------------
+# flow
+# The flow ( flow1, flow2, etc )
+#-----------------------------------------------------------------------------------------------------------------------
+fs_parent=$(dirname $fs_parent) # fs_parent is transitional
+flow=$(basename $fs_parent)
+
+
+
+#-----------------------------------------------------------------------------------------------------------------------
+# fs_parent
+# Parent folder of the fileSet
+# E.g. /a/b/c/d/flow3/10622/offloader-3
+#-----------------------------------------------------------------------------------------------------------------------
+fs_parent=$(dirname $fileSet)
+
+
+
+#-----------------------------------------------------------------------------------------------------------------------
+# datestamp
+# YYYY-MM-DD current date
+#-----------------------------------------------------------------------------------------------------------------------
+datestamp=$(date +"%Y-%m-%d")
+
+
+
+#-----------------------------------------------------------------------------------------------------------------------
+# event
+# The action, like 'ingest', 'backup', etc.
+#-----------------------------------------------------------------------------------------------------------------------
+event=$(basename $flow_run_folder)
+
+
+
+#-----------------------------------------------------------------------------------------------------------------------
+# work
+# The Working directory for log and reports
+#-----------------------------------------------------------------------------------------------------------------------
+work=$fs_parent/.work/$archiveID/$event
+mkdir -p $work
+
+
+
+#-----------------------------------------------------------------------------------------------------------------------
+# log
+# The log file
+#-----------------------------------------------------------------------------------------------------------------------
 time=$(date +"%H")
 log="${work}/${datestamp}T${time}.log"
-echo "log: ${log}">$log
-echo "trigger: ${trigger}">>$log
+echo "">$log
+echo "------------------------------------------------------------------------------------------------------------------------" >> $log
 echo "date: $(date)">>$log
 echo "datestamp: $datestamp">>$log
+echo "trigger: ${trigger}">>$log
+echo "DIGCOLPROC_HOME=${DIGCOLPROC_HOME}">>$log
+echo "DIGCOLPROC_DEBUG=${DIGCOLPROC_DEBUG}">>$log
 echo "offloader: $offloader">>$log
 echo "na: $na">>$log
 echo "archiveID: $archiveID">>$log
@@ -77,8 +150,55 @@ echo "fs_parent: $fs_parent">>$log
 echo "flow: $flow">>$log
 echo "event: $event">>$log
 echo "work: $work">>$log
+echo "PATH=${PATH}">>$log
+echo "user=$(whoami)">>$log
+echo "environment variables:" >>$log
+printenv >> $log
 
-# Assign values
+#-----------------------------------------------------------------------------------------------------------------------
+# Check values
+#-----------------------------------------------------------------------------------------------------------------------
+if [ -z "$fs_parent" ] ; then
+    echo "Parent of the fileset not set.">>$log
+    exit -1
+fi
+
+
+if [ ! -d "$fs_parent" ] ; then
+    echo "Parent of the fileset not found: ${fs_parent}">>$log
+    exit -1
+fi
+
+if [[ ! -d "$fileSet" ]] ; then
+    echo "Cannot find fileSet ${fileSet} Does the folder or share exist ?">>$log
+    exit -1
+fi
+
+if [ -z "$event" ] ; then
+    echo "event not set.">>$log
+    exit -1
+fi
+
+if [ -z "$fileSet" ] ; then
+    echo "fileSet not set.">>$log
+    exit -1
+fi
+
+if [ -z "$flow" ] ; then
+    echo "flow not set.">>$log
+    exit -1
+fi
+
+if [ -z "$flow_keys" ] ; then
+    echo "flow_keys not set.">>$log
+    exit -1
+fi
+
+
+
+#-----------------------------------------------------------------------------------------------------------------------
+# Dynamically assign variables
+#-----------------------------------------------------------------------------------------------------------------------
 for key in $flow_keys
 do
     v=$(eval "echo \$${flow}_${key}")
@@ -94,8 +214,3 @@ do
     fi
 done
 
-if [[ ! -d "$fileSet" ]] ; then
-    echo "Cannot find fileSet $fileSet">>$log
-    echo "Does the folder or share exist ?">>$log
-    exit -1
-fi

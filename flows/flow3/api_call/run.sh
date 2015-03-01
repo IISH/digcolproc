@@ -10,19 +10,32 @@
 #               This is the only odd-one-out of the run.sh scripts. Here there are no folders that have a trigger file placed in them.
 #               Rather is creates those folders for the offloader.
 
-mkdir -p "/tmp/dummy/dummy" # All log goes into this directory
-source "${DIGCOLPROC_HOME}setup.sh" "${DIGCOLPROC_HOME}/flows/flow3/api_call/run.sh" api_call "/tmp/dummy/dummy"
+
+
+#-----------------------------------------------------------------------------------------------------------------------
+# load environment variables
+#-----------------------------------------------------------------------------------------------------------------------
+mkdir -p "/tmp/dummy" # All log goes into this directory
+source "${DIGCOLPROC_HOME}setup.sh" "${DIGCOLPROC_HOME}/flows/flow3/api_call/run.sh" api_call "/tmp/dummy"
 source ../call_api_status.sh
 
+
+
+#-----------------------------------------------------------------------------------------------------------------------
+# Make sure we have a hotfolder directory
+#-----------------------------------------------------------------------------------------------------------------------
 if [ ! -d $flow3_hotfolders ] ; then
     echo "No hotfolder found: ${flow3_hotfolders}">>$log
     exit 1
 fi
 
 
+
+#-----------------------------------------------------------------------------------------------------------------------
 # call_api_folders
 # Call the 'folders' web service and extract the PIDs from the resulting JSON
 # Create a folder for each PID we find.
+#-----------------------------------------------------------------------------------------------------------------------
 function call_api_folders {
 
     for na in $flow3_hotfolders*
@@ -34,7 +47,7 @@ function call_api_folders {
             echo "owner=${owner}:${na}">>$log
 
             # get all pids with a status NEW_DIGITAL_MATERIAL_COLLECTION
-            request="curl --insecure ${acquisition_database}/service/folders?access_token=${acquisition_database_access_token} | /usr/sbin/jq .pids[]"
+            request="curl --insecure ${acquisition_database}/service/folders?access_token=${acquisition_database_access_token} | jq .pids[]"
             echo "request=${request}">>$log
             pids=$(eval ${request})
 
@@ -61,10 +74,9 @@ function call_api_folders {
                     continue
                 fi
 
-                    echo "mkdir -p $folder">>$log
-                    mkdir -p "$folder"
-                    chmod -R 775 "$folder"
-                    chown -R $owner:$na "$folder"
+                mkdir -p "$folder"
+                chmod -R 775 "$folder"
+                chown -R $owner:$na "$folder"
 
                 # check if the directory exists
                 if [ -d "$folder" ];
@@ -89,13 +101,16 @@ function call_api_folders {
 }
 
 
+
+#-----------------------------------------------------------------------------------------------------------------------
 # call_api_startBackup
 # Call the startBackup web service and extract the PIDs from the resulting JSON
 # Create a backup.txt event for each PID we find.
+#-----------------------------------------------------------------------------------------------------------------------
 function call_api_backup() {
 
     # Get all the PIDs with a status MATERIAL_UPLOADED
-    request="curl --insecure ${acquisition_database}/service/startBackup?access_token=${acquisition_database_access_token} | /usr/sbin/jq .pids[]"
+    request="curl --insecure ${acquisition_database}/service/startBackup?access_token=${acquisition_database_access_token} | jq .pids[]"
     echo "request=${request}">>$log
     pids=$(eval ${request})
 
@@ -115,13 +130,16 @@ function call_api_backup() {
 }
 
 
+
+#-----------------------------------------------------------------------------------------------------------------------
 # call_api_restore
 # Call the restore web service and extract the PIDs from the resulting JSON
 # Create a backup.txt event for each PID we find.
+#-----------------------------------------------------------------------------------------------------------------------
 function call_api_restore() {
 
     # Get all the PIDs with a status READY_FOR_RESTORE
-    request="curl --insecure ${acquisition_database}/service/startRestore?access_token=${acquisition_database_access_token} | /usr/sbin/jq .pids[]"
+    request="curl --insecure ${acquisition_database}/service/startRestore?access_token=${acquisition_database_access_token} | jq .pids[]"
     echo "request=${request}">>$log
     pids=$(eval ${request})
 
@@ -141,13 +159,16 @@ function call_api_restore() {
 }
 
 
+
+#-----------------------------------------------------------------------------------------------------------------------
 # call_api_ingest
 # Call the restore web service and extract the PIDs from the resulting JSON
 # Create a backup.txt event for each PID we find.
+#-----------------------------------------------------------------------------------------------------------------------
 function call_api_ingest() {
 
     # Get all the PIDs with a status READY_FOR_PERMANENT_STORAGE
-    request="curl --insecure $acquisition_database/service/startIngest?access_token=${acquisition_database_access_token} | /usr/sbin/jq .pids[]"
+    request="curl --insecure $acquisition_database/service/startIngest?access_token=${acquisition_database_access_token} | jq .pids[]"
     echo "request=${request}">>$log
     pids=$(eval ${request})
 
@@ -167,16 +188,21 @@ function call_api_ingest() {
 }
 
 
+
+#-----------------------------------------------------------------------------------------------------------------------
+# call_api
+# Run each api method
+#-----------------------------------------------------------------------------------------------------------------------
 function call_api(){
 
     call_api_folders
     call_api_backup
     call_api_restore
-    #call_api_ingest
+    call_api_ingest
 
     return 0
 }
 
-call_api
 
+call_api
 exit 0

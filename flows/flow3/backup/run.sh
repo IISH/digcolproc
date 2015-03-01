@@ -6,58 +6,84 @@
 # Then create a droid analysis
 #
 
+
+
+#-----------------------------------------------------------------------------------------------------------------------
+# load environment variables
+#-----------------------------------------------------------------------------------------------------------------------
 source "${DIGCOLPROC_HOME}setup.sh" $0 "$@"
 source ../call_api_status.sh
-
-
-# Tell what we are doing
+STATUS=$BACKUP_RUNNING
 pid=$na/$archiveID
-call_api_status $pid $BACKUP_RUNNING
 
 
+
+#-----------------------------------------------------------------------------------------------------------------------
+# Commence job. Tell what we are doing
+#-----------------------------------------------------------------------------------------------------------------------
+call_api_status $pid $STATUS
+
+
+
+#-----------------------------------------------------------------------------------------------------------------------
 # Lock the folder and it's contents
+#-----------------------------------------------------------------------------------------------------------------------
 chown -R root:root $fileSet
 
 
-# Produce a droid analysis so we have our manifest
+
+#-----------------------------------------------------------------------------------------------------------------------
+# Produce a droid analysis
+#-----------------------------------------------------------------------------------------------------------------------
 profile=$work/profile.droid
 echo "Begin droid analysis for profile ${profile}" >> $log
-droid --quiet -p $profile -a $fileSet -R
+droid --recurse -p $profile --profile-resources $fileSet>>$log
 rc=$?
 if [[ $rc != 0 ]] ; then
-    msg="Droid profiling threw an error."
-    call_api_status $pid $BACKUP_RUNNING true "$msg"
-    exit $rc
+    exit_error "$pid" ${STATUS} "Droid profiling threw an error."
+fi
+if [[ ! -f $profile ]] ; then
+    exit_error "$pid" ${STATUS} "Unable to find a DROID profile."
 fi
 
 
-# produce a report
-droid_report=$fileSet/manifest.csv
-droid --quiet -p $profile -e $droid_report  >> $log
+
+#-----------------------------------------------------------------------------------------------------------------------
+# Produce a droid report so we have our manifest
+#-----------------------------------------------------------------------------------------------------------------------
+profile_csv=$fileSet/manifest.csv
+droid -p $profile --export-file $profile_csv >> $log
 if [[ $rc != 0 ]] ; then
-    msg="Droid reporting threw an error."
-    call_api_status $pid $BACKUP_RUNNING true "$msg"
-    exit $rc
+    exit_error "$pid" ${STATUS} "Droid reporting threw an error."
+fi
+if [[ ! -f $profile_csv ]] ; then
+    exit_error "$pid" ${STATUS} "Unable to find a DROID report."
 fi
 
 
-# Now start the reverse mirror
-# Upload the files
+
+#-----------------------------------------------------------------------------------------------------------------------
+# Upload the files.
+#-----------------------------------------------------------------------------------------------------------------------
 ftp_script_base=$work/ftp.$archiveID.$datestamp
 ftp_script=$ftp_script_base.files.txt
 bash ${DIGCOLPROC_HOME}util/ftp.sh "$ftp_script" "mirror --reverse --delete --verbose ${fileSet} /${archiveID}" "$flow_ftp_connection" "$log"
 rc=$?
 if [[ $rc != 0 ]] ; then
-    msg="FTP error."
-    call_api_status $pid $BACKUP_RUNNING true "$msg"
-    exit $rc
+    exit_error "$pid" ${STATUS} "FTP error"
 fi
 
 
+
+#-----------------------------------------------------------------------------------------------------------------------
 # Release the folder and it's contents
+#-----------------------------------------------------------------------------------------------------------------------
 chown -R $offloader:$offloader $fileSet
 
-# Update the status
-call_api_status $pid $BACKUP_FINISHED
 
+
+#-----------------------------------------------------------------------------------------------------------------------
+# End job
+#-----------------------------------------------------------------------------------------------------------------------
+call_api_status $pid $BACKUP_FINISHED
 exit 0
