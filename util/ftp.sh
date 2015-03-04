@@ -14,6 +14,7 @@ echo "debug 10" > $ftp_scriptfile
 echo "set xfer:log true" >> $ftp_scriptfile
 echo "set xfer:log-file \"${logfile}\"" >> $ftp_scriptfile
 echo "set ssl:verify-certificate false">> $ftp_scriptfile
+echo "set ftp:use-utf8 true">> $ftp_scriptfile
 echo "open ${ftp_connection}" >> $ftp_scriptfile
 echo "$put" >> $ftp_scriptfile
 echo "bye" >> $ftp_scriptfile
