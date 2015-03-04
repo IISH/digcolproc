@@ -5,7 +5,6 @@
 # Iterates over all application folders and starts the run.sh routine.
 
 
-echo "${DIGCOLPROC_HOME}config.sh" >> /tmp/a.log
 source "${DIGCOLPROC_HOME}config.sh"
 
 for flow in ${DIGCOLPROC_HOME}flows/* # Find all potential script folders in /flows/

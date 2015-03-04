@@ -49,7 +49,6 @@ chown -R root:root $fileSet
 # Produce a droid analysis
 #-----------------------------------------------------------------------------------------------------------------------
 profile=$work/profile.droid
-profile_extended_csv=$profile.extended.csv
 droid --recurse -p $profile --profile-resources $fileSet>>$log
 rc=$?
 if [[ $rc != 0 ]] ; then
@@ -75,7 +74,8 @@ fi
 #-----------------------------------------------------------------------------------------------------------------------
 # Now extend the report with two columns: a md5 checksum and a persistent identifier
 #-----------------------------------------------------------------------------------------------------------------------
-python droid_extend_csv.py --sourcefile $profile_csv --targetfile $profile_extended_csv --na $na --fileset $fileSet >> $log
+profile_extended_csv=$profile.extended.csv
+python ${DIGCOLPROC_HOME}/util/droid_extend_csv.py --sourcefile $profile_csv --targetfile $profile_extended_csv --na $na --fileset $fileSet >> $log
 if [[ $rc != 0 ]] ; then
     exit_error "$pid" $STATUS "Failed to extend the droid report with a PID and md5 checksum."
 fi
@@ -86,7 +86,7 @@ fi
 # Create a mets document
 #-----------------------------------------------------------------------------------------------------------------------
 manifest=${fileSet}/manifest.xml
-python droid_to_mets.py --sourcefile $profile_extended_csv --targetfile $manifest --objid "$pid"
+python ${DIGCOLPROC_HOME}/util/droid_to_mets.py --sourcefile $profile_extended_csv --targetfile $manifest --objid "$pid"
 rc=$?
 if [[ $rc != 0 ]] ; then
     exit_error "$pid" $STATUS "Failed to create a mets document."
@@ -101,7 +101,7 @@ fi
 # Add the mets file to the manifest.csv, in order for it to be in the xml instruction
 #-----------------------------------------------------------------------------------------------------------------------
 md5_hash=$(md5sum $manifest | cut -d ' ' -f 1)
-echo ""","1","file:/${archivalID}/","/${archivalID}/manifest.xml","manifest.xml","METHOD","$STATUS","SIZE","File","xml","","EXTENSION_MISMATCH","${md5_hash}","FORMAT_COUNT","PUID","application/xml","Xml Document","FORMAT_VERSION", "${pid}"">>$profile_extended_csv
+echo ""","1","file:/${archiveID}/","/${archiveID}/manifest.xml","manifest.xml","METHOD","$STATUS","SIZE","File","xml","","EXTENSION_MISMATCH","${md5_hash}","FORMAT_COUNT","PUID","application/xml","Xml Document","FORMAT_VERSION","${pid}",""">>$profile_extended_csv
 
 
 
@@ -121,7 +121,7 @@ fi
 #-----------------------------------------------------------------------------------------------------------------------
 # Produce instruction from the report.
 #-----------------------------------------------------------------------------------------------------------------------
-python droid_to_instruction.py -s $profile_extended_csv -t $file_instruction --objid "$pid" --access "$flow_access" --submission_date "$datestamp" --autoIngestValidInstruction "$flow_autoIngestValidInstruction" --label "$archiveID $flow_client" --action "add" --notificationEMail "$flow_notificationEMail" --plan "StagingfileBindPIDs,StagingfileIngestMaster" >> $log
+python ${DIGCOLPROC_HOME}/util/droid_to_instruction.py -s $profile_extended_csv -t $file_instruction --objid "$pid" --access "$flow_access" --submission_date "$datestamp" --autoIngestValidInstruction "$flow_autoIngestValidInstruction" --label "$archiveID $flow_client" --action "add" --notificationEMail "$flow_notificationEMail" --plan "StagingfileBindPIDs,StagingfileIngestMaster" >> $log
 rc=$?
 if [[ $rc != 0 ]] ; then
     rm $file_instruction

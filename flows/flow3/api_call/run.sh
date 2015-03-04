@@ -54,10 +54,10 @@ function call_api_folders {
             # Create a folder for each PID
             for pid in ${pids}
             do
-                # Remove the quotes around the PID
+                # Remove the quotes around the PID. E.g. "10622/BULK12345" becomes 10622/BULK12345
                 pid="${pid%\"}"
                 pid="${pid#\"}"
-                id=$(basename $pid) # And remove the prefix
+                id=$(basename $pid) # And remove the prefix so we get BULK12345
 
                 echo "\$pid = $pid">>$log
                 echo "\$id = $id">>$log

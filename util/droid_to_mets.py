@@ -167,11 +167,6 @@ def parse_csv(sourcefile, targetfile):
     xl = MetsDocument(manifest)
 
     xl.elem(u'METS:mets', _attributes)
-
-    #if 'dmdsec' in _attributes:
-    #    dmdsec(xl, 'dmd001', _attributes['dmdsec'])
-    #amdsec(xl, 'admSec-1')
-
     create_filesec(xl, sourcefile)
     create_structmap(xl, sourcefile)
 

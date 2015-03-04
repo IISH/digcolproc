@@ -1,39 +1,42 @@
 #!/bin/bash
-
+#
 # run.sh
 #
 # Usage:
 # run.sh [na] [folder name]
 #
 # This script expects a submission package in the folder pattern:
-# /a/b/c/10622/offloader/YYY-MM-DD]
+# /a/b/c/10622/offloader/[barcode]
+# And with files that start with the barcode:
+# /a/b/c/10622/offloader/[barcode]/[barcode].[extension]
+# E.g.:
+#    /10622/offloader-4/N1234567890
 
+
+
+#-----------------------------------------------------------------------------------------------------------------------
+# load environment variables
+#-----------------------------------------------------------------------------------------------------------------------
 source "${DIGCOLPROC_HOME}setup.sh" $0 "$@"
+source ../call_api_status.sh
 
 
+
+#-----------------------------------------------------------------------------------------------------------------------
 # Is the ingest in progress ?
+#-----------------------------------------------------------------------------------------------------------------------
 file_instruction=$fileSet/instruction.xml
 if [ -f "$file_instruction" ] ; then
-	echo "Instruction already present: $file_instruction">>$log
-	echo "This may indicate the SIP is staged or the ingest is already in progress. This is not an error.">>$log
-	exit 0
+    exit_error "Instruction already present: $file_instruction. This may indicate the SIP is staged or the ingest is already in progress. This is not an error."
 fi
 
 
-# Are we in a valid folder ? We expect 20YY-MM-DD
-regex_datestamp="20[0-9]{2}-[0-1][0-9]-[0-3][0-9]$"
-if [[ $archiveID =~ $regex_datestamp ]]
-then
-    echo "ok"
-else
-    echo "Invalid datestamp for the folder name. Expect ${regex_datestamp} but got ${archiveID}" >> $log
-    exit -1
-fi
 
-
-# Now loop though all files in the folder and see if there size is non zero and have a valid syntax.
+#-----------------------------------------------------------------------------------------------------------------------
+# Now loop though all files in the folder and see if their size is non zero and have a valid syntax.
+#-----------------------------------------------------------------------------------------------------------------------
 error_number=0
-regex_filename="^[a-zA-Z0-9]+\.[a-zA-Z0-9]+$|^[a-zA-Z0-9]+\.[0-9]+\.[a-zA-Z0-9]+$" # abcdefg.extension  or abcdefg.12345.extension
+regex_filename="^${archiveID}\.[a-zA-Z0-9]+$|^${archiveID}\.[0-9]+\.[a-zA-Z0-9]+$" # abcdefg.extension  or abcdefg.12345.extension
 for f in $(find "$fileSet" -type f )
 do
     filesize=$(stat -c%s "$f")
@@ -53,15 +56,76 @@ if [[ $error_number == 0 ]]
 then
     echo "Files look good" >> $log
 else
-    exit -1
+    exit_error "Aborting job because of the previous errors."
 fi
 
 
+
+#-----------------------------------------------------------------------------------------------------------------------
+# Are we in a valid folder ? We expect the barcode to exist in our catalogs.
+#-----------------------------------------------------------------------------------------------------------------------
+sru_call="${sru}?query=marc.852\$p=\"${archiveID}\"&version=1.1&operation=searchRetrieve&recordSchema=info:srw/schema/1/marcxml-v1.1&maximumRecords=1&startRecord=1&resultSetTTL=0&recordPacking=xml"
+access=$(python ${DIGCOLPROC_HOME}/util/sru_call.py --url "$sru_call")
+if [ "$access" == "None" ] ; then
+    exit_error "No such barcode \"${archiveID}\" found by the SRU service ${sru_call}"
+fi
+
+
+
+#-----------------------------------------------------------------------------------------------------------------------
 # Lock the folder and it's contents
+#-----------------------------------------------------------------------------------------------------------------------
 chown -R root:root $fileSet
 
 
+
+#-----------------------------------------------------------------------------------------------------------------------
+# Produce a droid analysis
+#-----------------------------------------------------------------------------------------------------------------------
+profile=$work/profile.droid
+echo "Begin droid analysis for profile ${profile}" >> $log
+droid --recurse -p $profile --profile-resources $fileSet>>$log
+rc=$?
+if [[ $rc != 0 ]] ; then
+    exit_error "Droid profiling threw an error."
+fi
+if [[ ! -f $profile ]] ; then
+    exit_error "Unable to find a DROID profile."
+fi
+
+
+
+#-----------------------------------------------------------------------------------------------------------------------
+# produce a report.
+#-----------------------------------------------------------------------------------------------------------------------
+profile_csv=$profile.csv
+droid -p $profile --export-file $profile_csv >> $log
+if [[ $rc != 0 ]] ; then
+    exit_error "$pid" ${STATUS} "Droid reporting threw an error."
+fi
+if [ ! -f $profile_csv ] ; then
+    exit_error "$pid" ${STATUS} "Unable to create a droid profile: ${profile_csv}"
+fi
+
+
+
+#-----------------------------------------------------------------------------------------------------------------------
+# Now extend the report with two columns: a md5 checksum and a persistent identifier
+#-----------------------------------------------------------------------------------------------------------------------
+profile_extended_csv=$profile.extended.csv
+python ${DIGCOLPROC_HOME}/util/droid_extend_csv.py --sourcefile $profile_csv --targetfile $profile_extended_csv --na $na --fileset $fileSet >> $log
+if [[ $rc != 0 ]] ; then
+    exit_error "Failed to extend the droid report with a PID and md5 checksum."
+fi
+if [[ ! -f $profile_extended_csv ]] ; then
+    exit_error "Unable to make a DROID report."
+fi
+
+
+
+#-----------------------------------------------------------------------------------------------------------------------
 # Upload the files
+#-----------------------------------------------------------------------------------------------------------------------
 ftp_script_base=$work/ftp.$archiveID.$datestamp
 ftp_script=$ftp_script_base.files.txt
 bash ${DIGCOLPROC_HOME}util/ftp.sh "$ftp_script" "mirror --reverse --delete --verbose ${fileSet} /${archiveID}" "$flow_ftp_connection" "$log"
@@ -71,15 +135,26 @@ if [[ $rc != 0 ]] ; then
 fi
 
 
-# Produce instruction
-groovy "${DIGCOLPROC_HOME}util/instruction.groovy" -na $na -fileSet "$fileSet" -access $flow_access -sruServer $sru -tag 542 -code m -autoIngestValidInstruction "$flow_autoIngestValidInstruction" -label "$archiveID $flow_client" -action upsert -notificationEMail "$flow_notificationEMail" -recurse true -use_objd_seq_pid_from_file true>>$log
+
+#-----------------------------------------------------------------------------------------------------------------------
+# Produce instruction from the report.
+#-----------------------------------------------------------------------------------------------------------------------
+pid=$na/$archiveID
+python ${DIGCOLPROC_HOME}/util/droid_to_instruction.py -s $profile_extended_csv -t $file_instruction --objid "$pid" --access "$access" --submission_date "$datestamp" --autoIngestValidInstruction "$flow_autoIngestValidInstruction" --label "$archiveID $flow_client" --action "add" --use_seq --notificationEMail "$flow_notificationEMail" --plan "StagingfileBindPIDs,StagingfileIngestMaster" >> $log
 rc=$?
 if [[ $rc != 0 ]] ; then
-    echo "Problem when creating the instruction.">>$log
-    exit $rc
+    rm $file_instruction
+    exit_error "Failed to create an instruction."
+fi
+if [ ! -f $file_instruction ] ; then
+    exit_error "Failed to find an instruction at ${file_instruction}"
 fi
 
+
+
+#-----------------------------------------------------------------------------------------------------------------------
 # Upload the instruction
+#-----------------------------------------------------------------------------------------------------------------------
 ftp_script=$ftp_script_base.instruction.txt
 bash ${DIGCOLPROC_HOME}util/ftp.sh "$ftp_script" "put -O /${archiveID} ${fileSet}/instruction.xml" "$flow_ftp_connection" "$log"
 rc=$?
@@ -87,6 +162,10 @@ if [[ $rc != 0 ]] ; then
     exit $rc
 fi
 
-echo "Done. All went well at this side." >> $log
 
+
+#-----------------------------------------------------------------------------------------------------------------------
+# End job
+#-----------------------------------------------------------------------------------------------------------------------
+echo "Done. All went well at this side." >> $log
 exit 0

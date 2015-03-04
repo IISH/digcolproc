@@ -1,5 +1,6 @@
 # Droid
-# Droid enumeration. The keys values equal the csv index.
+# Droid enumeration. The keys values equal the csv index up until FORMAT_VERSION. Then it adds values for four
+# non existing columns. Hence the leap.
 class Droid:
     ID = 0
     PARENT_ID = 1
@@ -19,4 +20,5 @@ class Droid:
     MIME_TYPE = 15
     FORMAT_NAME = 16
     FORMAT_VERSION = 17
-    PID = 18
+    PID = 22
+    SEQ = 23
