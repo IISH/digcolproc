@@ -20,5 +20,5 @@ class Droid:
     MIME_TYPE = 15
     FORMAT_NAME = 16
     FORMAT_VERSION = 17
-    PID = 22
-    SEQ = 23
+    PID = 18
+    SEQ = 19

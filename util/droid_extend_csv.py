@@ -45,7 +45,7 @@ def parse_csv(sourcefile, targetfile, na, fileset):
 
             items[Droid.URI] = relative(items[Droid.URI], fileset)
             items[Droid.FILE_PATH] = relative(items[Droid.FILE_PATH], fileset)
-            items = ['"{0}"'.format(item) for item in items]  # Add the double quotes
+            items = ['"{0}"'.format(item.replace('"', '""')) for item in items]  # Add the double quotes and ensure the values are escaped.
             manifest.write(','.join(items) + "\n")
     manifest.close()
 
