@@ -63,6 +63,19 @@ function call_api_status() {
 }
 
 
+function call_api_manifest() {
+    pid=$1
+    file=$2
+    endpoint="${acquisition_database}/service/manifest"
+    curl --insecure --max-time 180 --form "access_token=${acquisition_database_access_token}" --form "pid=${pid}" --form manifest_csv="@${file};type=text/csv" "$endpoint"
+    rc=$?
+    if [[ $rc != 0 ]] ; then
+        echo "Error when contacting ${endpoint} ">>$log
+        exit 1
+    fi
+    return $rc
+}
+
 #-----------------------------------------------------------------------------------------------------------------------
 # exit_error
 # Pass over an error

@@ -38,8 +38,7 @@ chown -R root:root $fileSet
 profile=$work/profile.droid
 echo "Begin droid analysis for profile ${profile}" >> $log
 droid --recurse -p $profile --profile-resources $fileSet>>$log
-rc=$?
-if [[ $rc != 0 ]] ; then
+if [[ $? != 0 ]] ; then
     exit_error "$pid" ${STATUS} "Droid profiling threw an error."
 fi
 if [[ ! -f $profile ]] ; then
@@ -53,13 +52,23 @@ fi
 #-----------------------------------------------------------------------------------------------------------------------
 profile_csv=$fileSet/manifest.csv
 droid -p $profile --export-file $profile_csv >> $log
-if [[ $rc != 0 ]] ; then
+if [[ $? != 0 ]] ; then
     exit_error "$pid" ${STATUS} "Droid reporting threw an error."
 fi
 if [[ ! -f $profile_csv ]] ; then
     exit_error "$pid" ${STATUS} "Unable to find a DROID report."
 fi
+chmod 444 $profile_csv
 
+
+
+#-----------------------------------------------------------------------------------------------------------------------
+# POST our manifest.csv
+#-----------------------------------------------------------------------------------------------------------------------
+call_api_manifest "$pid" "$profile_csv"
+if [[ $? != 0 ]] ; then
+    exit_error "$pid" ${STATUS} "Droid reporting threw an error."
+fi
 
 
 #-----------------------------------------------------------------------------------------------------------------------
@@ -68,8 +77,7 @@ fi
 ftp_script_base=$work/ftp.$archiveID.$datestamp
 ftp_script=$ftp_script_base.files.txt
 bash ${DIGCOLPROC_HOME}util/ftp.sh "$ftp_script" "mirror --reverse --delete --verbose ${fileSet} /${archiveID}" "$flow_ftp_connection" "$log"
-rc=$?
-if [[ $rc != 0 ]] ; then
+if [[ $? != 0 ]] ; then
     exit_error "$pid" ${STATUS} "FTP error"
 fi
 
