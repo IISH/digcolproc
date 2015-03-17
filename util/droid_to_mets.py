@@ -84,7 +84,7 @@ def fileMD(xl, id, title, date):
         elem('METS:FContent'). \
         elem('METS:xmlData'). \
         elem('dcterms:title', None, title).close_entry(). \
-        elem('dcterms:created', None, date+'Z').close_entry(). \
+        elem('dcterms:created', None, date + 'Z').close_entry(). \
         elem('dcterms:accessRights', None, 'closed').close_entry(). \
         close_entry(3)
 
@@ -105,7 +105,13 @@ def create_filesec(xl, csvfile):
                 fileMD(xl, id_dc, name, file[Droid.LAST_MODIFIED]).close_entry()
             else:  # We have two fileGrp elements here. We can insert more metadata in future.
                 xl.elem('METS:fileGrp').elem('METS:fileGrp')
-                fileMD(xl, id_dc, name, file[Droid.LAST_MODIFIED]).elem('METS:file', {'CHECKSUM': file[Droid.HASH], 'CHECKSUMTYPE': 'MD5', 'ID': id, 'MIMETYPE': file[Droid.MIME_TYPE], 'SIZE': file[Droid.SIZE]}).  elem('METS:FLocat', {'LOCTYPE': 'HANDLE', 'xlink:href': 'http://hdl.handle.net/' + file[Droid.PID] + '?locatt=view:master', 'xlink:type': 'simple'}).close_entry(4)
+                fileMD(xl, id_dc, name, file[Droid.LAST_MODIFIED]).elem('METS:file', {'CHECKSUM': file[Droid.HASH],
+                                                                                      'CHECKSUMTYPE': 'MD5', 'ID': id,
+                                                                                      'MIMETYPE': file[Droid.MIME_TYPE],
+                                                                                      'SIZE': file[Droid.SIZE]}).elem(
+                    'METS:FLocat', {'LOCTYPE': 'HANDLE',
+                                    'xlink:href': 'http://hdl.handle.net/' + file[Droid.PID] + '?locatt=view:master',
+                                    'xlink:type': 'simple'}).close_entry(4)
     csvfile.close()
     xl.close_entry()
     return xl
@@ -121,18 +127,18 @@ def structmap(xl, files, map):
         fileid_dc = file[Droid.TYPE].upper() + '_DC_' + id
         name = file[Droid.NAME]
         if file[Droid.TYPE] == 'Folder':
-            xl.elem('METS:div', {'LABEL': name, 'TYPE': 'folder'}). \
-                elem('METS:div', {'LABEL': 'dc', 'TYPE': 'dc'}). \
+            xl.elem('METS:div', {'TYPE': 'folder'}). \
+                elem('METS:div', {'TYPE': 'dc'}). \
                 elem('METS:fptr', {'FILEID': fileid_dc}).close_entry(2)
             if id in map:
                 structmap(xl, map[id], map)
             xl.close_entry()
         else:
-            xl.elem('METS:div', {'LABEL': name, 'TYPE': 'file'}). \
-                elem('METS:div', {'LABEL': 'Content', 'TYPE': 'content'}). \
+            xl.elem('METS:div', {'TYPE': 'file'}). \
+                elem('METS:div', {'TYPE': 'content'}). \
                 elem('METS:fptr', {'FILEID': fileid_content}). \
                 close_entry(2). \
-                elem('METS:div', {'LABEL': 'Dublin Core', 'TYPE': 'dc'}). \
+                elem('METS:div', {'TYPE': 'dc'}). \
                 elem('METS:fptr', {'FILEID': fileid_dc}). \
                 close_entry(3)
     return xl
@@ -155,7 +161,7 @@ def create_structmap(xl, csvfile):
 
     csvfile.close()
 
-    xl.elem('METS:structMap')
+    xl.elem('METS:structMap', {'ID': 'physical'})
     structmap(xl, structural_map[0], structural_map)
     xl.close_entry()
 
@@ -166,7 +172,7 @@ def parse_csv(sourcefile, targetfile):
     manifest = open(targetfile, 'wb')
     xl = MetsDocument(manifest)
 
-    xl.elem(u'METS:mets', _attributes)
+    xl.elem(u'METS:mets', {'OBJID': _attributes['objid']})
     create_filesec(xl, sourcefile)
     create_structmap(xl, sourcefile)
 
