@@ -71,6 +71,7 @@ def parse_csv():
                     xl.write_entry(u'seq', items[Droid.SEQ])
                 xl.close_entry(u'stagingfile')
 
+    xl.close_entry(u'instruction')
     xl.close()
     return
 

@@ -63,6 +63,7 @@ if [ -f $fileSet/manifest.csv ] ; then rm $fileSet/manifest.csv ; fi
 #-----------------------------------------------------------------------------------------------------------------------
 profile_csv=$profile.csv
 droid -p $profile --export-file $profile_csv >> $log
+rc=$?
 if [[ $rc != 0 ]] ; then
     exit_error "$pid" ${STATUS} "Droid reporting threw an error."
 fi
@@ -77,6 +78,7 @@ fi
 #-----------------------------------------------------------------------------------------------------------------------
 profile_extended_csv=$profile.extended.csv
 python ${DIGCOLPROC_HOME}/util/droid_extend_csv.py --sourcefile $profile_csv --targetfile $profile_extended_csv --na $na --fileset $fileSet >> $log
+rc=$?
 if [[ $rc != 0 ]] ; then
     exit_error "$pid" $STATUS "Failed to extend the droid report with a PID and md5 checksum."
 fi
@@ -144,6 +146,33 @@ if [[ $rc != 0 ]] ; then
     exit_error "$pid" $STATUS "FTP error with uploading the object repository instruction."
 fi
 
+
+#-----------------------------------------------------------------------------------------------------------------------
+# Bind the PID
+#-----------------------------------------------------------------------------------------------------------------------
+soapenv="<?xml version='1.0' encoding='UTF-8'?>  \
+		<soapenv:Envelope xmlns:soapenv='http://schemas.xmlsoap.org/soap/envelope/' xmlns:pid='http://pid.socialhistoryservices.org/'>  \
+			<soapenv:Body> \
+				<pid:UpsertPidRequest> \
+					<pid:na>$na</pid:na> \
+					<pid:handle> \
+						<pid:pid>$pid</pid:pid> \
+						<pid:locAtt> \
+								<pid:location weight='1' href='$or/metadata/$pid'/> \
+								<pid:location weight='0' href='$or/file/master/$pid' view='master'/> \
+							</pid:locAtt> \
+					</pid:handle> \
+				</pid:UpsertPidRequest> \
+			</soapenv:Body> \
+		</soapenv:Envelope>"
+echo "Binding pid ${pid} with ${soapenv}" >> $log
+rc=$?
+wget -O /dev/null --header="Content-Type: text/xml" \
+    --header="Authorization: oauth $pidwebserviceKey" --post-data "$soapenv" \
+    --no-check-certificate $pidwebserviceEndpoint
+if [[ $rc != 0 ]] ; then
+    exit_error "$pid" $STATUS "The submission to the object repostory succeeded. However we failed to bind the pid to the url of the manifest."
+fi
 
 
 #-----------------------------------------------------------------------------------------------------------------------
