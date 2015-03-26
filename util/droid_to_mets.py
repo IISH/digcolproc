@@ -212,7 +212,7 @@ def main(argv):
     print('targetfile=' + targetfile)
     print('objid=' + objid)
 
-    _attributes['objid'] = objid
+    _attributes['OBJID'] = objid
     parse_csv(sourcefile, targetfile)
     return
 
