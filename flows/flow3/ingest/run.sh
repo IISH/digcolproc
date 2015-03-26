@@ -109,6 +109,21 @@ echo ""","1","file:/${archiveID}/","/${archiveID}/manifest.xml","manifest.xml","
 
 
 #-----------------------------------------------------------------------------------------------------------------------
+# Produce instruction from the report.
+#-----------------------------------------------------------------------------------------------------------------------
+work_instruction=$work/instruction.xml
+python ${DIGCOLPROC_HOME}/util/droid_to_instruction.py -s $profile_extended_csv -t $work_instruction --objid "$pid" --access "$flow_access" --submission_date "$datestamp" --autoIngestValidInstruction "$flow_autoIngestValidInstruction" --label "$archiveID $flow_client" --action "add" --notificationEMail "$flow_notificationEMail" --plan "StagingfileBindPIDs,StagingfileIngestMaster" >> $log
+rc=$?
+if [[ $rc != 0 ]] ; then
+    exit_error "$pid" $STATUS "Failed to create an instruction."
+fi
+if [ ! -f $work_instruction ] ; then
+    exit_error "$pid" $STATUS "Failed to find an instruction at ${file_instruction}"
+fi
+
+
+
+#-----------------------------------------------------------------------------------------------------------------------
 # Now start the reverse mirror
 #-----------------------------------------------------------------------------------------------------------------------
 ftp_script_base=${work}/ftp.$archiveID.$datestamp
@@ -122,23 +137,9 @@ fi
 
 
 #-----------------------------------------------------------------------------------------------------------------------
-# Produce instruction from the report.
-#-----------------------------------------------------------------------------------------------------------------------
-python ${DIGCOLPROC_HOME}/util/droid_to_instruction.py -s $profile_extended_csv -t $file_instruction --objid "$pid" --access "$flow_access" --submission_date "$datestamp" --autoIngestValidInstruction "$flow_autoIngestValidInstruction" --label "$archiveID $flow_client" --action "add" --notificationEMail "$flow_notificationEMail" --plan "StagingfileBindPIDs,StagingfileIngestMaster" >> $log
-rc=$?
-if [[ $rc != 0 ]] ; then
-    rm $file_instruction
-    exit_error "$pid" $STATUS "Failed to create an instruction."
-fi
-if [ ! -f $file_instruction ] ; then
-    exit_error "$pid" $STATUS "Failed to find an instruction at ${file_instruction}"
-fi
-
-
-
-#-----------------------------------------------------------------------------------------------------------------------
 # Upload the instruction
 #-----------------------------------------------------------------------------------------------------------------------
+mv $work_instruction $file_instruction
 ftp_script=$ftp_script_base.instruction.txt
 bash ${DIGCOLPROC_HOME}util/ftp.sh "$ftp_script" "put -O /${archiveID} ${file_instruction}" "$flow_ftp_connection" "$log"
 rc=$?

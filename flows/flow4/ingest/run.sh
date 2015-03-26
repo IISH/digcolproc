@@ -66,6 +66,10 @@ fi
 #-----------------------------------------------------------------------------------------------------------------------
 sru_call="${sru}?query=marc.852\$p=\"${archiveID}\"&version=1.1&operation=searchRetrieve&recordSchema=info:srw/schema/1/marcxml-v1.1&maximumRecords=1&startRecord=1&resultSetTTL=0&recordPacking=xml"
 access=$(python ${DIGCOLPROC_HOME}/util/sru_call.py --url "$sru_call")
+rc=$?
+if [[ $rc != 0 ]] ; then
+    exit_error "The SRU service call produced an error ${sru_call}"
+fi
 if [ "$access" == "None" ] ; then
     exit_error "No such barcode \"${archiveID}\" found by the SRU service ${sru_call}"
 fi
@@ -100,6 +104,7 @@ fi
 #-----------------------------------------------------------------------------------------------------------------------
 profile_csv=$profile.csv
 droid -p $profile --export-file $profile_csv >> $log
+rc=$?
 if [[ $rc != 0 ]] ; then
     exit_error "$pid" ${STATUS} "Droid reporting threw an error."
 fi
@@ -114,11 +119,27 @@ fi
 #-----------------------------------------------------------------------------------------------------------------------
 profile_extended_csv=$profile.extended.csv
 python ${DIGCOLPROC_HOME}/util/droid_extend_csv.py --sourcefile $profile_csv --targetfile $profile_extended_csv --na $na --fileset $fileSet >> $log
+rc=$?
 if [[ $rc != 0 ]] ; then
     exit_error "Failed to extend the droid report with a PID and md5 checksum."
 fi
 if [[ ! -f $profile_extended_csv ]] ; then
     exit_error "Unable to make a DROID report."
+fi
+
+
+#-----------------------------------------------------------------------------------------------------------------------
+# Produce instruction from the report.
+#-----------------------------------------------------------------------------------------------------------------------
+pid=$na/$archiveID
+work_instruction=$work/instruction.xml
+python ${DIGCOLPROC_HOME}/util/droid_to_instruction.py -s $profile_extended_csv -t $work_instruction --objid "$pid" --access "$access" --submission_date "$datestamp" --autoIngestValidInstruction "$flow_autoIngestValidInstruction" --label "$archiveID $flow_client" --action "add" --use_seq --notificationEMail "$flow_notificationEMail" --plan "StagingfileBindPIDs,StagingfileIngestMaster" >> $log
+rc=$?
+if [[ $rc != 0 ]] ; then
+    exit_error "Failed to create an instruction."
+fi
+if [ ! -f $work_instruction ] ; then
+    exit_error "Failed to find an instruction at ${work_instruction}"
 fi
 
 
@@ -131,23 +152,8 @@ ftp_script=$ftp_script_base.files.txt
 bash ${DIGCOLPROC_HOME}util/ftp.sh "$ftp_script" "mirror --reverse --delete --verbose ${fileSet} /${archiveID}" "$flow_ftp_connection" "$log"
 rc=$?
 if [[ $rc != 0 ]] ; then
-    exit $rc
-fi
-
-
-
-#-----------------------------------------------------------------------------------------------------------------------
-# Produce instruction from the report.
-#-----------------------------------------------------------------------------------------------------------------------
-pid=$na/$archiveID
-python ${DIGCOLPROC_HOME}/util/droid_to_instruction.py -s $profile_extended_csv -t $file_instruction --objid "$pid" --access "$access" --submission_date "$datestamp" --autoIngestValidInstruction "$flow_autoIngestValidInstruction" --label "$archiveID $flow_client" --action "add" --use_seq --notificationEMail "$flow_notificationEMail" --plan "StagingfileBindPIDs,StagingfileIngestMaster" >> $log
-rc=$?
-if [[ $rc != 0 ]] ; then
-    rm $file_instruction
-    exit_error "Failed to create an instruction."
-fi
-if [ ! -f $file_instruction ] ; then
-    exit_error "Failed to find an instruction at ${file_instruction}"
+    exit_error "FTP Failed"
+    exit 1
 fi
 
 
@@ -155,11 +161,13 @@ fi
 #-----------------------------------------------------------------------------------------------------------------------
 # Upload the instruction
 #-----------------------------------------------------------------------------------------------------------------------
+mv $work_instruction $file_instruction
 ftp_script=$ftp_script_base.instruction.txt
 bash ${DIGCOLPROC_HOME}util/ftp.sh "$ftp_script" "put -O /${archiveID} ${fileSet}/instruction.xml" "$flow_ftp_connection" "$log"
 rc=$?
 if [[ $rc != 0 ]] ; then
-    exit $rc
+    exit_error "FTP Failed"
+    exit 1
 fi
 
 
