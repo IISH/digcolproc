@@ -69,8 +69,17 @@ function call_api_folders {
                 folder=$offloader/$id
                 # check if the directory exists
                 if [ -d "$folder" ]; then
-                    msg="The folder ${folder} already exists."
-                    call_api_status $pid $FOLDER_CREATED true "$msg"
+                    # TODO: Question: is it necessary to send a failure and the message 'folder already exists'? You cannot go to the next status!
+                    # TODO: Question: shouldn't we also do the chmod and chown commands, to be sure the rights are set okay?
+                    #msg="The folder ${folder} already exists."
+                    #call_api_status $pid $FOLDER_CREATED true "$msg"
+                    call_api_status $pid $FOLDER_CREATED
+
+					# set permissions
+	                chmod -R 775 "$folder"
+	                chown -R $owner:$na "$folder"
+
+	                # loop to next pid
                     continue
                 fi
 

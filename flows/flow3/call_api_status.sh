@@ -43,10 +43,18 @@ function call_api_status() {
     fi
     if [ -z "$failure" ]; then
         failure=false
-    fi
-    if [ -z "$message" ]; then
-        message="ok"
-    fi
+	fi
+
+	# TODO GCU expand
+	if [ -z "$message" ]; then
+		if [ $status -eq 20 ] || [ $status -eq 50 ] || [ $status -eq 80 ] || [ $status -eq 110 ]; then
+			message="Processing";
+		elif [ $status -eq 30 ] || [ $status -eq 60 ] || [ $status -eq 90 ] || [ $status -eq 120 ]; then
+			message="Done";
+		else
+			message="ok";
+		fi
+	fi
 
     # Update the status using the 'status' web service
     request_data="pid=${pid}&status=${status}&failure=${failure}&access_token=${acquisition_database_access_token}&message=${message}"
