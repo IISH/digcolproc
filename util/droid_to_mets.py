@@ -172,7 +172,7 @@ def parse_csv(sourcefile, targetfile):
     manifest = open(targetfile, 'wb')
     xl = MetsDocument(manifest)
 
-    xl.elem(u'METS:mets', {'OBJID': _attributes['objid']})
+    xl.elem(u'METS:mets', _attributes)
     create_filesec(xl, sourcefile)
     create_structmap(xl, sourcefile)
 
@@ -194,7 +194,6 @@ def main(argv):
         usage()
         sys.exit(2)
     for opt, arg in opts:
-        if opt.startswith('--'): _attributes[opt[2:]] = arg
         if opt in ('-h', '--help'):
             usage()
             sys.exit()
@@ -211,7 +210,9 @@ def main(argv):
 
     print('sourcefile=' + sourcefile)
     print('targetfile=' + targetfile)
+    print('objid=' + objid)
 
+    _attributes['objid'] = objid
     parse_csv(sourcefile, targetfile)
     return
 
