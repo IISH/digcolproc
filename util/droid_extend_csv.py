@@ -52,12 +52,16 @@ def parse_csv(sourcefile, targetfile, na, fileset):
 
 # hashfile
 # Calculate the hash by streaming the file
-def hashfile(file, hasher=hashlib.md5(), blocksize=65536):
+def hashfile(file, blocksize=32768):
     _file = open(file, 'r')
-    buf = _file.read(blocksize)
-    while len(buf) > 0:
-        hasher.update(buf)
+    _blocksize = blocksize
+    hasher=hashlib.md5()
+    while _blocksize == blocksize:
         buf = _file.read(blocksize)
+        hasher.update(buf)
+        _blocksize=len(buf)
+
+    _file.close()
     return hasher.hexdigest()
 
 
