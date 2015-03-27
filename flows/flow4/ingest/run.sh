@@ -128,6 +128,30 @@ if [[ ! -f $profile_extended_csv ]] ; then
 fi
 
 
+
+#-----------------------------------------------------------------------------------------------------------------------
+# Create a mets document
+#-----------------------------------------------------------------------------------------------------------------------
+manifest=${fileSet}/manifest.xml
+python ${DIGCOLPROC_HOME}/util/droid_to_mets.py --sourcefile $profile_extended_csv --targetfile $manifest --objid "$pid"
+rc=$?
+if [[ $rc != 0 ]] ; then
+    exit_error "Failed to create a mets document."
+fi
+if [ ! -f $manifest ] ; then
+    exit_error "Failed to find a mets file at ${manifest}"
+fi
+
+
+
+#-----------------------------------------------------------------------------------------------------------------------
+# Add the mets file to the manifest.csv, in order for it to be in the xml instruction
+#-----------------------------------------------------------------------------------------------------------------------
+md5_hash=$(md5sum $manifest | cut -d ' ' -f 1)
+echo ""","1","file:/${archiveID}/","/${archiveID}/manifest.xml","manifest.xml","METHOD","$STATUS","SIZE","File","xml","","EXTENSION_MISMATCH","${md5_hash}","FORMAT_COUNT","PUID","application/xml","Xml Document","FORMAT_VERSION","${pid}",""">>$profile_extended_csv
+
+
+
 #-----------------------------------------------------------------------------------------------------------------------
 # Produce instruction from the report.
 #-----------------------------------------------------------------------------------------------------------------------
