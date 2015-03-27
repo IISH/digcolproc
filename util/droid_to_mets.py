@@ -125,7 +125,6 @@ def structmap(xl, files, map):
         id = file[Droid.ID]
         fileid_content = file[Droid.TYPE].upper() + '_' + id
         fileid_dc = file[Droid.TYPE].upper() + '_DC_' + id
-        name = file[Droid.NAME]
         if file[Droid.TYPE] == 'Folder':
             xl.elem('METS:div', {'TYPE': 'folder'}). \
                 elem('METS:div', {'TYPE': 'dc'}). \
@@ -134,7 +133,10 @@ def structmap(xl, files, map):
                 structmap(xl, map[id], map)
             xl.close_entry()
         else:
-            xl.elem('METS:div', {'TYPE': 'file'}). \
+            _a = {'TYPE': 'file'}
+            if ( file[Droid.SEQ] ):
+                _a['ORDER'] = file[Droid.SEQ]
+            xl.elem('METS:div', _a). \
                 elem('METS:div', {'TYPE': 'content'}). \
                 elem('METS:fptr', {'FILEID': fileid_content}). \
                 close_entry(2). \

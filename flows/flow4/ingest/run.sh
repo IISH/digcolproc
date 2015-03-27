@@ -19,7 +19,7 @@
 #-----------------------------------------------------------------------------------------------------------------------
 source "${DIGCOLPROC_HOME}setup.sh" $0 "$@"
 source ../call_api_status.sh
-
+pid=$na/$archiveID
 
 
 #-----------------------------------------------------------------------------------------------------------------------
@@ -106,10 +106,10 @@ profile_csv=$profile.csv
 droid -p $profile --export-file $profile_csv >> $log
 rc=$?
 if [[ $rc != 0 ]] ; then
-    exit_error "$pid" ${STATUS} "Droid reporting threw an error."
+    exit_error "Droid reporting threw an error."
 fi
 if [ ! -f $profile_csv ] ; then
-    exit_error "$pid" ${STATUS} "Unable to create a droid profile: ${profile_csv}"
+    exit_error "Unable to create a droid profile: ${profile_csv}"
 fi
 
 
@@ -155,7 +155,6 @@ echo ""","1","file:/${archiveID}/","/${archiveID}/manifest.xml","manifest.xml","
 #-----------------------------------------------------------------------------------------------------------------------
 # Produce instruction from the report.
 #-----------------------------------------------------------------------------------------------------------------------
-pid=$na/$archiveID
 work_instruction=$work/instruction.xml
 python ${DIGCOLPROC_HOME}/util/droid_to_instruction.py -s $profile_extended_csv -t $work_instruction --objid "$pid" --access "$access" --submission_date "$datestamp" --autoIngestValidInstruction "$flow_autoIngestValidInstruction" --label "$archiveID $flow_client" --action "add" --use_seq --notificationEMail "$flow_notificationEMail" --plan "StagingfileBindPIDs,StagingfileIngestMaster" >> $log
 rc=$?
@@ -192,6 +191,35 @@ rc=$?
 if [[ $rc != 0 ]] ; then
     exit_error "FTP Failed"
     exit 1
+fi
+
+
+
+#-----------------------------------------------------------------------------------------------------------------------
+# Bind the PID
+#-----------------------------------------------------------------------------------------------------------------------
+soapenv="<?xml version='1.0' encoding='UTF-8'?>  \
+		<soapenv:Envelope xmlns:soapenv='http://schemas.xmlsoap.org/soap/envelope/' xmlns:pid='http://pid.socialhistoryservices.org/'>  \
+			<soapenv:Body> \
+				<pid:UpsertPidRequest> \
+					<pid:na>$na</pid:na> \
+					<pid:handle> \
+						<pid:pid>$pid</pid:pid> \
+						<pid:locAtt> \
+								<pid:location weight='1' href='$or/metadata/$pid'/> \
+								<pid:location weight='0' href='$or/file/master/$pid' view='master'/> \
+							</pid:locAtt> \
+					</pid:handle> \
+				</pid:UpsertPidRequest> \
+			</soapenv:Body> \
+		</soapenv:Envelope>"
+echo "Binding pid ${pid} with ${soapenv}" >> $log
+rc=$?
+wget -O /dev/null --header="Content-Type: text/xml" \
+    --header="Authorization: oauth $pidwebserviceKey" --post-data "$soapenv" \
+    --no-check-certificate $pidwebserviceEndpoint
+if [[ $rc != 0 ]] ; then
+    exit_error "The submission to the object repostory succeeded. However we failed to bind the pid to the url of the manifest."
 fi
 
 
