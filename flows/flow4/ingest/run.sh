@@ -130,33 +130,10 @@ fi
 
 
 #-----------------------------------------------------------------------------------------------------------------------
-# Create a mets document
-#-----------------------------------------------------------------------------------------------------------------------
-manifest=${fileSet}/manifest.xml
-python ${DIGCOLPROC_HOME}/util/droid_to_mets.py --sourcefile $profile_extended_csv --targetfile $manifest --objid "$pid"
-rc=$?
-if [[ $rc != 0 ]] ; then
-    exit_error "Failed to create a mets document."
-fi
-if [ ! -f $manifest ] ; then
-    exit_error "Failed to find a mets file at ${manifest}"
-fi
-
-
-
-#-----------------------------------------------------------------------------------------------------------------------
-# Add the mets file to the manifest.csv, in order for it to be in the xml instruction
-#-----------------------------------------------------------------------------------------------------------------------
-md5_hash=$(md5sum $manifest | cut -d ' ' -f 1)
-echo ""","1","file:/${archiveID}/","/${archiveID}/manifest.xml","manifest.xml","METHOD","$STATUS","SIZE","File","xml","","EXTENSION_MISMATCH","${md5_hash}","FORMAT_COUNT","PUID","application/xml","Xml Document","FORMAT_VERSION","${pid}",""">>$profile_extended_csv
-
-
-
-#-----------------------------------------------------------------------------------------------------------------------
 # Produce instruction from the report.
 #-----------------------------------------------------------------------------------------------------------------------
 work_instruction=$work/instruction.xml
-python ${DIGCOLPROC_HOME}/util/droid_to_instruction.py -s $profile_extended_csv -t $work_instruction --objid "$pid" --access "$access" --submission_date "$datestamp" --autoIngestValidInstruction "$flow_autoIngestValidInstruction" --label "$archiveID $flow_client" --action "add" --use_seq --notificationEMail "$flow_notificationEMail" --plan "StagingfileIngestLevel3,StagingfileIngestLevel2,StagingfileIngestLevel1,StagingfileBindPIDs,StagingfileIngestMaster" >> $log
+python ${DIGCOLPROC_HOME}/util/droid_to_instruction.py -s $profile_extended_csv -t $work_instruction --objid "$pid" --access "$access" --submission_date "$datestamp" --autoIngestValidInstruction "$flow_autoIngestValidInstruction" --label "$archiveID $flow_client" --action "add" --use_seq --notificationEMail "$flow_notificationEMail" --plan "StagingfileIngestLevel3,StagingfileIngestLevel2,StagingfileIngestLevel1,StagingfileBindPIDs,StagingfileBindObjId,StagingfileIngestMaster" >> $log
 rc=$?
 if [[ $rc != 0 ]] ; then
     exit_error "Failed to create an instruction."
@@ -191,35 +168,6 @@ rc=$?
 if [[ $rc != 0 ]] ; then
     exit_error "FTP Failed"
     exit 1
-fi
-
-
-
-#-----------------------------------------------------------------------------------------------------------------------
-# Bind the PID
-#-----------------------------------------------------------------------------------------------------------------------
-soapenv="<?xml version='1.0' encoding='UTF-8'?>  \
-		<soapenv:Envelope xmlns:soapenv='http://schemas.xmlsoap.org/soap/envelope/' xmlns:pid='http://pid.socialhistoryservices.org/'>  \
-			<soapenv:Body> \
-				<pid:UpsertPidRequest> \
-					<pid:na>$na</pid:na> \
-					<pid:handle> \
-						<pid:pid>$pid</pid:pid> \
-						<pid:locAtt> \
-								<pid:location weight='1' href='$or/metadata/$pid'/> \
-								<pid:location weight='0' href='$or/file/master/$pid' view='master'/> \
-							</pid:locAtt> \
-					</pid:handle> \
-				</pid:UpsertPidRequest> \
-			</soapenv:Body> \
-		</soapenv:Envelope>"
-echo "Binding pid ${pid} with ${soapenv}" >> $log
-rc=$?
-wget -O /dev/null --header="Content-Type: text/xml" \
-    --header="Authorization: oauth $pidwebserviceKey" --post-data "$soapenv" \
-    --no-check-certificate $pidwebserviceEndpoint
-if [[ $rc != 0 ]] ; then
-    exit_error "The submission to the object repostory succeeded. However we failed to bind the pid to the url of the manifest."
 fi
 
 
