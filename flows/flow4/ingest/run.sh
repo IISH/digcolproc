@@ -118,7 +118,7 @@ fi
 # Now extend the report with two columns: a md5 checksum and a persistent identifier
 #-----------------------------------------------------------------------------------------------------------------------
 profile_extended_csv=$profile.extended.csv
-python ${DIGCOLPROC_HOME}/util/droid_extend_csv.py --sourcefile $profile_csv --targetfile $profile_extended_csv --na $na --fileset $fileSet >> $log
+python ${DIGCOLPROC_HOME}/util/droid_extend_csv.py --sourcefile $profile_csv --targetfile $profile_extended_csv --na $na --fileset $fileSet --force_seq >> $log
 rc=$?
 if [[ $rc != 0 ]] ; then
     exit_error "Failed to extend the droid report with a PID and md5 checksum."

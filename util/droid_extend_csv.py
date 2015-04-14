@@ -24,18 +24,21 @@ UNKNOWN_MIME_TYPE = 'application/octet-stream'
 SEQ_PATTERN = re.compile('^([a-zA-Z0-9]+)\.([a-zA-Z0-9]+)$|^([a-zA-Z0-9]+)\.([0-9]+)\.([a-zA-Z0-9]+)$')
 
 
-def parse_csv(sourcefile, targetfile, na, fileset):
+def parse_csv(sourcefile, targetfile, na, fileset, force_seq):
     manifest = open(targetfile, 'w')
+    seq = 0
 
     with open(sourcefile, 'rb') as csvfile:
         reader = csv.reader(csvfile, delimiter=',', quotechar='"')
         for items in reader:
             if items[Droid.TYPE] == 'File':
+                if force_seq:
+                    seq+=1
                 items[Droid.HASH] = hashfile(items[Droid.FILE_PATH])
                 if not items[Droid.MIME_TYPE]:
                     items[Droid.MIME_TYPE] = UNKNOWN_MIME_TYPE
                 items.append(na + '/' + str(uuid.uuid4()).upper())
-                items.append(sequence(items[Droid.NAME]))
+                items.append(sequence(items[Droid.NAME]), seq)
             elif items[Droid.TYPE] == 'TYPE':
                 items.append("PID")
                 items.append("SEQ")
@@ -75,17 +78,17 @@ def relative(path, fileset):
 # Sequence
 # Determine a potential sequence based on the file name:
 # filename.sequence.extension
-def sequence(name):
+def sequence(name, seq):
     matcher = SEQ_PATTERN.match(name)
     if matcher:
         if (matcher.group(1)):  # match for filename.extension
             # _objid = matcher.group(1) # the aaa in aaa.bbb
-            _seq = ""
+            _seq = seq if seq else ""
         else:
             # _objid = matcher.group(3) # the aaa in aaa.12345.ccc null null aaa 12345 ccc
             _seq = int(matcher.group(4))  # the 12345 in aaa.12345.ccc null null aaa 12345 ccc
     else:
-        _seq = ""
+        _seq = seq if seq else ""
 
     return str(_seq)
 
@@ -95,11 +98,11 @@ def usage():
 
 
 def main(argv):
-    sourcefile = na = targetfile = fileset = 0
+    sourcefile = na = targetfile = fileset = force_seq = 0
 
     try:
         opts, args = getopt.getopt(argv, 'n:s:t:f:hd',
-                                   ['na=', 'sourcefile=', 'targetfile=', 'fileset=', 'help', 'debug'])
+                                   ['na=', 'sourcefile=', 'targetfile=', 'fileset=', 'force_seq', 'help', 'debug'])
     except getopt.GetoptError:
         usage()
         sys.exit(2)
@@ -107,6 +110,8 @@ def main(argv):
         if opt in ('-h', '--help'):
             usage()
             sys.exit()
+        elif opt == 'force_seq':
+            force_seq = 1
         elif opt == '-d':
             global _debug
             _debug = 1
@@ -127,8 +132,9 @@ def main(argv):
     print('targetfile=' + targetfile)
     print('na=' + na)
     print('fileset=' + fileset)
+    print('force_seq=' + force_seq)
 
-    parse_csv(sourcefile, targetfile, na, fileset)
+    parse_csv(sourcefile, targetfile, na, fileset, force_seq)
 
 
 if __name__ == '__main__':
