@@ -45,9 +45,11 @@ function call_api_status() {
         failure=false
 	fi
 
-	# TODO GCU expand
+	#
 	if [ -z "$message" ]; then
-		if [ $status -eq 20 ] || [ $status -eq 50 ] || [ $status -eq 80 ] || [ $status -eq 110 ]; then
+		if [ $status -eq 40 ] || [ $status -eq 70 ] || [ $status -eq 100 ]; then
+			message="Requested";
+		elif [ $status -eq 20 ] || [ $status -eq 50 ] || [ $status -eq 80 ] || [ $status -eq 110 ]; then
 			message="Processing";
 		elif [ $status -eq 30 ] || [ $status -eq 60 ] || [ $status -eq 90 ] || [ $status -eq 120 ]; then
 			message="Done";
