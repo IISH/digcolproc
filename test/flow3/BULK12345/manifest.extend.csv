@@ -1,0 +1,5 @@
+"ID","PARENT_ID","URI","FILE_PATH","NAME","METHOD","STATUS","SIZE","TYPE","EXT","LAST_MODIFIED","EXTENSION_MISMATCH","HASH","FORMAT_COUNT","PUID","MIME_TYPE","FORMAT_NAME","FORMAT_VERSION","PID","SEQ"
+"1","","file:/BULK12345/","/BULK12345","BULK12345","","Done","","Folder","","2015-04-22T13:02:01","false","","","","","","","",""
+"2","1","file:/BULK12345/a/","/BULK12345/a","a","","Done","","Folder","","2015-04-22T13:00:05","false","","","","","","","",""
+"4","2","file:/BULK12345/a/b.csv","/BULK12345/a/b.csv","b.csv","Extension","Done","6","File","csv","2015-04-22T13:00:05","false","52f83ff6877e42f613bcd2444c22528c","1","x-fmt/18","text/csv","Comma Separated Values","","10622/21CC9C04-0963-4EEB-AE0C-7F3E901FC205",""
+"3","2","file:/BULK12345/a/a.txt","/BULK12345/a/a.txt","a.txt","Extension","Done","6","File","txt","2015-04-22T12:59:54","false","09f7e02f1290be211da707a266f153b3","1","x-fmt/111","text/plain","Plain Text File","","10622/EC88D370-BCC8-403E-82E2-E6A5B3AF0C2E",""
