@@ -67,7 +67,7 @@ def parse_csv():
                 xl.write_entry(u'location', items[Droid.FILE_PATH])
                 xl.write_entry(u'contentType', items[Droid.MIME_TYPE])
                 xl.write_entry(u'md5', items[Droid.HASH])
-                if _attributes.has_key('use_seq') and items[Droid.SEQ]:
+                if items[Droid.SEQ]:
                     xl.write_entry(u'seq', items[Droid.SEQ])
                 xl.close_entry(u'stagingfile')
 
@@ -84,7 +84,7 @@ def main(argv):
     try:
         opts, args = getopt.getopt(argv, 's:t:h',
                                    ['help', 'objid=', 'access=', 'submission_date=', 'autoIngestValidInstruction=',
-                                    'label=', 'action=', 'notificationEMail=', 'plan=', 'use_seq'])
+                                    'label=', 'action=', 'notificationEMail=', 'plan='])
     except getopt.GetoptError as e:
         print("Opt error: " + e.msg)
         usage()

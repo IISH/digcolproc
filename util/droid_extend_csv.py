@@ -38,7 +38,7 @@ def parse_csv(sourcefile, targetfile, na, fileset, force_seq):
                 if not items[Droid.MIME_TYPE]:
                     items[Droid.MIME_TYPE] = UNKNOWN_MIME_TYPE
                 items.append(na + '/' + str(uuid.uuid4()).upper())
-                items.append(sequence(items[Droid.NAME]), seq)
+                items.append(sequence(items[Droid.NAME], seq))
             elif items[Droid.TYPE] == 'TYPE':
                 items.append("PID")
                 items.append("SEQ")
@@ -110,7 +110,7 @@ def main(argv):
         if opt in ('-h', '--help'):
             usage()
             sys.exit()
-        elif opt == 'force_seq':
+        elif opt == '--force_seq':
             force_seq = 1
         elif opt == '-d':
             global _debug
@@ -132,7 +132,7 @@ def main(argv):
     print('targetfile=' + targetfile)
     print('na=' + na)
     print('fileset=' + fileset)
-    print('force_seq=' + force_seq)
+    print('force_seq=' + str(force_seq))
 
     parse_csv(sourcefile, targetfile, na, fileset, force_seq)
 
