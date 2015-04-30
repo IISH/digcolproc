@@ -27,7 +27,6 @@ fi
 report="$log.report"
 echo $fileSet > $report
 groovy ${DIGCOLPROC_HOME}util/remove.file.groovy -file "$file_instruction" -access_token $flow_access_token -or $or -delete true >> $report
-groovy -cp "${DIGCOLPROC_HOME}util/bin/javax.mail-api-1.5.0.jar;${DIGCOLPROC_HOME}util/bin/mail-1.4.7.jar ${DIGCOLPROC_HOME}util/mail.groovy "$report $flow_client "$flow_notificationEMail" "Dagelijkste Sor import van de scans" $mailrelay >> $log
 
 
 
