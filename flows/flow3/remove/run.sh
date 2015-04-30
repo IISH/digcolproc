@@ -22,7 +22,7 @@ fi
 
 
 #-----------------------------------------------------------------------------------------------------------------------
-# Removal procedure. Use -delete true to remove a file when it is confirmed that is exists in the object repository
+# Removal procedure. Use -delete true to remove a file when it is confirmed that is exists in the object repository 
 #-----------------------------------------------------------------------------------------------------------------------
 report="$log.report"
 echo $fileSet > $report
@@ -32,7 +32,7 @@ groovy -cp "${DIGCOLPROC_HOME}util/bin/javax.mail-api-1.5.0.jar;${DIGCOLPROC_HOM
 
 
 #-----------------------------------------------------------------------------------------------------------------------
-# When all files are processed and deleted, the total file count should be one ( the instruction.xml file ).
+# When all files are processed and deleted, the total file count should be one ( the instruction.xml file ). 
 #-----------------------------------------------------------------------------------------------------------------------
 count=$(find $fileSet -type f \( ! -regex ".*/\..*/..*" \) | wc -l)
 if [[ $count == 1 ]] ; then
