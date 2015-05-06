@@ -80,7 +80,7 @@ profile_extended_csv=$profile.extended.csv
 python ${DIGCOLPROC_HOME}/util/droid_extend_csv.py --sourcefile $profile_csv --targetfile $profile_extended_csv --na $na --fileset $fileSet >> $log
 rc=$?
 if [[ $rc != 0 ]] ; then
-    exit_error "$pid" $STATUS "Failed to extend the droid report with a PID and md5 checksum."
+    exit_error "$pid" $STATUS "Failed to extend the droid report with a PID and md5 checksum. -- python ${DIGCOLPROC_HOME}/util/droid_extend_csv.py --sourcefile $profile_csv --targetfile $profile_extended_csv --na $na --fileset $fileSet >> $log "
 fi
 
 
