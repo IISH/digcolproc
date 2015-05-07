@@ -32,7 +32,7 @@ call_api_status $pid ${STATUS}
 #-----------------------------------------------------------------------------------------------------------------------
 file_instruction=$fileSet/instruction.xml
 if [ -f "$file_instruction" ] ; then
-    exit_error "$pid" $STATUS "Instruction already present: ${file_instruction}. This may indicate the SIP is staged \
+    exit_error "$pid" ${STATUS} "Instruction already present: ${file_instruction}. This may indicate the SIP is staged \
     or the ingest is already in progress."
 fi
 
@@ -68,7 +68,7 @@ if [[ $rc != 0 ]] ; then
     exit_error "$pid" ${STATUS} "Droid reporting threw an error."
 fi
 if [ ! -f $profile_csv ] ; then
-    exit_error "$pid" ${STATUS} "Unable to create a droid profile: ${profile_csv}"
+	exit_error "$pid" ${STATUS} "Unable to create a droid profile: ${profile_csv}"
 fi
 
 
@@ -77,10 +77,11 @@ fi
 # Now extend the report with two columns: a md5 checksum and a persistent identifier
 #-----------------------------------------------------------------------------------------------------------------------
 profile_extended_csv=$profile.extended.csv
+echo "RUN: python ${DIGCOLPROC_HOME}/util/droid_extend_csv.py --sourcefile $profile_csv --targetfile $profile_extended_csv --na $na --fileset $fileSet >> $log " >> $log
 python ${DIGCOLPROC_HOME}/util/droid_extend_csv.py --sourcefile $profile_csv --targetfile $profile_extended_csv --na $na --fileset $fileSet >> $log
 rc=$?
 if [[ $rc != 0 ]] ; then
-    exit_error "$pid" $STATUS "Failed to extend the droid report with a PID and md5 checksum. -- python ${DIGCOLPROC_HOME}/util/droid_extend_csv.py --sourcefile $profile_csv --targetfile $profile_extended_csv --na $na --fileset $fileSet >> $log "
+	exit_error "$pid" ${STATUS} "Error flow3-ingest-a3c2d4. Failed to extend the droid report with a PID and md5 checksum."
 fi
 
 
@@ -92,10 +93,10 @@ manifest=${fileSet}/manifest.xml
 python ${DIGCOLPROC_HOME}/util/droid_to_mets.py --sourcefile $profile_extended_csv --targetfile $manifest --objid "$pid"
 rc=$?
 if [[ $rc != 0 ]] ; then
-    exit_error "$pid" $STATUS "Failed to create a mets document."
+    exit_error "$pid" ${STATUS} "Failed to create a mets document."
 fi
 if [ ! -f $manifest ] ; then
-    exit_error "$pid" $STATUS "Failed to find a mets file at ${manifest}"
+    exit_error "$pid" ${STATUS} "Failed to find a mets file at ${manifest}"
 fi
 
 
@@ -115,10 +116,10 @@ work_instruction=$work/instruction.xml
 python ${DIGCOLPROC_HOME}/util/droid_to_instruction.py -s $profile_extended_csv -t $work_instruction --objid "$pid" --access "$flow_access" --submission_date "$datestamp" --autoIngestValidInstruction "$flow_autoIngestValidInstruction" --label "$archiveID $flow_client" --action "add" --notificationEMail "$flow_notificationEMail" --plan "StagingfileBindPIDs,StagingfileIngestMaster" >> $log
 rc=$?
 if [[ $rc != 0 ]] ; then
-    exit_error "$pid" $STATUS "Failed to create an instruction."
+    exit_error "$pid" ${STATUS} "Failed to create an instruction."
 fi
 if [ ! -f $work_instruction ] ; then
-    exit_error "$pid" $STATUS "Failed to find an instruction at ${file_instruction}"
+    exit_error "$pid" ${STATUS} "Failed to find an instruction at ${file_instruction}"
 fi
 
 
@@ -131,7 +132,7 @@ ftp_script=${ftp_script_base}.files.txt
 bash ${DIGCOLPROC_HOME}util/ftp.sh "$ftp_script" "mirror --reverse --delete --verbose ${fileSet} /${archiveID}" "$flow_ftp_connection" "$log"
 rc=$?
 if [[ $rc != 0 ]] ; then
-    exit_error "$pid" $STATUS "FTP error with uploading the files."
+    exit_error "$pid" ${STATUS} "FTP error with uploading the files."
 fi
 
 
@@ -144,7 +145,7 @@ ftp_script=$ftp_script_base.instruction.txt
 bash ${DIGCOLPROC_HOME}util/ftp.sh "$ftp_script" "put -O /${archiveID} ${file_instruction}" "$flow_ftp_connection" "$log"
 rc=$?
 if [[ $rc != 0 ]] ; then
-    exit_error "$pid" $STATUS "FTP error with uploading the object repository instruction."
+    exit_error "$pid" ${STATUS} "FTP error with uploading the object repository instruction."
 fi
 
 
@@ -172,7 +173,7 @@ wget -O /dev/null --header="Content-Type: text/xml" \
     --header="Authorization: oauth $pidwebserviceKey" --post-data "$soapenv" \
     --no-check-certificate $pidwebserviceEndpoint
 if [[ $rc != 0 ]] ; then
-    exit_error "$pid" $STATUS "The submission to the object repostory succeeded. However we failed to bind the pid to the url of the manifest."
+    exit_error "$pid" ${STATUS} "The submission to the object repostory succeeded. However we failed to bind the pid to the url of the manifest."
 fi
 
 
