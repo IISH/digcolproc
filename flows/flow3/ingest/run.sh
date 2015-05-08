@@ -77,11 +77,10 @@ fi
 # Now extend the report with two columns: a md5 checksum and a persistent identifier
 #-----------------------------------------------------------------------------------------------------------------------
 profile_extended_csv=$profile.extended.csv
-echo "RUN: python ${DIGCOLPROC_HOME}/util/droid_extend_csv.py --sourcefile $profile_csv --targetfile $profile_extended_csv --na $na --fileset $fileSet >> $log " >> $log
 python ${DIGCOLPROC_HOME}/util/droid_extend_csv.py --sourcefile $profile_csv --targetfile $profile_extended_csv --na $na --fileset $fileSet >> $log
 rc=$?
 if [[ $rc != 0 ]] ; then
-	exit_error "$pid" ${STATUS} "Error flow3-ingest-a3c2d4. Failed to extend the droid report with a PID and md5 checksum."
+	exit_error "$pid" ${STATUS} "Failed to extend the droid report with a PID and md5 checksum."
 fi
 
 
