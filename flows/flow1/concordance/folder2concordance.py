@@ -44,7 +44,7 @@ def parse_csv(fileset):
 
     with open(concordance_file_bad) as o:
         for line in o:
-            objectnumber_inventorynumber = line.split(',')
+            objectnumber_inventorynumber = line.strip().split(',')
             if len(objectnumber_inventorynumber) > 1:
                 objectnumber = objectnumber_inventorynumber[0]
                 inventorynumber = objectnumber_inventorynumber[1]
