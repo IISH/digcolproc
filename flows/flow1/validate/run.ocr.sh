@@ -49,7 +49,7 @@ fi
 #-----------------------------------------------------------------------------------------------------------------------
 # produce a report.
 #-----------------------------------------------------------------------------------------------------------------------
-profile_csv=$profile.csv
+profile_csv=$work/profile.csv
 droid -p $profile --export-file $profile_csv >> $log
 rc=$?
 if [[ $rc != 0 ]] ; then
@@ -64,17 +64,13 @@ fi
 #-----------------------------------------------------------------------------------------------------------------------
 # Start validation of concordance table based on droid report.
 #-----------------------------------------------------------------------------------------------------------------------
-cf=$work/concordanceValidWithPID.csv
-python ${DIGCOLPROC_HOME}/util/droid_validate_concordance.py --basepath $fs_parent --na $na --droid $profile_csv --sourcefile $fileSet/$archiveID.csv --targetfile $cf >> $report
+python ${DIGCOLPROC_HOME}/util/droid_validate_concordance.py --basepath $fs_parent --droid $profile_csv --concordance $fileSet/$archiveID.csv >> $report
 rc=$?
 if [[ $rc != 0 ]] ; then
     exit_error "Validation of the concordance table failed."
 fi
-if [[ ! -f $cf ]] ; then
-    echo "Unable to find $cf">>$log
-    echo "The validation was interrupted.">>$log
-    exit -1
-fi
+cf=$work/concordanceValid.csv
+cp $fileSet/$archiveID.csv $cf
 
 
 
