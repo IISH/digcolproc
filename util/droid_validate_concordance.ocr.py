@@ -6,11 +6,10 @@
 import re
 import sys
 import csv
-import uuid
 import getopt
 
 from droid import Droid
-from os.path import normpath, basename, splitext, split, join, sep
+from os.path import normpath, basename, splitext, split, sep
 
 # Required
 OBJECT_COLUMN_NAME = 'objnr'
@@ -39,21 +38,20 @@ class ExpectedNr:
     expected_obj_nr = None
 
 
-def parse_csv(basepath, na, droid, sourcefile, targetfile):
+def parse_csv(basepath, droid, concordance):
     files = []
     all_items = []
     header_columns = {}
     expected_nr = ExpectedNr()
 
     # Perform validation for each line in the concordance table
-    with open(sourcefile, 'r') as csvfile:
+    with open(concordance, 'r') as csvfile:
         reader = csv.reader(csvfile, delimiter=',', quotechar='"')
         for i, items in enumerate(reader):
             if not header_columns:
                 print('Validating header columns')
 
                 identify_columns(items, header_columns)
-                create_pid_column_header(items)
             else:
                 print('Validating column ' + str(i))
 
@@ -65,20 +63,11 @@ def parse_csv(basepath, na, droid, sourcefile, targetfile):
 
                 print('Validated column ' + str(i))
                 update_files(items, header_columns, files)
-                create_pid_column(items, na)
-
-            all_items.append(items)
 
     # Perform validation for the complete concordance table
     print('Comparing files on disk with files in concordance table')
     test_droid_existence(all_items, header_columns, droid, basepath, int(expected_nr.expected_obj_nr), files)
     print('Compared files on disk with files in concordance table')
-
-    # Write changes to target concordance file
-    f = open(targetfile, 'w')
-    for items in all_items:
-        f.write(array_to_csv_line(items) + '\n')
-    f.close()
 
     print('----  All tests passed.  ----' + '\n')
 
@@ -103,10 +92,6 @@ def identify_columns(items, header_columns):
             exit(1)
 
     print('Parsing columns complete. No errors detected.')
-
-
-def create_pid_column_header(items):
-    items.append('PID')
 
 
 def check_sequence_numbers(items, line, header_columns, expected_nr):
@@ -223,11 +208,6 @@ def update_files(items, header_columns, files):
     for_all_columns_with_items(header_columns, items, execute_for_column)
 
 
-def create_pid_column(items, na):
-    pid = na + '/' + str(uuid.uuid4()).upper()
-    items.append(pid)
-
-
 def test_droid_existence(all_items, header_columns, droid, basepath, objnr_count, files):
     def execute_for_column(column_name, parent_directory):
         identifier = -1
@@ -336,40 +316,31 @@ def find_parent_folder_for_column(header_columns, column_name, all_items):
 
 
 def get_parent_directory_of_file(path):
-    # Remove (1) the file name and (2) its directory (objnr) from the path: so split twice
+    # Remove (1) the file name and (2) its directory from the path: so split twice
     return split(split(path)[0])[0]
 
 
 def join_paths(*paths):
     paths = [normpath(path) for path in paths]
-    paths = [path[1:] if path.startswith(sep) else path for path in paths]
-    path = join(*paths)
+    path = sep.join(paths)
     return normpath(path)
-
-
-def array_to_csv_line(items):
-    # Add the double quotes and ensure the values with double quotes are escaped.
-    items_escaped = ['"{0}"'.format(item.replace('"', '""')) for item in items]
-    return ','.join(items_escaped)
 
 
 def error(message, line=None, items=None):
     print('Error: ' + message)
     if line is not None and items is not None:
-        print('line ' + str(line + 1) + ': ' + array_to_csv_line(items))
+        print('line ' + str(line + 1) + ': ' + ','.join(items))
 
 
 def usage():
-    print('Usage: droid_validate_concordance.py -b base path; -n naming authority; -d droid report; ' +
-          '-s source concordance table; -t target concordance table')
+    print('Usage: droid_validate_concordance.py -b base path; -d droid report; -c concordance table')
 
 
 def main(argv):
-    basepath = na = droid = sourcefile = targetfile = 0
+    basepath = droid = concordance = 0
 
     try:
-        opts, args = getopt.getopt(argv, 'b:n:d:s:t:hd',
-                                   ['basepath=', 'na=', 'droid=', 'sourcefile=', 'targetfile=', 'help', 'debug'])
+        opts, args = getopt.getopt(argv, 'b:d:c:hd', ['basepath=', 'droid=', 'concordance=', 'help', 'debug'])
     except getopt.GetoptError:
         usage()
         sys.exit(2)
@@ -383,27 +354,20 @@ def main(argv):
             _debug = 1
         elif opt in ('-b', '--basepath'):
             basepath = arg
-        elif opt in ('-n', '--na'):
-            na = arg
         elif opt in ('-d', '--droid'):
             droid = arg
-        elif opt in ('-s', '--sourcefile'):
-            sourcefile = arg
-        elif opt in ('-t', '--targetfile'):
-            targetfile = arg
+        elif opt in ('-c', '--concordance'):
+            concordance = arg
 
     assert basepath
-    assert na
     assert droid
-    assert sourcefile
-    assert targetfile
-    print('basepath=' + basepath)
-    print('na=' + na)
-    print('droid=' + droid)
-    print('sourcefile=' + sourcefile)
-    print('targetfile=' + targetfile + '\n')
+    assert concordance
 
-    parse_csv(basepath, na, droid, sourcefile, targetfile)
+    print('basepath=' + basepath)
+    print('droid=' + droid)
+    print('concordance=' + concordance + '\n')
+
+    parse_csv(basepath, droid, concordance)
 
 
 if __name__ == '__main__':
