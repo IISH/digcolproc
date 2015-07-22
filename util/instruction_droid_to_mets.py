@@ -86,15 +86,16 @@ def create_amdsec(xl, file_groups, access='closed'):
         open_access = False
         file_ref = file_group.file_refs[0]
 
-        if not file_ref.textLayer:
-            if access == 'open':
-                open_access = file_ref.level != 'master'
-            elif access == 'restricted':
-                open_access = file_ref.level == 'level3' or file_ref.level == 'level2'
-            elif access == 'minimal':
-                open_access = file_ref.level == 'level3'
-            elif access == 'closed':
-                open_access = False
+        if file_ref.textLayer:
+            open_access = access == 'open'  # If level 1 has open access, then text layers also have open access
+        elif access == 'open':
+            open_access = file_ref.level != 'master'
+        elif access == 'restricted':
+            open_access = file_ref.level == 'level3' or file_ref.level == 'level2'
+        elif access == 'minimal':
+            open_access = file_ref.level == 'level3'
+        elif access == 'closed':
+            open_access = False
 
         value_ref = 'http://purl.org/eprint/accessRights/OpenAccess' \
             if open_access \
