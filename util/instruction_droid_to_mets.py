@@ -238,7 +238,7 @@ def get_file_refs(instruction, droid):
                 file_ref = FileRef()
                 file_ref.id = 'f' + str(id_counter)
                 file_ref.checkSum = file[Droid.HASH]
-                file_ref.mimeType = file[Droid.MIME_TYPE]
+                file_ref.mimeType = file[Droid.MIME_TYPE].split(',')[0].trim()  # Could contain multiple mime types
                 file_ref.size = file[Droid.SIZE]
                 file_ref.pid = file[Droid.PID]
                 file_ref.level = 'master'

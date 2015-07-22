@@ -65,7 +65,7 @@ def parse_csv():
                 xl.open_entry(u'stagingfile')
                 xl.write_entry(u'pid', items[Droid.PID])
                 xl.write_entry(u'location', items[Droid.FILE_PATH])
-                xl.write_entry(u'contentType', items[Droid.MIME_TYPE])
+                xl.write_entry(u'contentType', items[Droid.MIME_TYPE].split(',')[0].trim())
                 xl.write_entry(u'md5', items[Droid.HASH])
                 if items[Droid.SEQ]:
                     xl.write_entry(u'seq', items[Droid.SEQ])
