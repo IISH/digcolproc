@@ -105,7 +105,7 @@ def create_filesec(xl, csvfile):
                 fileMD(xl, id_dc, name, file[Droid.LAST_MODIFIED]).close_entry()
             else:  # We have two fileGrp elements here. We can insert more metadata in future.
                 xl.elem('METS:fileGrp').elem('METS:fileGrp')
-                mimetype = file[Droid.MIME_TYPE].split(',')[0].trim()
+                mimetype = file[Droid.MIME_TYPE].split(',')[0].strip()
                 fileMD(xl, id_dc, name, file[Droid.LAST_MODIFIED]).elem('METS:file', {'CHECKSUM': file[Droid.HASH],
                                                                                       'CHECKSUMTYPE': 'MD5', 'ID': id,
                                                                                       'MIMETYPE': mimetype,

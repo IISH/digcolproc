@@ -1,36 +1,6 @@
 #!/bin/bash
 #
-# run.sh
-#
-# Usage:
-# run.sh [na] [folder name]
-#
-
-source "${DIGCOLPROC_HOME}setup.sh" $0 "$@"
-pid=$na/$archiveID
-
-
-
-#-----------------------------------------------------------------------------------------------------------------------
-# Is there an instruction ?
-#-----------------------------------------------------------------------------------------------------------------------
-file_instruction=$fileSet/instruction.xml
-if [ ! -f "$file_instruction" ] ; then
-	echo "Instruction not found: $file_instruction">>$log
-	exit 0
-fi
-
-
-
-#-----------------------------------------------------------------------------------------------------------------------
-# Is there an access file ?
-#-----------------------------------------------------------------------------------------------------------------------
-access_file=$fileSet/.access.txt
-if [ ! -f "$access_file" ] ; then
-	echo "Access file not found: $access_file">>$log
-	exit 0
-fi
-access=$(<"$access_file")
+# mets.sh
 
 
 
@@ -43,14 +13,14 @@ access=$(<"$access_file")
 #-----------------------------------------------------------------------------------------------------------------------
 # Create the METS manifest
 #-----------------------------------------------------------------------------------------------------------------------
-manifest=$work/manifest.xml
+manifest=$fileSet/manifest.xml
 python ${DIGCOLPROC_HOME}/util/instruction_droid_to_mets.py --instruction $file_instruction --droid $profile_extended_csv --targetfile $manifest --objid "$pid" --access "$access" >> $log
 rc=$?
 if [[ $rc != 0 ]] ; then
     exit_error "Failed to create a METS file."
 fi
-if [ ! -f mets ] ; then
-    exit_error "Failed to find a METS file at ${manifest}"
+if [ ! -f $manifest ] ; then
+    exit_error "Failed to find a METS file at $manifest"
 fi
 
 
@@ -68,14 +38,14 @@ echo ""","1","file:/${archiveID}/","/${archiveID}/manifest.xml","manifest.xml","
 #-----------------------------------------------------------------------------------------------------------------------
 # Produce instruction for the METS
 #-----------------------------------------------------------------------------------------------------------------------
-instruction_mets=$work/instruction_mets.xml
-python ${DIGCOLPROC_HOME}/util/droid_to_instruction.py -s $profile_manifest -t $instruction_mets --objid "$pid" --access "$access" --submission_date "$datestamp" --autoIngestValidInstruction "$flow_autoIngestValidInstruction" --label "$archiveID $flow_client METS" --action "upsert" --use_seq --notificationEMail "$flow_notificationEMail" --plan "StagingfileIngestMaster" >> $log
+instruction_mets=$fileSet/instruction_mets.xml
+python ${DIGCOLPROC_HOME}/util/droid_to_instruction.py -s $profile_manifest -t $instruction_mets --objid "$pid" --access "$access" --submission_date "$datestamp" --autoIngestValidInstruction "$flow_autoIngestValidInstruction" --label "$archiveID $flow_client METS" --action "upsert" --notificationEMail "$flow_notificationEMail" --plan "StagingfileIngestMaster" >> $log
 rc=$?
 if [[ $rc != 0 ]] ; then
     exit_error "Failed to create an instruction for the METS."
 fi
 if [ ! -f $instruction_mets ] ; then
-    exit_error "Failed to find an instruction for the METS at ${instruction_mets}"
+    exit_error "Failed to find an instruction for the METS at $instruction_mets"
 fi
 
 
@@ -85,11 +55,10 @@ fi
 #-----------------------------------------------------------------------------------------------------------------------
 ftp_script_base=$work/ftp.$archiveID.$datestamp
 ftp_script=$ftp_script_base.mets.txt
-bash ${DIGCOLPROC_HOME}util/ftp.sh "put -O /${work} manifest.xml" "$flow_ftp_connection" "$log"
+bash ${DIGCOLPROC_HOME}util/ftp.sh "$ftp_script" "put -O /${archiveID} ${fileSet}/manifest.xml" "$flow_ftp_connection" "$log"
 rc=$?
 if [[ $rc != 0 ]] ; then
     exit_error "FTP Failed"
-    exit 1
 fi
 
 
@@ -98,17 +67,8 @@ fi
 # Upload the instruction
 #-----------------------------------------------------------------------------------------------------------------------
 ftp_script=$ftp_script_base.instruction.txt
-bash ${DIGCOLPROC_HOME}util/ftp.sh "$ftp_script" "put -O /${work} instruction_mets.xml" "$flow_ftp_connection" "$log"
+bash ${DIGCOLPROC_HOME}util/ftp.sh "$ftp_script" "put -O /${archiveID} ${fileSet}/instruction_mets.xml" "$flow_ftp_connection" "$log"
 rc=$?
 if [[ $rc != 0 ]] ; then
     exit_error "FTP Failed"
-    exit 1
 fi
-
-
-
-#-----------------------------------------------------------------------------------------------------------------------
-# End job
-#-----------------------------------------------------------------------------------------------------------------------
-echo "Done. All went well at this side." >> $log
-exit 0

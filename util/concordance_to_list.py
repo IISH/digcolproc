@@ -7,11 +7,10 @@ import csv
 
 
 def usage():
-    print('Usage: concordance_to_list.py '
-          '--concordance [concordance file] --filter [name of column to filter] (optional)')
+    print('Usage: concordance_to_list.py --concordance [concordance file]')
 
 
-def parse_csv(concordance, filter):
+def parse_csv(concordance):
     columns = {}
     last_items = None
     with open(concordance, 'r') as csvfile:
@@ -19,39 +18,29 @@ def parse_csv(concordance, filter):
         for i, items in enumerate(reader):
             if i == 0:
                 columns = identify_columns(items)
-            elif not filter or last_items[columns[filter]] != items[columns[filter]]:
+            elif not filter or last_items[columns['ID']] != items[columns['ID']]:
                 print_items(items, columns)
 
             last_items = items
 
 
 def print_items(items, columns):
-    items_to_print = [items[columns['objnr']], items[columns['ID']], items[columns['volgnr']], items[columns['PID']]]
-
-    print(items[columns['master']] + ',' + ','.join(items_to_print))
-    for text_column in columns['text']:
-        if items[text_column]:
-            print(items[text_column] + ',' + ','.join(items_to_print))
+    items_to_print = [items[columns['objnr']], items[columns['ID']]]
+    print(','.join(items_to_print))
 
 
 def identify_columns(items):
     columns = {}
     for i, val in enumerate(items):
-        if val.startswith('text '):
-            if 'text' in columns:
-                columns['text'].append(i)
-            else:
-                columns['text'] = [i]
-        else:
-            columns[val] = i
+        columns[val] = i
     return columns
 
 
 def main(argv):
-    concordance = filter = 0
+    concordance = 0
 
     try:
-        opts, args = getopt.getopt(argv, 'c:p:hd', ['concordance=', 'filter=', 'help', 'debug'])
+        opts, args = getopt.getopt(argv, 'c:hd', ['concordance=', 'help', 'debug'])
     except getopt.GetoptError:
         usage()
         sys.exit(2)
@@ -65,11 +54,9 @@ def main(argv):
             _debug = 1
         elif opt in ('-c', '--concordance'):
             concordance = arg
-        elif opt in ('-f', '--filter'):
-            filter = arg
 
     assert concordance
-    parse_csv(concordance, filter)
+    parse_csv(concordance)
 
 
 if __name__ == '__main__':

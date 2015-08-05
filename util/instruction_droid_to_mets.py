@@ -28,7 +28,7 @@ class MetsDocument:
         Set up a document object, which takes SAX events and outputs
         an XML log file
         """
-        document = XMLGenerator(output, encoding, short_empty_elements)
+        document = XMLGenerator(output, encoding)  # TODO: , short_empty_elements
         document.startDocument()
         self._document = document
         self._output = output
@@ -238,7 +238,7 @@ def get_file_refs(instruction, droid):
                 file_ref = FileRef()
                 file_ref.id = 'f' + str(id_counter)
                 file_ref.checkSum = file[Droid.HASH]
-                file_ref.mimeType = file[Droid.MIME_TYPE].split(',')[0].trim()  # Could contain multiple mime types
+                file_ref.mimeType = file[Droid.MIME_TYPE].split(',')[0].strip()  # Could contain multiple mime types
                 file_ref.size = file[Droid.SIZE]
                 file_ref.pid = file[Droid.PID]
                 file_ref.level = 'master'

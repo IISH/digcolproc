@@ -5,13 +5,6 @@
 
 
 #-----------------------------------------------------------------------------------------------------------------------
-# Determine PID
-#-----------------------------------------------------------------------------------------------------------------------
-pid=$na/$archiveID
-
-
-
-#-----------------------------------------------------------------------------------------------------------------------
 # Lock the folder and it's contents
 #-----------------------------------------------------------------------------------------------------------------------
 chown -R root:root $fileSet
@@ -68,7 +61,7 @@ fi
 # Produce instruction from the report.
 #-----------------------------------------------------------------------------------------------------------------------
 work_instruction=$work/instruction.xml
-python ${DIGCOLPROC_HOME}/util/droid_to_instruction.py -s $profile_extended_csv -t $work_instruction --objid "$pid" --access "$access" --submission_date "$datestamp" --autoIngestValidInstruction "$flow_autoIngestValidInstruction" --label "$archiveID $flow_client" --action "add" --use_seq --notificationEMail "$flow_notificationEMail" --plan "StagingfileIngestLevel3,StagingfileIngestLevel2,StagingfileIngestLevel1,StagingfileBindPIDs,StagingfileBindObjId,StagingfileIngestMaster" >> $log
+python ${DIGCOLPROC_HOME}/util/droid_to_instruction.py -s $profile_extended_csv -t $work_instruction --objid "$pid" --access "$access" --submission_date "$datestamp" --autoIngestValidInstruction "$flow_autoIngestValidInstruction" --label "$archiveID $flow_client" --action "add" --notificationEMail "$flow_notificationEMail" --plan "StagingfileIngestLevel3,StagingfileIngestLevel2,StagingfileIngestLevel1,StagingfileBindPIDs,StagingfileIngestMaster" >> $log
 rc=$?
 if [[ $rc != 0 ]] ; then
     exit_error "Failed to create an instruction."
@@ -88,7 +81,6 @@ bash ${DIGCOLPROC_HOME}util/ftp.sh "$ftp_script" "mirror --reverse --delete --ve
 rc=$?
 if [[ $rc != 0 ]] ; then
     exit_error "FTP Failed"
-    exit 1
 fi
 
 
@@ -102,5 +94,62 @@ bash ${DIGCOLPROC_HOME}util/ftp.sh "$ftp_script" "put -O /${archiveID} ${fileSet
 rc=$?
 if [[ $rc != 0 ]] ; then
     exit_error "FTP Failed"
-    exit 1
+fi
+
+
+
+#-----------------------------------------------------------------------------------------------------------------------
+# Declare objid PID
+#-----------------------------------------------------------------------------------------------------------------------
+lastpid=""
+while read line
+do
+    IFS=, read ID PARENT_ID URI FILE_PATH NAME METHOD STATUS SIZE TYPE EXT LAST_MODIFIED EXTENSION_MISMATCH HASH FORMAT_COUNT PUID MIME_TYPE FORMAT_NAME FORMAT_VERSION PID SEQ <<< "$line"
+    if [ -z "$lastpid" ] && [ "$SEQ" == "\"2\"" ]; then
+        lastpid="${PID%\"}"
+        lastpid="${lastpid#\"}"
+
+        pidLocation=""
+        if [ ! -z "$catalogUrl" ] ; then
+            pidLocation="<pid:location weight='1' href='$catalogUrl'/> <pid:location weight='0' href='$catalogUrl' view='catalog'/>"
+        else
+            pidLocation="<pid:location weight='1' href='$or/mets/$pid'/>"
+        fi
+
+        soapenv="<?xml version='1.0' encoding='UTF-8'?>  \
+		<soapenv:Envelope xmlns:soapenv='http://schemas.xmlsoap.org/soap/envelope/' xmlns:pid='http://pid.socialhistoryservices.org/'>  \
+			<soapenv:Body> \
+				<pid:UpsertPidRequest> \
+					<pid:na>$na</pid:na> \
+					<pid:handle> \
+						<<pid:pid>$pid</pid:pid> \
+                            <pid:locAtt> \
+                                $pidLocation \
+                                <pid:location weight='0' href='$or/mets/$pid' view='mets'/> \
+                                <pid:location weight='0' href='$or/pdf/$pid' view='pdf'/> \
+                                <pid:location weight='0' href='$or/file/master/$lastpid' view='master'/> \
+                                <pid:location weight='0' href='$or/file/level1/$lastpid' view='level1'/> \
+                                <pid:location weight='0' href='$or/file/level2/$lastpid' view='level2'/> \
+                                <pid:location weight='0' href='$or/file/level3/$lastpid' view='level3'/> \
+                            </pid:locAtt> \
+					</pid:handle> \
+				</pid:UpsertPidRequest> \
+			</soapenv:Body> \
+		</soapenv:Envelope>"
+
+        echo "Sending $objid" >> $log
+        wget -O /dev/null --header="Content-Type: text/xml" \
+            --header="Authorization: oauth $pidwebserviceKey" --post-data "$soapenv" \
+            --no-check-certificate $pidwebserviceEndpoint
+
+        rc=$?
+        if [[ $rc != 0 ]]; then
+            echo "Message:" >> $log
+            echo $soapenv >> $log
+            exit_error "Error from PID webservice: $rc" >> $log
+        fi
+    fi
+done < $profile_extended_csv
+if [ -z "$lastpid" ] ; then
+    exit_error "No PID found for binding the PID of the objid."
 fi

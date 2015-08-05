@@ -21,6 +21,7 @@ source "${DIGCOLPROC_HOME}setup.sh" $0 "$@"
 source ../call_api_status.sh
 
 
+
 #-----------------------------------------------------------------------------------------------------------------------
 # Is the ingest in progress ?
 #-----------------------------------------------------------------------------------------------------------------------
@@ -33,24 +34,26 @@ fi
 
 #-----------------------------------------------------------------------------------------------------------------------
 # Now loop though all files in the folder and see if their size is non zero and have a valid syntax.
+# Spaces in path: http://stackoverflow.com/questions/23356779/how-can-i-store-find-command-result-as-arrays-in-bash
 #-----------------------------------------------------------------------------------------------------------------------
 error_number=0
 regex_filename="^${archiveID}\.[a-zA-Z0-9]+$|^${archiveID}\.[0-9]+\.[a-zA-Z0-9]+$" # abcdefg.extension  or abcdefg.12345.extension
-for f in $(find "$fileSet" -type f )
-do
+while IFS=  read -r -d $'\0'; do
+    f=("$REPLY")
+
     filesize=$(stat -c%s "$f")
     if [[ $filesize == 0 ]]
     then
         let "error_number++"
         echo "Error ${error_number}: File is zero bytes: ${f}" >> $log
     fi
-    f=$(basename $f)
-    if [[ ! $f =~ $regex_filename ]]
+    f=$(basename "$f")
+    if [[ ! "$f" =~ $regex_filename ]]
     then
         let "error_number++"
         echo "Error ${error_number}: File is ${f} but expect ${regex_filename}" >> $log
     fi
-done
+done < <(find ${fileSet} -type f -print0)
 if [[ $error_number == 0 ]]
 then
     echo "Files look good" >> $log
@@ -79,6 +82,7 @@ echo "$access" > ${fileSet}/.access.txt
 #-----------------------------------------------------------------------------------------------------------------------
 # Start the ingest
 #-----------------------------------------------------------------------------------------------------------------------
+pid=$na/$archiveID
 source ../ingest.sh
 
 

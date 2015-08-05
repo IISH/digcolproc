@@ -8,7 +8,7 @@
 # load environment variables
 #-----------------------------------------------------------------------------------------------------------------------
 source "${DIGCOLPROC_HOME}setup.sh" $0 "$@"
-
+source ../call_api_status.sh
 report=$work/report.txt
 
 
@@ -75,9 +75,30 @@ cp $fileSet/$archiveID.csv $cf
 
 
 #-----------------------------------------------------------------------------------------------------------------------
-# Start EAD validation TODO: Move to ingest?
+# Start EAD validation
 #-----------------------------------------------------------------------------------------------------------------------
-source ./ead.sh
+eadFile=$fileSet/$archiveID.xml
+if [ ! -f $eadFile ] ; then
+    exit_error "Unable to find the EAD document at $eadFile The validation was interrupted."
+fi
+
+archiveIDs=$work/archiveIDs.xml
+echo "<?xml version=\"1.0\" encoding=\"UTF-8\"?><list>" > $archiveIDs
+while read line
+do
+    IFS=, read objnr ID <<< "$line"
+    echo "<item>$ID</item>" >> $archiveIDs
+done < <(python ${DIGCOLPROC_HOME}/util/concordance_to_list.py --concordance "$cf")
+echo "</list>" >> $archiveIDs
+
+eadReport=$work/ead.report.html
+groovy ${DIGCOLPROC_HOME}util/ead.groovy "$eadFile" "$archiveIDs" $eadReport >> $log
+if [ -f $eadReport ] ; then
+    echo "See the EAD validation for inventarisnummer and unitid matches at" >> $log
+    echo $eadReport >> $log
+else
+    exit_error "Unable to validate $eadFile"
+fi
 
 
 
