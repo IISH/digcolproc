@@ -51,7 +51,7 @@ def move_files(columns, items):
     dir_name = archive_id + '.' + items[columns['ID']]
     volgnr = items[columns['volgnr']]
 
-    move_files_for(dir_name, items[columns['master']], 'archival image', volgnr)
+    move_files_for(dir_name, items[columns['master']], 'archive image', volgnr)
     move_files_for(dir_name, items[columns['jpeg']], '.level1', volgnr)
 
     for name in columns['text']:
