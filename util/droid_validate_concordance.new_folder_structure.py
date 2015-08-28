@@ -2,6 +2,8 @@
 #
 # droid_validate_concordance.ocr.py
 #
+# New folder structure
+#
 
 import re
 import sys
@@ -175,8 +177,9 @@ def test_file_existence_and_headers(items, line, header_columns, droid, basepath
         found_file = False
         found_objnr = False
 
+        archive = path.split(sep)[1]
         file_path = join_paths(basepath, path)
-        objnr_path = join_paths(basepath, get_parent_directory_of_file(path), objnr)
+        objnr_path = join_paths(basepath, archive, archive + '.' + objnr)
 
         with open(droid, 'r') as csvfile:
             reader = csv.reader(csvfile, delimiter=',', quotechar='"')
@@ -207,6 +210,9 @@ def test_file_existence_and_headers(items, line, header_columns, droid, basepath
             error('Found objectnummer ' + objnr + ' in concordance table without corresponding subdirectory '
                   + objnr_path, line, items)
 
+        if not file_path.startswith(objnr_path):
+            error('The file ' + file_path + ' was not found in the folder ' + objnr_path, line, items)
+
     for_all_columns_with_items(header_columns, items, execute_for_column)
 
 
@@ -219,58 +225,52 @@ def update_files(items, header_columns, files):
 
 
 def test_droid_existence(all_items, header_columns, droid, basepath, objnr_count, files):
-    def execute_for_column(column_name, parent_directory):
-        identifier = -1
-        folder_ids = []
-        folder_names = []
-        file_names = []
-        path_parent = join_paths(basepath, parent_directory)
+    identifier = 1  # The root folder always has this identifier
 
-        with open(droid, 'r') as csvfile:
-            reader = csv.reader(csvfile, delimiter=',', quotechar='"')
+    folder_ids = []
+    folder_names = []
 
-            # First find the id
-            next(reader, None)  # skip the headers
-            for file in reader:
-                droid_file_path = file[Droid.FILE_PATH].strip()
-                if droid_file_path == path_parent:
-                    identifier = int(file[Droid.ID])
+    file_folder_ids = []
+    file_names = []
 
-        if identifier > 0:
-            with open(droid, 'r') as csvfile:
-                reader = csv.reader(csvfile, delimiter=',', quotechar='"')
+    # First collect all objnr folders
+    with open(droid, 'r') as csvfile:
+        reader = csv.reader(csvfile, delimiter=',', quotechar='"')
 
-                # Next find the folders
-                next(reader, None)  # skip the headers
-                for file in reader:
-                    if file[Droid.PARENT_ID] and int(file[Droid.PARENT_ID]) == identifier \
-                            and file[Droid.TYPE].strip() == 'Folder':
-                        folder_ids.append(int(file[Droid.ID]))
-                        folder_names.append(file[Droid.NAME].strip())
+        next(reader, None)  # skip the headers
+        for file in reader:
+            if file[Droid.PARENT_ID] and int(file[Droid.PARENT_ID]) == identifier \
+                    and file[Droid.TYPE].strip() == 'Folder':
+                folder_ids.append(int(file[Droid.ID]))
+                folder_names.append(file[Droid.NAME].strip())
 
-            with open(droid, 'r') as csvfile:
-                reader = csv.reader(csvfile, delimiter=',', quotechar='"')
+    # Next find all the sub folders for each objnr folder which in turn contain the files
+    with open(droid, 'r') as csvfile:
+        reader = csv.reader(csvfile, delimiter=',', quotechar='"')
 
-                # Lastly find all the files
-                next(reader, None)  # skip the headers
-                for file in reader:
-                    if file[Droid.PARENT_ID] and int(file[Droid.PARENT_ID]) in folder_ids:
-                        file_names.append(file[Droid.NAME].strip())
+        next(reader, None)  # skip the headers
+        for file in reader:
+            if file[Droid.PARENT_ID] and int(file[Droid.PARENT_ID]) in folder_ids \
+                    and file[Droid.TYPE].strip() == 'Folder':
+                file_folder_ids.append(int(file[Droid.ID]))
 
-        if objnr_count != len(folder_names) and column_name not in header_columns[TEXT_COLUMN_NAME]:
-            error_str = 'Amount of directories found in ' + path_parent + ' (' + str(len(folder_ids)) + ') ' + \
-                        'is not the same as the amount of objects found in concordance file ' + \
-                        '(' + str(objnr_count) + ')\n'
-            missing_folders = ['Folder: ' + missing_folder for missing_folder
-                               in set(folder_names) - set(range(1, objnr_count))]
-            error(error_str + '\n'.join(missing_folders))
+    # Lastly find all the files
+    with open(droid, 'r') as csvfile:
+        reader = csv.reader(csvfile, delimiter=',', quotechar='"')
 
-        missing_files = set(file_names) - set(files)
-        if len(missing_files) > 0:
-            error_str = 'The following files are found on disk but are not listed in the concordance table: \n'
-            error(error_str + '\n'.join(missing_files))
+        next(reader, None)  # skip the headers
+        for file in reader:
+            if file[Droid.PARENT_ID] and int(file[Droid.PARENT_ID]) in file_folder_ids:
+                file_names.append(file[Droid.NAME].strip())
 
-    for_all_columns(header_columns, all_items, execute_for_column)
+    if objnr_count != len(folder_names):
+        error('Amount of directories found (' + str(len(folder_names)) + ') is not the same '
+              'as the amount of objects found in concordance file (' + str(objnr_count) + ')\n')
+
+    missing_files = set(file_names) - set(files)
+    if len(missing_files) > 0:
+        error_str = 'The following files are found on disk but are not listed in the concordance table: \n'
+        error(error_str + '\n'.join(missing_files))
 
 
 def for_all_columns_with_items(header_columns, items, exec_for_column):
@@ -292,29 +292,6 @@ def for_all_columns_with_items(header_columns, items, exec_for_column):
             # Textual files are optional, so skip if empty
             if column:
                 exec_for_column(column_name, normpath(column))
-
-
-def for_all_columns(header_columns, all_items, exec_for_column):
-    parent_directory = find_parent_folder_for_column(header_columns, TIFF_COLUMN_NAME, all_items) \
-        if all_items else None
-    exec_for_column(TIFF_COLUMN_NAME, parent_directory)
-
-    if JPEG_COLUMN_NAME in header_columns:
-        parent_directory = find_parent_folder_for_column(header_columns, JPEG_COLUMN_NAME, all_items) \
-            if all_items else None
-        exec_for_column(JPEG_COLUMN_NAME, parent_directory)
-
-    if JPEG2_COLUMN_NAME in header_columns:
-        parent_directory = find_parent_folder_for_column(header_columns, JPEG2_COLUMN_NAME, all_items) \
-            if all_items else None
-        exec_for_column(JPEG2_COLUMN_NAME, parent_directory)
-
-    if TEXT_COLUMN_NAME in header_columns:
-        header_text_columns = header_columns[TEXT_COLUMN_NAME]
-        for column_name in header_text_columns:
-            parent_directory = find_parent_folder_for_column(header_text_columns, column_name, all_items) \
-                if all_items else None
-            exec_for_column(column_name, parent_directory)
 
 
 def find_parent_folder_for_column(header_columns, column_name, all_items):

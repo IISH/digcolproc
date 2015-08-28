@@ -31,8 +31,13 @@ fi
 
 
 #-----------------------------------------------------------------------------------------------------------------------
-# TODO: Transform to flow 4 directory layout?
+# Transform to flow 4 directory layout
 #-----------------------------------------------------------------------------------------------------------------------
+python ${DIGCOLPROC_HOME}/util/concordance_to_directory.py --concordance $cf --fileset $fileSet >> $log
+rc=$?
+if [[ $rc != 0 ]] ; then
+    exit_error "Failed to transform the directory layout."
+fi
 
 
 
@@ -74,10 +79,6 @@ do
 
     if [ ! -d "$work" ] ; then
         mkdir $work
-    fi
-
-    if [ -d "$fileSet/jpeg" ] ; then
-        mv $fileSet/jpeg $fileSet/.level1
     fi
 
     file_instruction=$fileSet/instruction.xml
