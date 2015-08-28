@@ -23,7 +23,7 @@ class MetsDocument:
         Set up a document object, which takes SAX events and outputs
         an XML log file
         """
-        document = XMLGenerator(output, encoding)
+        document = XMLGenerator(output, encoding)  # Python 3.2 : short_empty_elements
         document.startDocument()
         self._document = document
         self._output = output

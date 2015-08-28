@@ -69,7 +69,12 @@ def move_files_for(parent_dir, cur_path, dir_name, volgnr):
             new_dir = os.path.join(parent_dir, dir_name)
             new_filename = parent_dir + '.' + volgnr + os.path.splitext(cur_path)[1]
 
-            os.makedirs(new_dir, exist_ok=True)
+            try:
+                os.makedirs(new_dir)  # Python 3.2 : exist_ok=True
+            except OSError:
+                if not os.path.isdir(new_dir):
+                    raise
+
             os.rename(cur_path, os.path.join(new_dir, new_filename))
 
 
