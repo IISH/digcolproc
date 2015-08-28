@@ -48,7 +48,7 @@ def identify_columns(items):
 
 def move_files(columns, items):
     archive_id = os.path.basename(os.path.dirname(os.getcwd()))
-    dir_name = archive_id + '.' + items[columns['ID']]
+    dir_name = archive_id + '.' + items[columns['objnr']]
     volgnr = items[columns['volgnr']]
 
     move_files_for(dir_name, items[columns['master']], 'archive image', volgnr)
