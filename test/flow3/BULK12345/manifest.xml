@@ -1,18 +1,2 @@
 <?xml version="1.0" encoding="utf-8"?>
-<instruction xmlns="http://objectrepository.org/instruction/1.0/"
-             sourcefile="/offloader/flow3/10622/offloader-flow3-acc/BULK12345/manifest.extend.csv"
-             targetfile="/offloader/flow3/10622/offloader-flow3-acc/BULK12345/manifest.xml" access="open" plan="bla"
-             objid="10622/BULK12345">
-    <stagingfile>
-        <pid>10622/21CC9C04-0963-4EEB-AE0C-7F3E901FC205</pid>
-        <location>/BULK12345/a/b.csv</location>
-        <contentType>text/csv</contentType>
-        <md5>52f83ff6877e42f613bcd2444c22528c</md5>
-    </stagingfile>
-    <stagingfile>
-        <pid>10622/EC88D370-BCC8-403E-82E2-E6A5B3AF0C2E</pid>
-        <location>/BULK12345/a/a.txt</location>
-        <contentType>text/plain</contentType>
-        <md5>09f7e02f1290be211da707a266f153b3</md5>
-    </stagingfile>
-</instruction>
+<instruction xmlns="http://objectrepository.org/instruction/1.0/" sourcefile="/offloader/flow3/10622/offloader-flow3-acc/BULK12345/manifest.extend.csv" targetfile="/offloader/flow3/10622/offloader-flow3-acc/BULK12345/manifest.xml" access="open" plan="bla" objid="10622/BULK12345"><stagingfile><pid>10622/21CC9C04-0963-4EEB-AE0C-7F3E901FC205</pid><location>/BULK12345/a/b.csv</location><contentType>text/csv</contentType><md5>52f83ff6877e42f613bcd2444c22528c</md5></stagingfile><stagingfile><pid>10622/EC88D370-BCC8-403E-82E2-E6A5B3AF0C2E</pid><location>/BULK12345/a/a.txt</location><contentType>text/plain</contentType><md5>09f7e02f1290be211da707a266f153b3</md5></stagingfile></instruction>

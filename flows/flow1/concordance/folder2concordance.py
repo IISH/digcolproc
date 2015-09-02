@@ -64,7 +64,11 @@ def parse_csv(fileset):
             #extension=name_extension[1]
             na_item_sequence = name.split('_')
             #na = na_item_sequence[0]
-            object_number = na_item_sequence[1]  # 1
+            object_number_file = na_item_sequence[1]  # 1
+
+            if object_number_file != object_number:
+                print "Info: File objectnumber " + object_number_file + " is different from folder " + object_number
+
             if is_number(na_item_sequence[2]):
                 sequence = str(int(na_item_sequence[2]))  # 00005
             else:
