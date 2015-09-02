@@ -25,7 +25,7 @@ def usage():
 CR = "\n"
 
 # our dictionary with objectnumber and inventory numbers
-list = {}
+our_list = {}
 
 
 def parse_csv(fileset):
@@ -46,17 +46,17 @@ def parse_csv(fileset):
         for line in o:
             objectnumber_inventorynumber = line.strip().split(',')
             if len(objectnumber_inventorynumber) > 1:
-                objectnumber = objectnumber_inventorynumber[0]
-                inventorynumber = objectnumber_inventorynumber[1]
-                list[objectnumber] = inventorynumber
-            else:
-                print "Warning: line cannot be parsed: " + line
+                object_number = objectnumber_inventorynumber[0]
+                inventory_number = objectnumber_inventorynumber[1]
+                our_list[object_number] = inventory_number
+                print object_number + "=" + inventory_number
 
     fh = open(concordance_file_good, 'w')
     fh.write('objnr,ID,master,jpeg,volgnr' + CR)
 
-    for objectnumber in os.listdir(tiff_folder):
-        item_folder = tiff_folder + '/' + objectnumber
+    for object_number in os.listdir(tiff_folder):
+        print "object_number=" + object_number
+        item_folder = tiff_folder + '/' + object_number
         for filename in os.listdir(item_folder):
             # filename is for example ARCH00860_1_00005.tif
             name_extension = filename.split('.')
@@ -64,16 +64,32 @@ def parse_csv(fileset):
             #extension=name_extension[1]
             na_item_sequence = name.split('_')
             #na = na_item_sequence[0]
-            objectnumber = na_item_sequence[1]  # 1
-            sequence = str(int(na_item_sequence[2]))  # 00005
-            jpeg_file = relative(fileset + '/jpeg/' + objectnumber + '/' + name + '.jpeg', fileset)
-            filename = relative(fileset + '/' + objectnumber + '/' + name, fileset)
-            if list.has_key(objectnumber):
-                inventorynumber = list[objectnumber]
-                fh.write(objectnumber + ',' + inventorynumber + ',' + filename + '.tif' + ',' + filename + '.jpg' + ',' + sequence + CR)
+            object_number_file = na_item_sequence[1]  # 1
+
+            if object_number_file != object_number:
+                print "Info: File objectnumber " + object_number_file + " is different from folder " + object_number
+
+            if is_number(na_item_sequence[2]):
+                sequence = str(int(na_item_sequence[2]))  # 00005
             else:
-                print "Warning: no such objectnumber: " + objectnumber
+                print("Invalid sequence. Not a number in filename " + tiff_folder + '/' + filename)
+                sequence="NaN"
+
+            tiff_file = relative(fileset + '/Tiff/' + object_number + '/' + name + '.tif', fileset)
+            jpeg_file = relative(fileset + '/jpeg/' + object_number + '/' + name + '.jpg', fileset)
+            if object_number in our_list:
+                inventory_number = our_list[object_number]
+                fh.write(object_number + ',' + inventory_number + ',' + tiff_file + ',' + jpeg_file + ',' + sequence + CR)
+            else:
+                print "Warning: no such object_number: " + object_number
     fh.close()
+
+def is_number(s):
+    try:
+        int(s)
+        return True
+    except ValueError:
+        return False
 
 
 def relative(path, fileset):
