@@ -20,8 +20,8 @@ import uuid
 
 UNKNOWN_MIME_TYPE = 'application/octet-stream'
 
-# Pattern for: aaa.bbb and aaa.123.bbb
-SEQ_PATTERN = re.compile('^([a-zA-Z0-9]+)\.([a-zA-Z0-9]+)$|^([a-zA-Z0-9]+)\.([0-9]+)\.([a-zA-Z0-9]+)$')
+# Pattern for: aaa.bbb and aaa.123.bbb (The part 'aaa' may contain multiple dots)
+SEQ_PATTERN = re.compile('^([a-zA-Z0-9]+)\.([a-zA-Z0-9]+)$|^([a-zA-Z0-9.]+)\.([0-9]+)\.([a-zA-Z0-9]+)$')
 
 
 def parse_csv(sourcefile, targetfile, na, fileset, force_seq):
