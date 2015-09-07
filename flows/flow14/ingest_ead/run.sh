@@ -97,15 +97,19 @@ soapenv="<?xml version='1.0' encoding='UTF-8'?>  \
 </soapenv:Envelope>"
 
 echo "Sending $objid" >> $log
-wget -O /dev/null --header="Content-Type: text/xml" \
-    --header="Authorization: oauth $pidwebserviceKey" --post-data "$soapenv" \
-    --no-check-certificate $pidwebserviceEndpoint
+if $test ; then
+    echo "Message send to PID webservice: $soapenv" >> $log
+else
+    wget -O /dev/null --header="Content-Type: text/xml" \
+        --header="Authorization: oauth $pidwebserviceKey" --post-data "$soapenv" \
+        --no-check-certificate $pidwebserviceEndpoint
 
-rc=$?
-if [[ $rc != 0 ]]; then
-    echo "Message:" >> $log
-    echo $soapenv >> $log
-    exit_error "Error from PID webservice: $rc" >> $log
+    rc=$?
+    if [[ $rc != 0 ]]; then
+        echo "Message:" >> $log
+        echo $soapenv >> $log
+        exit_error "Error from PID webservice: $rc" >> $log
+    fi
 fi
 
 
