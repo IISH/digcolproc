@@ -5,9 +5,48 @@
 
 
 #-----------------------------------------------------------------------------------------------------------------------
+# Start ingest
+#-----------------------------------------------------------------------------------------------------------------------
+echo "Started ingest for $pid" >> $log
+
+
+
+#-----------------------------------------------------------------------------------------------------------------------
+# Is the ingest in progress?
+#-----------------------------------------------------------------------------------------------------------------------
+file_instruction=$fileSet/instruction.xml
+if [ -f "$file_instruction" ] ; then
+    exit_error "Instruction already present: $file_instruction. This may indicate the SIP is staged or the ingest is already in progress. This is not an error." 2
+fi
+
+
+
+#-----------------------------------------------------------------------------------------------------------------------
 # Lock the folder and it's contents
 #-----------------------------------------------------------------------------------------------------------------------
 chown -R root:root $fileSet
+
+
+
+#-----------------------------------------------------------------------------------------------------------------------
+# Temporarily rename all hidden files (So Droid does not include them)
+#-----------------------------------------------------------------------------------------------------------------------
+while IFS=  read -r -d $'\n'; do
+    f=("$REPLY")
+
+    if [ -d "$f" ] ; then
+        while IFS=  read -r -d $'\n'; do
+            f2=("$REPLY")
+            d2="$(dirname "$f2")"
+            b2="$(basename "$f2")"
+            mv "$f2" "$d2/HIDE$b2"
+        done < <(find "$f" -type f | tac)
+    fi
+
+    d="$(dirname "$f")"
+    b="$(basename "$f")"
+    mv "$f" "$d/HIDE$b"
+done < <(find ${fileSet} -name ".*" | tac)
 
 
 
@@ -28,10 +67,23 @@ fi
 
 
 #-----------------------------------------------------------------------------------------------------------------------
-# produce a report.
+# Revert renaming of all hidden files
+#-----------------------------------------------------------------------------------------------------------------------
+while IFS=  read -r -d $'\n'; do
+    f=("$REPLY")
+    d="$(dirname "$f")"
+    b="$(basename "$f")"
+    b_no_hide=${b:4}
+    mv "$f" "$d/$b_no_hide"
+done < <(find ${fileSet} -name "HIDE*" | tac)
+
+
+
+#-----------------------------------------------------------------------------------------------------------------------
+# Produce a report
 #-----------------------------------------------------------------------------------------------------------------------
 profile_csv=$profile.csv
-droid -p $profile --export-file $profile_csv >> $log
+droid -p $profile -f "file_name not starts 'HIDE'" --export-file $profile_csv >> $log
 rc=$?
 if [[ $rc != 0 ]] ; then
     exit_error "Droid reporting threw an error."
@@ -138,18 +190,29 @@ do
 		</soapenv:Envelope>"
 
         echo "Sending $objid" >> $log
-        wget -O /dev/null --header="Content-Type: text/xml" \
-            --header="Authorization: oauth $pidwebserviceKey" --post-data "$soapenv" \
-            --no-check-certificate $pidwebserviceEndpoint
+        if $test ; then
+            echo "Message send to PID webservice: $soapenv" >> $log
+        else
+            wget -O /dev/null --header="Content-Type: text/xml" \
+                --header="Authorization: oauth $pidwebserviceKey" --post-data "$soapenv" \
+                --no-check-certificate $pidwebserviceEndpoint
 
-        rc=$?
-        if [[ $rc != 0 ]]; then
-            echo "Message:" >> $log
-            echo $soapenv >> $log
-            exit_error "Error from PID webservice: $rc" >> $log
+            rc=$?
+            if [[ $rc != 0 ]]; then
+                echo "Message:" >> $log
+                echo $soapenv >> $log
+                exit_error "Error from PID webservice: $rc" >> $log
+            fi
         fi
     fi
 done < $profile_extended_csv
 if [ -z "$lastpid" ] ; then
     exit_error "No PID found for binding the PID of the objid."
 fi
+
+
+
+#-----------------------------------------------------------------------------------------------------------------------
+# Ingest finished
+#-----------------------------------------------------------------------------------------------------------------------
+echo "Finished ingest for $pid" >> $log

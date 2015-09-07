@@ -22,27 +22,6 @@ fi
 
 
 #-----------------------------------------------------------------------------------------------------------------------
-# Removal procedure. Use -delete true to remove a file when it is confirmed that is exists in the object repository
+# Start the removal procedure
 #-----------------------------------------------------------------------------------------------------------------------
-report="$log.report"
-echo $fileSet > $report
-groovy ${DIGCOLPROC_HOME}util/remove.file.groovy -file "$file_instruction" -access_token $flow_access_token -or $or -delete true >> $report
-# TODO: Delete true or false? Difference in flow 1 and flow 4.
-
-
-#-----------------------------------------------------------------------------------------------------------------------
-# When all files are processed and deleted, the total file count should be one ( the instruction.xml file ).
-#-----------------------------------------------------------------------------------------------------------------------
-count=$(find $fileSet -type f \( ! -regex ".*/\..*/..*" \) | wc -l)
-if [[ $count == 1 ]] ; then
-	history="${fs_parent}/.history"
-	mkdir -p $history
-	mv $fileSet $history
-fi
-
-
-
-#-----------------------------------------------------------------------------------------------------------------------
-# Notify
-#-----------------------------------------------------------------------------------------------------------------------
-/usr/bin/sendmail --body "$report" --from "$flow_client" --to "$flow_notificationEMail" --subject "Removal eport for $archiveID" --mail_relay "$mail_relay" --mail_user "$mail_user" --mail_password "$mail_password" >> $log
+source ../remove.sh

@@ -43,6 +43,7 @@ flow4_client=flow2@localhost
 flow4_autoIngestValidInstruction=false
 flow4_notificationEMail=
 
+test=false
 FTP_CONNECTION="[ftp domain]-explicittls -passive"
 datestamp=$(date +"%Y-%m-%d")
 mailrelay=
