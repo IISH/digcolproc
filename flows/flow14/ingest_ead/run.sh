@@ -56,41 +56,19 @@ fi
 
 
 #-----------------------------------------------------------------------------------------------------------------------
-# Start ingest for each item
+# Start ingest and METS creation for each item
 #-----------------------------------------------------------------------------------------------------------------------
-curFileSet=$fileSet
-curArchiveID=$archiveID
-curWork=$work
+pids=()
+i=0
 while read line
 do
     IFS=, read objnr ID <<< "$line"
 
-    fileSet=$curFileSet/$curArchiveID.$objnr
-    archiveID=$(basename "$fileSet")
-    catalogUrl="$catalog/$curArchiveID/ArchiveContentList#$ID"
-    work=$curWork/$curArchiveID.$objnr
-    pid=$na/$curArchiveID.$ID
-
-    echo "fileSet: $fileSet" >> $log
-    echo "archiveID: $archiveID" >> $log
-    echo "catalogUrl: $catalogUrl" >> $log
-    echo "work: $work" >> $log
-    echo "pid: $pid" >> $log
-
-    if [ ! -d "$work" ] ; then
-        mkdir $work
-    fi
-
-    file_instruction=$fileSet/instruction.xml
-    if [ -f "$file_instruction" ] ; then
-        exit_error "Instruction already present: $file_instruction. This may indicate the SIP is staged or the ingest is already in progress. This is not an error."
-    fi
-
-    source ../ingest.sh
+    i=$i+1
+    (source ./ingest_ead_item.sh "$objnr" "$ID") &
+    pids[$i]=$!
 done < <(python ${DIGCOLPROC_HOME}/util/concordance_to_list.py --concordance "$cf")
-fileSet=$curFileSet
-archiveID=$curArchiveID
-work=$curWork
+
 
 
 #-----------------------------------------------------------------------------------------------------------------------
@@ -153,6 +131,27 @@ if [ -f $ead ] ; then
 else
     exit_error "Unable to add daoloc elements to $ead"
 fi
+
+
+
+#-----------------------------------------------------------------------------------------------------------------------
+# Wait for each item to finish ingest and METS creation
+#-----------------------------------------------------------------------------------------------------------------------
+for i in ${!pids[@]}
+do
+    wait ${pids[i]}
+    rc=$?
+    if [[ $rc != 0 && $rc != 2 ]] ; then
+        exit_error "At least one of the items failed to ingest." >> $log
+    fi
+done
+
+
+
+#-----------------------------------------------------------------------------------------------------------------------
+# Start the remove procedure
+#-----------------------------------------------------------------------------------------------------------------------
+# TODO: source ../remove.sh
 
 
 

@@ -52,7 +52,7 @@ def move_files(columns, items):
     volgnr = items[columns['volgnr']]
 
     move_files_for(dir_name, items[columns['master']], 'archive image', volgnr)
-    move_files_for(dir_name, items[columns['jpeg']], '.level1', volgnr)
+    move_files_for(dir_name, items[columns['jpeg']], 'archive image/.level1', volgnr)
 
     for name in columns['text']:
         move_files_for(dir_name, items[columns['text'][name]], name, volgnr)

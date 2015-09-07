@@ -23,16 +23,6 @@ source ../call_api_status.sh
 
 
 #-----------------------------------------------------------------------------------------------------------------------
-# Is the ingest in progress ?
-#-----------------------------------------------------------------------------------------------------------------------
-file_instruction=$fileSet/instruction.xml
-if [ -f "$file_instruction" ] ; then
-    exit_error "Instruction already present: $file_instruction. This may indicate the SIP is staged or the ingest is already in progress. This is not an error."
-fi
-
-
-
-#-----------------------------------------------------------------------------------------------------------------------
 # Now loop though all files in the folder and see if their size is non zero and have a valid syntax.
 # Spaces in path: http://stackoverflow.com/questions/23356779/how-can-i-store-find-command-result-as-arrays-in-bash
 #-----------------------------------------------------------------------------------------------------------------------
@@ -47,6 +37,14 @@ while IFS=  read -r -d $'\0'; do
         let "error_number++"
         echo "Error ${error_number}: File is zero bytes: ${f}" >> $log
     fi
+
+    foldername="$(basename "$(dirname "$f")")"
+    if [[ $foldername == $archiveID ]]
+    then
+        let "error_number++"
+        echo "Error ${error_number}: File not within a use case folder: ${f}" >> $log
+    fi
+
     f=$(basename "$f")
     if [[ ! "$f" =~ $regex_filename ]]
     then
@@ -80,10 +78,18 @@ echo "$access" > ${fileSet}/.access.txt
 
 
 #-----------------------------------------------------------------------------------------------------------------------
-# Start the ingest
+# Start the ingest followed by the METS creation
 #-----------------------------------------------------------------------------------------------------------------------
 pid=$na/$archiveID
 source ../ingest.sh
+# TODO: source ../mets.sh
+
+
+
+#-----------------------------------------------------------------------------------------------------------------------
+# Remove procedure
+#-----------------------------------------------------------------------------------------------------------------------
+# TODO: source ../remove.sh
 
 
 
