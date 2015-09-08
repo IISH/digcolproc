@@ -1,6 +1,9 @@
 # Droid
-# Droid enumeration. The keys values equal the csv index up until FORMAT_VERSION. Then it adds values for four
-# non existing columns. Hence the leap.
+# Droid enumeration. The keys values equal the csv index up until FORMAT_VERSION.
+# Other procedures add keys 'PID' and 'SEQ' columns.
+#
+# Note that a droid analysis may produce more than one FORMAT_* column with container files.
+# These are not read in and ignored here.
 class Droid:
     ID = 0
     PARENT_ID = 1

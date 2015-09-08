@@ -4,13 +4,16 @@
 #
 # Reads in a csv document and parses it to an XML SOR processing instruction.
 
-from droid import Droid
-import sys
 import csv
+from droid import Droid
 import getopt
+import re
+import sys
 from xml.sax.saxutils import XMLGenerator
 
+
 _attributes = {u'xmlns': 'http://objectrepository.org/instruction/1.0/'}
+PID_PATTERN = re.compile('^[0-9]+\/.*$')
 
 
 class XmlInstruction:
@@ -63,9 +66,11 @@ def parse_csv():
         for items in reader:
             if items[Droid.TYPE] == 'File':
                 xl.open_entry(u'stagingfile')
+
+                assert PID_PATTERN.match(items[Droid.PID])
                 xl.write_entry(u'pid', items[Droid.PID])
                 xl.write_entry(u'location', items[Droid.FILE_PATH])
-                xl.write_entry(u'contentType', items[Droid.MIME_TYPE].split(',')[0].strip())
+                xl.write_entry(u'contentType', items[Droid.MIME_TYPE])
                 xl.write_entry(u'md5', items[Droid.HASH])
                 if items[Droid.SEQ]:
                     xl.write_entry(u'seq', items[Droid.SEQ])

@@ -30,12 +30,20 @@ def parse_csv(sourcefile, targetfile, na, fileset, force_seq):
 
     with open(sourcefile, 'rb') as csvfile:
         reader = csv.reader(csvfile, delimiter=',', quotechar='"')
-        for items in reader:
+        for _items in reader:
+
+            # The DROID report may actually contain multiple FORMAT_ columns.
+            # However, we will only accept one and accept the Droid structure as defined in Droid.py
+            # "ID","PARENT_ID","URI","FILE_PATH","NAME","METHOD","STATUS","SIZE","TYPE","EXT","LAST_MODIFIED","EXTENSION_MISMATCH","HASH","FORMAT_COUNT","PUID","MIME_TYPE","FORMAT_NAME","FORMAT_VERSION","PID","SEQ"
+            items = _items[0:18]
+
             if items[Droid.TYPE] == 'File':
                 if force_seq:
                     seq+=1
                 items[Droid.HASH] = hashfile(items[Droid.FILE_PATH])
-                if not items[Droid.MIME_TYPE]:
+                if items[Droid.MIME_TYPE]:
+                    items[Droid.MIME_TYPE] = items[Droid.MIME_TYPE].split(',')[0].strip()
+                else:
                     items[Droid.MIME_TYPE] = UNKNOWN_MIME_TYPE
                 items.append(na + '/' + str(uuid.uuid4()).upper())
                 items.append(sequence(items[Droid.NAME], seq))
