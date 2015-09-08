@@ -5,8 +5,37 @@
 
 
 #-----------------------------------------------------------------------------------------------------------------------
-# TODO: Wait for SOR to process complete instruction
+# Start METS creation
 #-----------------------------------------------------------------------------------------------------------------------
+echo "Started creation of METS for $pid" >> $log
+
+
+
+#-----------------------------------------------------------------------------------------------------------------------
+# Is the ingest of the METS already in progress?
+#-----------------------------------------------------------------------------------------------------------------------
+instruction_mets=$fileSet/instruction_mets.xml
+if [ -f "$instruction_mets" ] ; then
+    exit_error "METS instruction already present: $instruction_mets. This may indicate the SIP is staged or the ingest is already in progress. This is not an error." 2
+fi
+
+
+
+#-----------------------------------------------------------------------------------------------------------------------
+# TODO: Has the SOR processed the complete instruction?
+#-----------------------------------------------------------------------------------------------------------------------
+#echo "Waiting for instruction to be completely processed by the SOR." >> $log
+#while true
+#do
+#    sor_status_code=$(curl -o /dev/null --silent --head --write-out '%{http_code}' "$or/instruction/$pid?access_token=$flow_access_token")
+#    if [[ sor_status_code -eq 404 ]] ; then
+#        sleep 300
+#    elif [[ sor_status_code -ne 200 ]] ; then
+#        exit_error "The SOR returned an unexpected status code $sor_status_code."
+#    else
+#        break
+#    fi
+#done
 
 
 
@@ -38,7 +67,6 @@ echo ""","1","file:/${archiveID}/","/${archiveID}/manifest.xml","manifest.xml","
 #-----------------------------------------------------------------------------------------------------------------------
 # Produce instruction for the METS
 #-----------------------------------------------------------------------------------------------------------------------
-instruction_mets=$fileSet/instruction_mets.xml
 python ${DIGCOLPROC_HOME}/util/droid_to_instruction.py -s $profile_manifest -t $instruction_mets --objid "$pid" --access "$access" --submission_date "$datestamp" --autoIngestValidInstruction "$flow_autoIngestValidInstruction" --label "$archiveID $flow_client METS" --action "upsert" --notificationEMail "$flow_notificationEMail" --plan "StagingfileIngestMaster" >> $log
 rc=$?
 if [[ $rc != 0 ]] ; then
@@ -72,3 +100,10 @@ rc=$?
 if [[ $rc != 0 ]] ; then
     exit_error "FTP Failed"
 fi
+
+
+
+#-----------------------------------------------------------------------------------------------------------------------
+# METS creation finished
+#-----------------------------------------------------------------------------------------------------------------------
+echo "Finished creation of METS for $pid" >> $log

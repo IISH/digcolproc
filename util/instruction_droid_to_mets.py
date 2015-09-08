@@ -13,7 +13,7 @@ import getopt
 from os.path import normpath, split
 from xml.etree import ElementTree
 
-from urllib.request import urlopen
+from urllib2 import urlopen  # Python 3.2 : urllib.request
 from xml.sax.saxutils import XMLGenerator
 
 _attributes = {u'xmlns': 'http://www.loc.gov/METS/',
@@ -62,7 +62,7 @@ class MetsDocument:
 
 
 class FileRef:
-    id = checkSum = mimeType = size = pid = level = seq = textLayer = language = None
+    id = checkSum = mimeType = size = pid = level = seq = textLayer = language = master_use = None
 
 
 class FileGrp:
@@ -70,6 +70,23 @@ class FileGrp:
         self.id = self.use = None
         self.file_refs = []
         self.attributes = {}
+
+
+DERIVATIVES_USES = {
+    'archive image': {
+        'level1': 'hires reference image',
+        'level2': 'reference image',
+        'level3': 'thumbnail image'
+    },
+    'archive audio': {
+        'level1': 'reference audio'
+    },
+    'archive video': {
+        'level1': 'reference video',
+        'level2': 'stills video',
+        'level3': 'thumbnail video',
+    }
+}
 
 
 # For now specifically aimed at access only!
@@ -201,15 +218,19 @@ def get_file_groups(file_refs):
                                and file_ref.language == first_file_ref.language]
         else:
             level = first_file_ref.level
-            use = 'archive image'
-            if level == 'level1':
-                use = 'hires reference image'
-            if level == 'level2':
-                use = 'reference image'
-            if level == 'level3':
-                use = 'thumbnail image'
+            use = first_file_ref.master_use
+
             group_file_refs = [file_ref for file_ref in file_refs_left
-                               if file_ref.level == level and not file_ref.textLayer]
+                               if file_ref.level == level and file_ref.master_use == use and not file_ref.textLayer]
+
+            # Determine the use attribute of a derivative based on the master use and the derivative level
+            if level != 'master':
+                if use in DERIVATIVES_USES and level in DERIVATIVES_USES[use]:
+                    use = DERIVATIVES_USES[use][level]
+                else:
+                    print('Unknown derivative found for a ' + level + ' derivative ' +
+                          'with master use ' + use + ' and with PID ' + first_file_ref.pid)
+                    exit(1)
 
         file_group = FileGrp()
         file_group.id = 'fileGrp-' + str(id_counter)
@@ -227,6 +248,7 @@ def get_file_groups(file_refs):
 
 def get_file_refs(instruction, droid):
     pids = get_pids(instruction)
+    folders = get_folders(droid)
 
     id_counter = 1
     file_refs = []
@@ -238,13 +260,14 @@ def get_file_refs(instruction, droid):
                 file_ref = FileRef()
                 file_ref.id = 'f' + str(id_counter)
                 file_ref.checkSum = file[Droid.HASH]
-                file_ref.mimeType = file[Droid.MIME_TYPE].split(',')[0].strip()  # Could contain multiple mime types
+                file_ref.mimeType = file[Droid.MIME_TYPE]
                 file_ref.size = file[Droid.SIZE]
                 file_ref.pid = file[Droid.PID]
                 file_ref.level = 'master'
                 file_ref.seq = file[Droid.SEQ]
+                file_ref.master_use = folders[file[Droid.PARENT_ID]]
 
-                # Use the folder pattern 'text_[text-layer]_[language]' to determine text layers
+                # Use the folder pattern 'text [text_layer] [language]' to determine text layers
                 file_path = normpath(file[Droid.FILE_PATH])
                 head, tail = split(file_path)
                 while head and tail:
@@ -283,11 +306,26 @@ def add_derivatives_for_master(master_file_ref, file_refs, id_counter):
         file_ref.pid = master_file_ref.pid
         file_ref.level = file_elem.tag
         file_ref.seq = master_file_ref.seq
+        file_ref.master_use = master_file_ref.master_use
 
         file_refs.append(file_ref)
         id_counter += 1
 
     return id_counter
+
+
+def get_folders(droid):
+    folders = {}
+    with open(droid, 'r') as csvfile:
+        reader = csv.reader(csvfile, delimiter=',', quotechar='"')
+        next(reader, None)  # skip the headers
+
+        for file in reader:
+            if file[Droid.TYPE] == 'Folder':
+                folders[file[Droid.ID]] = file[Droid.NAME]
+                # print(file[Droid.ID] + ' = ' + file[Droid.NAME])
+
+    return folders
 
 
 def get_pids(instruction):
@@ -296,9 +334,7 @@ def get_pids(instruction):
         instruction_xml = re.sub('xmlns="[^"]+"', '', instruction_xml, count=1)  # Remove the namespace
 
         instruction_elems = ElementTree.fromstring(instruction_xml)
-        pids = [stagingfile_elem.find('pid').text
-                for stagingfile_elem in instruction_elems.findall('.//stagingfile')]
-        #  if not stagingfile_elem.find('objid') or stagingfile_elem.find('objid').text == objid
+        pids = [stagingfile_elem.find('pid').text for stagingfile_elem in instruction_elems.findall('.//stagingfile')]
 
     return pids
 

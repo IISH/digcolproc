@@ -1,3 +1,7 @@
 "ID","PARENT_ID","URI","FILE_PATH","NAME","METHOD","STATUS","SIZE","TYPE","EXT","LAST_MODIFIED","EXTENSION_MISMATCH","HASH","FORMAT_COUNT","PUID","MIME_TYPE","FORMAT_NAME","FORMAT_VERSION","PID","SEQ"
 "1","","file:/BULK12345/","/BULK12345","BULK12345","","Done","","Folder","","2015-04-22T13:02:01","false","","","","","","","",""
 "2","1","file:/BULK12345/a/","/BULK12345/a","a","","Done","","Folder","","2015-04-22T13:00:05","false","","","","","","","",""
+"4","2","file:/BULK12345/a/b.csv","/BULK12345/a/b.csv","b.csv","Extension","Done","6","File","csv","2015-04-22T13:00:05","false","52f83ff6877e42f613bcd2444c22528c","1","x-fmt/18","text/csv","Comma Separated Values","","10622/AF9540F5-27C1-42C8-A1B8-4EF8ED9BE425",""
+"3","2","file:/BULK12345/a/a.txt","/BULK12345/a/a.txt","a.txt","Extension","Done","6","File","txt","2015-04-22T12:59:54","false","09f7e02f1290be211da707a266f153b3","1","x-fmt/111","text/plain","Plain Text File","","10622/653D9DD8-FA76-409C-8C12-1F4D60D18C6B",""
+"4","2","file:/BULK12345/a/a.txt","/BULK12345/a/a.txt","a.txt","Extension","Done","6","File","txt","2015-04-22T12:59:54","false","09f7e02f1290be211da707a266f153b3","1","x-fmt/111","text/plain","Plain Text File","","10622/B6EE6FA2-AAC8-476F-A961-89B1A02A3CED",""
+"5","2","file:/BULK12345/a/a.txt","/BULK12345/a/a.txt","a.txt","Extension","Done","6","File","txt","2015-04-22T12:59:54","false","09f7e02f1290be211da707a266f153b3","1","x-fmt/111","text/plain","Plain Text File","","10622/3390CAC8-D2D5-44EC-A409-10A1DACB3394",""
