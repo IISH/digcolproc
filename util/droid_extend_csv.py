@@ -37,7 +37,7 @@ def parse_csv(sourcefile, targetfile, na, fileset, force_seq):
             # "ID","PARENT_ID","URI","FILE_PATH","NAME","METHOD","STATUS","SIZE","TYPE","EXT","LAST_MODIFIED","EXTENSION_MISMATCH","HASH","FORMAT_COUNT","PUID","MIME_TYPE","FORMAT_NAME","FORMAT_VERSION","PID","SEQ"
             items = _items[0:18]
 
-            if items[Droid.TYPE] == 'File':
+            if items[Droid.TYPE] == 'File' or items[Droid.TYPE] == 'Container':
                 if force_seq:
                     seq+=1
                 items[Droid.HASH] = hashfile(items[Droid.FILE_PATH])

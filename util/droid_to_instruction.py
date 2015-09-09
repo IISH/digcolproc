@@ -64,7 +64,7 @@ def parse_csv():
     with open(sourcefile, 'rb') as csvfile:
         reader = csv.reader(csvfile, delimiter=',', quotechar='"')
         for items in reader:
-            if items[Droid.TYPE] == 'File':
+            if items[Droid.TYPE] == 'File' or items[Droid.TYPE] == 'Container':
                 xl.open_entry(u'stagingfile')
 
                 assert PID_PATTERN.match(items[Droid.PID])
