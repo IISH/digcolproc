@@ -97,9 +97,7 @@ soapenv="<?xml version='1.0' encoding='UTF-8'?>  \
 </soapenv:Envelope>"
 
 echo "Sending $objid" >> $log
-if $test ; then
-    echo "Message send to PID webservice: $soapenv" >> $log
-else
+if [ "$environment" == "production" ] ; then
     wget -O /dev/null --header="Content-Type: text/xml" \
         --header="Authorization: oauth $pidwebserviceKey" --post-data "$soapenv" \
         --no-check-certificate $pidwebserviceEndpoint
@@ -110,6 +108,8 @@ else
         echo $soapenv >> $log
         exit_error "Error from PID webservice: $rc" >> $log
     fi
+else
+    echo "Message send to PID webservice: $soapenv" >> $log
 fi
 
 
