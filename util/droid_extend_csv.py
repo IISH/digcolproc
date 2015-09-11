@@ -3,10 +3,13 @@
 # droid_extend_csv.py
 #
 # Parse the droid csv file
+# - Pick the first Mime type when several were declared
 # - Replace missing Mime types with the default
+# - Ensure files are larger than zero bytes
 # - Add a md5 checksum
 # - Add a PID
 # - introduce relative paths for the URI and FILE_PATH
+# - only accept the first 19 columns from the report, as these have column keys
 
 import os
 import os.path
@@ -38,6 +41,10 @@ def parse_csv(sourcefile, targetfile, na, fileset, force_seq):
             items = _items[0:18]
 
             if items[Droid.TYPE] == 'File' or items[Droid.TYPE] == 'Container':
+
+                statinfo = os.stat(file)
+                assert not statinfo.st_size == 0, 'A file size cannot be zero in length but it was for ' + file
+
                 if force_seq:
                     seq+=1
                 items[Droid.HASH] = hashfile(items[Droid.FILE_PATH])

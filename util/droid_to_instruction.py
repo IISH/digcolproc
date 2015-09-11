@@ -7,6 +7,7 @@
 import csv
 from droid import Droid
 import getopt
+import os
 import re
 import sys
 from xml.sax.saxutils import XMLGenerator
