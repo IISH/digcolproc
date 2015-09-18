@@ -37,8 +37,8 @@ do
                                     trigger="$fileSet/$(basename $run_folder).txt"
                                     echo $trigger
                                     if [ -f "$trigger" ] ; then
-                                        echo "${run_script} \"${trigger}\" \"${fileSet}\"">>/tmp/event.txt
-                                        $run_script "$trigger">>error.log 2>&2 &
+                                        echo "${run_script} \"${trigger}\" \"${fileSet}\"">>/var/log/digcolproc/event.log
+                                        $run_script "$trigger">>/var/log/digcolproc/error.log 2>&2 &
                                     fi
                                 fi
                             done
