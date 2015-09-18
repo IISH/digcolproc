@@ -38,7 +38,7 @@ do
                                     echo $trigger
                                     if [ -f "$trigger" ] ; then
                                         echo "${run_script} \"${trigger}\" \"${fileSet}\"">>/tmp/event.txt
-                                        $run_script "$trigger" &
+                                        $run_script "$trigger">>error.log 2>&2 &
                                     fi
                                 fi
                             done
