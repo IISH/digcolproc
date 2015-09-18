@@ -37,8 +37,10 @@ do
                                     trigger="$fileSet/$(basename $run_folder).txt"
                                     echo $trigger
                                     if [ -f "$trigger" ] ; then
-                                        echo "${run_script} \"${trigger}\" \"${fileSet}\"">>/var/log/digcolproc/event.log
-                                        $run_script "$trigger" >> "/var/log/digcolproc/${trigger}-${fileSet}-${datestamp}T${time}.log" 2>&2 &
+                                        datestamp=$(date +"%Y-%m-%d")
+                                        time=$(date +"%H")
+                                        echo "${datestamp}T${time} ${run_script} \"${trigger}\" \"${fileSet}\"">>/var/log/digcolproc/event.log
+                                        $run_script "$trigger" >> "/var/log/digcolproc/$(basename $run_folder)-${fileSet}-${datestamp}T${time}.log" 2>&2 &
                                     fi
                                 fi
                             done
