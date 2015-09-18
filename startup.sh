@@ -40,7 +40,7 @@ do
                                         datestamp=$(date +"%Y-%m-%d")
                                         time=$(date +"%H")
                                         echo "${datestamp}T${time} ${run_script} \"${trigger}\" \"${fileSet}\"">>/var/log/digcolproc/event.log
-                                        $run_script "$trigger" >> "/var/log/digcolproc/$(basename $run_folder)-${fileSet}-${datestamp}T${time}.log" 2>&2 &
+                                        $run_script "$trigger" >> "/var/log/digcolproc/$(basename $run_folder)-$(basename $fileSet)-${datestamp}T${time}.log" 2>&2 &
                                     fi
                                 fi
                             done
