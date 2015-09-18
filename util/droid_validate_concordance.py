@@ -81,6 +81,8 @@ def parse_csv(basepath, droid, concordance):
 
 
 def identify_columns(items, header_columns):
+    header_columns[TEXT_COLUMN_NAME] = {}
+    
     for i, val in enumerate(items):
         for column_name in REQUIRED_COLUMNS:
             if val == column_name:
@@ -89,8 +91,6 @@ def identify_columns(items, header_columns):
             if val == column_name:
                 header_columns[column_name] = i
         if val.startswith(TEXT_COLUMN_NAME):
-            if TEXT_COLUMN_NAME not in header_columns:
-                header_columns[TEXT_COLUMN_NAME] = {}
             header_text_columns = header_columns[TEXT_COLUMN_NAME]
             header_text_columns[val] = i
 
