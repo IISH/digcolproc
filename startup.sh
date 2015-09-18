@@ -38,7 +38,7 @@ do
                                     echo $trigger
                                     if [ -f "$trigger" ] ; then
                                         echo "${run_script} \"${trigger}\" \"${fileSet}\"">>/var/log/digcolproc/event.log
-                                        $run_script "$trigger">>/var/log/digcolproc/error.log 2>&2 &
+                                        $run_script "$trigger" >> "/var/log/digcolproc/${trigger}-${fileSet}-${datestamp}T${time}.log" 2>&2 &
                                     fi
                                 fi
                             done
