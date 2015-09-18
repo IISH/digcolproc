@@ -165,7 +165,7 @@ def test_file_existence_and_headers(items, line, header_columns, droid, basepath
         if column_name == TIFF_COLUMN_NAME:
             valid_signatures = ['fmt/353']
         elif column_name == JPEG_COLUMN_NAME or column_name == JPEG2_COLUMN_NAME:
-            valid_signatures = ['fmt/42', 'fmt/43', 'fmt/44']
+            valid_signatures = ['fmt/41', 'fmt/42', 'fmt/43', 'fmt/44']
         elif column_name in header_columns[TEXT_COLUMN_NAME]:
             valid_signatures = ['x-fmt/14', 'x-fmt/15', 'x-fmt/16', 'x-fmt/111']  # Plain text
             valid_signatures += ['fmt/101']  # XML
