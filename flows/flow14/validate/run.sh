@@ -40,9 +40,11 @@ echo "Begin droid analysis for profile ${profile}" >> $log
 droid --recurse -p $profile --profile-resources $fileSet>>$log
 rc=$?
 if [[ $rc != 0 ]] ; then
+    chown -R "$orgOwner:$orgGroup" $fileSet
     exit_error "Droid profiling threw an error."
 fi
 if [[ ! -f $profile ]] ; then
+    chown -R "$orgOwner:$orgGroup" $fileSet
     exit_error "Unable to find a DROID profile."
 fi
 
@@ -55,9 +57,11 @@ profile_csv=$work/profile.csv
 droid -p $profile --export-file $profile_csv >> $log
 rc=$?
 if [[ $rc != 0 ]] ; then
+    chown -R "$orgOwner:$orgGroup" $fileSet
     exit_error "Droid reporting threw an error."
 fi
 if [ ! -f $profile_csv ] ; then
+    chown -R "$orgOwner:$orgGroup" $fileSet
     exit_error "Unable to create a droid profile: ${profile_csv}"
 fi
 
@@ -69,6 +73,7 @@ fi
 python ${DIGCOLPROC_HOME}/util/droid_validate_concordance.py --basepath $fs_parent --droid $profile_csv --concordance $fileSet/$archiveID.csv >> $report
 rc=$?
 if [[ $rc != 0 ]] ; then
+    chown -R "$orgOwner:$orgGroup" $fileSet
     exit_error "Validation of the concordance table failed."
 fi
 cf=$work/concordanceValid.csv
@@ -81,6 +86,7 @@ cp $fileSet/$archiveID.csv $cf
 #-----------------------------------------------------------------------------------------------------------------------
 eadFile=$fileSet/$archiveID.xml
 if [ ! -f $eadFile ] ; then
+    chown -R "$orgOwner:$orgGroup" $fileSet
     exit_error "Unable to find the EAD document at $eadFile The validation was interrupted."
 fi
 
@@ -99,6 +105,7 @@ if [ -f $eadReport ] ; then
     echo "See the EAD validation for inventarisnummer and unitid matches at" >> $log
     echo $eadReport >> $log
 else
+    chown -R "$orgOwner:$orgGroup" $fileSet
     exit_error "Unable to validate $eadFile"
 fi
 
