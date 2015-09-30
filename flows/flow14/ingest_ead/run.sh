@@ -119,21 +119,21 @@ fi
 #-----------------------------------------------------------------------------------------------------------------------
 eadFile=$fileSet/$archiveID.xml
 if [ ! -f $eadFile ] ; then
-    exit_error "Unable to find the EAD document at $eadFile The ingest was interrupted."
-fi
-
-archiveIDs=$fs_parent/.work/$archiveID/validate/archiveIDs.xml
-if [ ! -f $archiveIDs ] ; then
-    exit_error "Unable to find the archiveIDs file at $archiveIDs The ingest was interrupted."
-fi
-
-ead=$work/$archiveID.xml
-groovy ${DIGCOLPROC_HOME}util/ead.groovy "$eadFile" "$archiveIDs" $ead >> $log
-if [ -f $ead ] ; then
-    echo "See the EAD with added daoloc elements at" >> $log
-    $ead >> $log
+    echo "Warning: Unable to find the EAD document at $eadFile" >> $log
 else
-    exit_error "Unable to add daoloc elements to $ead"
+    archiveIDs=$fs_parent/.work/$archiveID/validate/archiveIDs.xml
+    if [ ! -f $archiveIDs ] ; then
+        exit_error "Unable to find the archiveIDs file at $archiveIDs The ingest was interrupted."
+    fi
+
+    ead=$work/$archiveID.xml
+    groovy ${DIGCOLPROC_HOME}util/ead.groovy "$eadFile" "$archiveIDs" $ead >> $log
+    if [ -f $ead ] ; then
+        echo "See the EAD with added daoloc elements at" >> $log
+        $ead >> $log
+    else
+        exit_error "Unable to add daoloc elements to $ead"
+    fi
 fi
 
 

@@ -24,6 +24,8 @@ fi
 #-----------------------------------------------------------------------------------------------------------------------
 # Lock the folder and it's contents
 #-----------------------------------------------------------------------------------------------------------------------
+orgOwner=$(stat -c %U $fileSet)
+orgGroup=$(stat -c %G $fileSet)
 chown -R root:root $fileSet
 
 
@@ -86,9 +88,11 @@ profile_csv=$profile.csv
 droid -p $profile -f "file_name not starts 'HIDE'" --export-file $profile_csv >> $log
 rc=$?
 if [[ $rc != 0 ]] ; then
+    chown -R "$orgOwner:$orgGroup" $fileSet
     exit_error "Droid reporting threw an error."
 fi
 if [ ! -f $profile_csv ] ; then
+    chown -R "$orgOwner:$orgGroup" $fileSet
     exit_error "Unable to create a droid profile: ${profile_csv}"
 fi
 
@@ -101,9 +105,11 @@ profile_extended_csv=$profile.extended.csv
 python ${DIGCOLPROC_HOME}/util/droid_extend_csv.py --sourcefile $profile_csv --targetfile $profile_extended_csv --na $na --fileset $fileSet --force_seq >> $log
 rc=$?
 if [[ $rc != 0 ]] ; then
+    chown -R "$orgOwner:$orgGroup" $fileSet
     exit_error "Failed to extend the droid report with a PID and md5 checksum."
 fi
 if [[ ! -f $profile_extended_csv ]] ; then
+    chown -R "$orgOwner:$orgGroup" $fileSet
     exit_error "Unable to make a DROID report."
 fi
 
@@ -116,9 +122,11 @@ work_instruction=$work/instruction.xml
 python ${DIGCOLPROC_HOME}/util/droid_to_instruction.py -s $profile_extended_csv -t $work_instruction --objid "$pid" --access "$access" --submission_date "$datestamp" --autoIngestValidInstruction "$flow_autoIngestValidInstruction" --label "$archiveID $flow_client" --action "add" --notificationEMail "$flow_notificationEMail" --plan "StagingfileIngestLevel3,StagingfileIngestLevel2,StagingfileIngestLevel1,StagingfileBindPIDs,StagingfileIngestMaster" >> $log
 rc=$?
 if [[ $rc != 0 ]] ; then
+    chown -R "$orgOwner:$orgGroup" $fileSet
     exit_error "Failed to create an instruction."
 fi
 if [ ! -f $work_instruction ] ; then
+    chown -R "$orgOwner:$orgGroup" $fileSet
     exit_error "Failed to find an instruction at ${work_instruction}"
 fi
 
@@ -132,6 +140,7 @@ ftp_script=$ftp_script_base.files.txt
 bash ${DIGCOLPROC_HOME}util/ftp.sh "$ftp_script" "mirror --reverse --delete --verbose ${fileSet} /${archiveID}" "$flow_ftp_connection" "$log"
 rc=$?
 if [[ $rc != 0 ]] ; then
+    chown -R "$orgOwner:$orgGroup" $fileSet
     exit_error "FTP Failed"
 fi
 
@@ -145,6 +154,7 @@ ftp_script=$ftp_script_base.instruction.txt
 bash ${DIGCOLPROC_HOME}util/ftp.sh "$ftp_script" "put -O /${archiveID} ${fileSet}/instruction.xml" "$flow_ftp_connection" "$log"
 rc=$?
 if [[ $rc != 0 ]] ; then
+    chown -R "$orgOwner:$orgGroup" $fileSet
     exit_error "FTP Failed"
 fi
 
@@ -157,7 +167,7 @@ lastpid=""
 while read line
 do
     IFS=, read ID PARENT_ID URI FILE_PATH NAME METHOD STATUS SIZE TYPE EXT LAST_MODIFIED EXTENSION_MISMATCH HASH FORMAT_COUNT PUID MIME_TYPE FORMAT_NAME FORMAT_VERSION PID SEQ <<< "$line"
-    if [ -z "$lastpid" ] && [ "$SEQ" == "\"2\"" ]; then
+    if [ -z "$lastpid" ] ; then
         lastpid="${PID%\"}"
         lastpid="${lastpid#\"}"
 
@@ -197,6 +207,7 @@ do
 
             rc=$?
             if [[ $rc != 0 ]]; then
+                chown -R "$orgOwner:$orgGroup" $fileSet
                 echo "Message:" >> $log
                 echo $soapenv >> $log
                 exit_error "Error from PID webservice: $rc" >> $log
@@ -207,6 +218,7 @@ do
     fi
 done < $profile_extended_csv
 if [ -z "$lastpid" ] ; then
+    chown -R "$orgOwner:$orgGroup" $fileSet
     exit_error "No PID found for binding the PID of the objid."
 fi
 
@@ -215,4 +227,5 @@ fi
 #-----------------------------------------------------------------------------------------------------------------------
 # Ingest finished
 #-----------------------------------------------------------------------------------------------------------------------
+chown -R "$orgOwner:$orgGroup" $fileSet
 echo "Finished ingest for $pid" >> $log
