@@ -43,7 +43,7 @@ fi
 # Create the METS manifest
 #-----------------------------------------------------------------------------------------------------------------------
 manifest=$fileSet/manifest.xml
-python ${DIGCOLPROC_HOME}/util/instruction_droid_to_mets.py --instruction $file_instruction --droid $profile_extended_csv --targetfile $manifest --objid "$pid" --access "$access" >> $log
+python ${DIGCOLPROC_HOME}/util/instruction_droid_to_mets.py --droid $profile_extended_csv --targetfile $manifest --objid "$pid" --access "$access" >> $log
 rc=$?
 if [[ $rc != 0 ]] ; then
     exit_error "Failed to create a METS file."
