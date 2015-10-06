@@ -246,17 +246,15 @@ def get_file_groups(file_refs):
     return file_groups
 
 
-def get_file_refs(instruction, droid):
-    pids = get_pids(instruction)
+def get_file_refs(droid):
     folders = get_folders(droid)
-
     id_counter = 1
     file_refs = []
     with open(droid, 'r') as csvfile:
         reader = csv.reader(csvfile, delimiter=',', quotechar='"')
         next(reader, None)  # skip the headers
         for file in reader:
-            if file[Droid.PID] in pids:
+            if file[Droid.PID]:
                 file_ref = FileRef()
                 file_ref.id = 'f' + str(id_counter)
                 file_ref.checkSum = file[Droid.HASH]
@@ -289,7 +287,7 @@ def get_file_refs(instruction, droid):
 
 def add_derivatives_for_master(master_file_ref, file_refs, id_counter):
     url = 'http://disseminate.objectrepository.org/metadata/' + master_file_ref.pid + '?accept=text/xml&format=xml'
-    metadata_xml = urlopen(url)
+    metadata_xml = urlopen(url).read()
     metadata_xml = re.sub('xmlns="[^"]+"', '', metadata_xml, count=1)  # Remove the namespace for simpler findall()
 
     metadata = ElementTree.fromstring(metadata_xml)
@@ -323,24 +321,12 @@ def get_folders(droid):
         for file in reader:
             if file[Droid.TYPE] == 'Folder':
                 folders[file[Droid.ID]] = file[Droid.NAME]
-                # print(file[Droid.ID] + ' = ' + file[Droid.NAME])
 
     return folders
 
 
-def get_pids(instruction):
-    with open(instruction, 'r') as f:
-        instruction_xml = f.read()
-        instruction_xml = re.sub('xmlns="[^"]+"', '', instruction_xml, count=1)  # Remove the namespace
-
-        instruction_elems = ElementTree.fromstring(instruction_xml)
-        pids = [stagingfile_elem.find('pid').text for stagingfile_elem in instruction_elems.findall('.//stagingfile')]
-
-    return pids
-
-
-def parse_csv(instruction, droid, targetfile, access):
-    file_refs = get_file_refs(instruction, droid)
+def parse_csv(droid, targetfile, access):
+    file_refs = get_file_refs(droid)
     file_groups = get_file_groups(file_refs)
 
     manifest = open(targetfile, 'w')
@@ -362,10 +348,9 @@ def usage():
 
 
 def main(argv):
-    instruction = droid = targetfile = objid = access = 0
+    droid = targetfile = objid = access = 0
     try:
-        opts, args = getopt.getopt(argv, 'i:d:t:o:a:h', ['instruction=', 'droid=', 'targetfile=',
-                                                         'objid=', 'access=', 'help'])
+        opts, args = getopt.getopt(argv, 'd:t:o:a:h', ['droid=', 'targetfile=', 'objid=', 'access=', 'help'])
     except getopt.GetoptError:
         usage()
         sys.exit(2)
@@ -373,8 +358,6 @@ def main(argv):
         if opt in ('-h', '--help'):
             usage()
             sys.exit()
-        elif opt in ('-i', '--instruction'):
-            instruction = arg
         elif opt in ('-d', '--droid'):
             droid = arg
         elif opt in ('-t', '--targetfile'):
@@ -384,20 +367,18 @@ def main(argv):
         elif opt in ('-a', '--access'):
             access = arg
 
-    assert instruction
     assert droid
     assert targetfile
     assert objid
     assert access in ['closed', 'restricted', 'minimal', 'open']
 
-    print('instruction=' + instruction)
     print('droid=' + droid)
     print('targetfile=' + targetfile)
     print('objid=' + objid)
     print('access=' + access)
 
     _attributes['OBJID'] = objid
-    parse_csv(instruction, droid, targetfile, access)
+    parse_csv(droid, targetfile, access)
     return
 
 
