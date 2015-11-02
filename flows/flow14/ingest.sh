@@ -22,6 +22,17 @@ fi
 
 
 #-----------------------------------------------------------------------------------------------------------------------
+# Is there an access file ?
+#-----------------------------------------------------------------------------------------------------------------------
+access_file=$fileSet/.access.txt
+if [ ! -f "$access_file" ] ; then
+	exit_error "Access file not found: $access_file"
+fi
+access=$(<"$access_file")
+
+
+
+#-----------------------------------------------------------------------------------------------------------------------
 # Lock the folder and it's contents
 #-----------------------------------------------------------------------------------------------------------------------
 orgOwner=$(stat -c %U $fileSet)
@@ -60,9 +71,11 @@ echo "Begin droid analysis for profile ${profile}" >> $log
 droid --recurse -p $profile --profile-resources $fileSet>>$log
 rc=$?
 if [[ $rc != 0 ]] ; then
+    chown -R "$orgOwner:$orgGroup" $fileSet
     exit_error "Droid profiling threw an error."
 fi
 if [[ ! -f $profile ]] ; then
+    chown -R "$orgOwner:$orgGroup" $fileSet
     exit_error "Unable to find a DROID profile."
 fi
 
