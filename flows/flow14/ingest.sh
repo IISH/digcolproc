@@ -35,8 +35,8 @@ access=$(<"$access_file")
 #-----------------------------------------------------------------------------------------------------------------------
 # Lock the folder and it's contents
 #-----------------------------------------------------------------------------------------------------------------------
-orgOwner=$(stat -c %U $fileSet)
-orgGroup=$(stat -c %G $fileSet)
+orgOwner=$(stat -c %u $fileSet)
+orgGroup=$(stat -c %g $fileSet)
 chown -R root:root $fileSet
 
 
