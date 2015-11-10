@@ -263,7 +263,8 @@ def test_droid_existence(all_items, header_columns, droid, basepath, objnr_count
                                in set(folder_names) - set(range(1, objnr_count))]
             error(error_str + '\n'.join(missing_folders))
 
-        missing_files = set(file_names) - set(files)
+        files_to_ignore = ['.access.txt']
+        missing_files = set(file_names) - set(files) - set(files_to_ignore)
         if len(missing_files) > 0:
             error_str = 'The following files are found on disk but are not listed in the concordance table: \n'
             error(error_str + '\n'.join(missing_files))
