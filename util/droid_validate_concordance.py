@@ -21,9 +21,8 @@ REQUIRED_COLUMNS = [OBJECT_COLUMN_NAME, INV_COLUMN_NAME, VOLGNR_COLUMN_NAME, TIF
 
 # Optional
 JPEG_COLUMN_NAME = 'jpeg'
-JPEG2_COLUMN_NAME = 'jpeg2'
 
-OPTIONAL_COLUMNS = [JPEG_COLUMN_NAME, JPEG2_COLUMN_NAME]
+OPTIONAL_COLUMNS = [JPEG_COLUMN_NAME]
 
 # Text (starts with)
 TEXT_COLUMN_NAME = 'text'
@@ -136,7 +135,10 @@ def test_relationships(items, line, header_columns):
             reference_name = splitext(basename(normpath(org_reference_name)))[0]
 
             if tiff_name != reference_name:
-                error('Difference in filenames between ' + tiff_name + ' and ' + reference_name, line, items)
+                if not org_reference_name:
+                    error('Empty file name found in column ' + column_name, line, items)
+                else:
+                    error('Difference in filenames between ' + tiff_name + ' and ' + reference_name, line, items)
 
     for_all_columns_with_items(header_columns, items, execute_for_column)
 
@@ -164,7 +166,7 @@ def test_file_existence_and_headers(items, line, header_columns, droid, basepath
         valid_signatures = []
         if column_name == TIFF_COLUMN_NAME:
             valid_signatures = ['fmt/353']
-        elif column_name == JPEG_COLUMN_NAME or column_name == JPEG2_COLUMN_NAME:
+        elif column_name == JPEG_COLUMN_NAME:
             valid_signatures = ['fmt/41', 'fmt/42', 'fmt/43', 'fmt/44']
         elif column_name in header_columns[TEXT_COLUMN_NAME]:
             valid_signatures = ['x-fmt/14', 'x-fmt/15', 'x-fmt/16', 'x-fmt/111']  # Plain text
@@ -198,10 +200,10 @@ def test_file_existence_and_headers(items, line, header_columns, droid, basepath
                 if droid_file_path == objnr_path:
                     found_objnr = True
 
-        if not found_file:
+        if path and not found_file:
             error('File entry in concordance table does not exist in directory: ' + file_path, line, items)
 
-        if not found_objnr:
+        if path and not found_objnr:
             error('Found objectnummer ' + objnr + ' in concordance table without corresponding subdirectory '
                   + objnr_path, line, items)
 
@@ -273,15 +275,11 @@ def test_droid_existence(all_items, header_columns, droid, basepath, objnr_count
 
 def for_all_columns_with_items(header_columns, items, exec_for_column):
     column = items[header_columns[TIFF_COLUMN_NAME]]
-    exec_for_column(TIFF_COLUMN_NAME, normpath(column))
+    exec_for_column(TIFF_COLUMN_NAME, normpath(column) if column else '')
 
     if JPEG_COLUMN_NAME in header_columns:
         column = items[header_columns[JPEG_COLUMN_NAME]]
-        exec_for_column(JPEG_COLUMN_NAME, normpath(column))
-
-    if JPEG2_COLUMN_NAME in header_columns:
-        column = items[header_columns[JPEG2_COLUMN_NAME]]
-        exec_for_column(JPEG2_COLUMN_NAME, normpath(column))
+        exec_for_column(JPEG_COLUMN_NAME, normpath(column) if column else '')
 
     if TEXT_COLUMN_NAME in header_columns:
         header_text_columns = header_columns[TEXT_COLUMN_NAME]
@@ -289,30 +287,28 @@ def for_all_columns_with_items(header_columns, items, exec_for_column):
             column = items[header_text_columns[column_name]]
             # Textual files are optional, so skip if empty
             if column:
-                exec_for_column(column_name, normpath(column))
+                exec_for_column(column_name, normpath(column) if column else '')
 
 
 def for_all_columns(header_columns, all_items, exec_for_column):
     parent_directory = find_parent_folder_for_column(header_columns, TIFF_COLUMN_NAME, all_items) \
         if all_items else None
-    exec_for_column(TIFF_COLUMN_NAME, parent_directory)
+    if parent_directory:
+        exec_for_column(TIFF_COLUMN_NAME, parent_directory)
 
     if JPEG_COLUMN_NAME in header_columns:
         parent_directory = find_parent_folder_for_column(header_columns, JPEG_COLUMN_NAME, all_items) \
             if all_items else None
-        exec_for_column(JPEG_COLUMN_NAME, parent_directory)
-
-    if JPEG2_COLUMN_NAME in header_columns:
-        parent_directory = find_parent_folder_for_column(header_columns, JPEG2_COLUMN_NAME, all_items) \
-            if all_items else None
-        exec_for_column(JPEG2_COLUMN_NAME, parent_directory)
+        if parent_directory:
+            exec_for_column(JPEG_COLUMN_NAME, parent_directory)
 
     if TEXT_COLUMN_NAME in header_columns:
         header_text_columns = header_columns[TEXT_COLUMN_NAME]
         for column_name in header_text_columns:
             parent_directory = find_parent_folder_for_column(header_text_columns, column_name, all_items) \
                 if all_items else None
-            exec_for_column(column_name, parent_directory)
+            if parent_directory:
+                exec_for_column(column_name, parent_directory)
 
 
 def find_parent_folder_for_column(header_columns, column_name, all_items):

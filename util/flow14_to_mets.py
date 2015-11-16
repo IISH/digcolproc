@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 #
-# instruction_droid_to_mets.py
+# flow14_to_mets.py
 #
-# Reads in a SOR instruction and a CSV Droid report and parses it to a METS document.
+# Reads in a CSV Droid report and parses it to a METS document.
 
 from droid import Droid
 import re
@@ -343,8 +343,7 @@ def parse_csv(droid, targetfile, access):
 
 
 def usage():
-    print('Usage: instruction_droid_to_mets.py -i Instruction used during ingest -d Droid CSV file '
-          '-t Target METS document -objid objid -access Access level')
+    print('Usage: flow14_to_mets.py -d Droid CSV file -t Target METS document -objid objid -access Access level')
 
 
 def main(argv):
