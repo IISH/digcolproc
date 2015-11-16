@@ -37,9 +37,9 @@ def parse_csv(fileset):
         print('Expecting a badly coded file at ' + concordance_file_bad)
         sys.exit(-1)
 
-    tiff_folder = fileset + '/Tiff'
-    if not os.path.exists(tiff_folder):
-        print(tiff_folder + ' not found.')
+    master_folder = fileset + '/master'
+    if not os.path.exists(master_folder):
+        print(master_folder + ' not found.')
         sys.exit(-1)
 
     with open(concordance_file_bad) as o:
@@ -54,9 +54,9 @@ def parse_csv(fileset):
     fh = open(concordance_file_good, 'w')
     fh.write('objnr,ID,master,level1,volgnr' + CR)
 
-    for object_number in os.listdir(tiff_folder):
+    for object_number in os.listdir(master_folder):
         print "object_number=" + object_number
-        item_folder = tiff_folder + '/' + object_number
+        item_folder = master_folder + '/' + object_number
         for filename in os.listdir(item_folder):
             # filename is for example ARCH00860_1_00005.tif
             name_extension = filename.split('.')
@@ -68,7 +68,7 @@ def parse_csv(fileset):
             if is_number(na_item_sequence[2]):
                 sequence = str(int(na_item_sequence[2]))  # 00005
             else:
-                print("Invalid sequence. Not a number in filename " + tiff_folder + '/' + filename)
+                print("Invalid sequence. Not a number in filename " + master_folder + '/' + filename)
                 sequence="NaN"
 
             tiff_file = relative(fileset + '/master/' + object_number + '/' + name + '.tif', fileset)

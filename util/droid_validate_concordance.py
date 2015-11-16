@@ -128,32 +128,32 @@ def check_sequence_numbers(items, line, header_columns, expected_nr):
 def test_relationships(items, line, header_columns):
     def execute_for_column(column_name, column):
         if column_name is not MASTER_COLUMN_NAME:
-            org_tiff_name = items[header_columns[MASTER_COLUMN_NAME]]
+            org_master_name = items[header_columns[MASTER_COLUMN_NAME]]
             org_reference_name = column
 
-            tiff_name = splitext(basename(normpath(org_tiff_name)))[0]
+            master_name = splitext(basename(normpath(org_master_name)))[0]
             reference_name = splitext(basename(normpath(org_reference_name)))[0]
 
-            if tiff_name != reference_name:
+            if master_name != reference_name:
                 if not org_reference_name:
                     error('Empty file name found in column ' + column_name, line, items)
                 else:
-                    error('Difference in filenames between ' + tiff_name + ' and ' + reference_name, line, items)
+                    error('Difference in filenames between ' + master_name + ' and ' + reference_name, line, items)
 
     for_all_columns_with_items(header_columns, items, execute_for_column)
 
 
 def test_file_name(items, i, header_columns, all_items):
-    tiff = items[header_columns[MASTER_COLUMN_NAME]]
+    master = items[header_columns[MASTER_COLUMN_NAME]]
     inv = items[header_columns[INV_COLUMN_NAME]]
 
     for cur_items in all_items[1:]:
-        if cur_items[header_columns[MASTER_COLUMN_NAME]] == tiff:
-            error('Duplicate file entry \'' + tiff + '\'', i, items)
+        if cur_items[header_columns[MASTER_COLUMN_NAME]] == master:
+            error('Duplicate file entry \'' + master + '\'', i, items)
 
-    tiff_file = basename(normpath(tiff))
-    if FILE_NAME_REGEX.match(tiff_file) is None:
-        error('The filename \'' + tiff_file + '\' contains an invalid character.', i, items)
+    master_file = basename(normpath(master))
+    if FILE_NAME_REGEX.match(master_file) is None:
+        error('The filename \'' + master_file + '\' contains an invalid character.', i, items)
 
     if FILE_NAME_REGEX.match(inv) is None:
         error('The inventory number \'' + inv + '\' contains an invalid character.', i, items)
