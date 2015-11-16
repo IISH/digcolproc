@@ -15,14 +15,14 @@ from os.path import normpath, basename, splitext, split, sep
 OBJECT_COLUMN_NAME = 'objnr'
 INV_COLUMN_NAME = 'ID'
 VOLGNR_COLUMN_NAME = 'volgnr'
-TIFF_COLUMN_NAME = 'master'
+MASTER_COLUMN_NAME = 'master'
 
-REQUIRED_COLUMNS = [OBJECT_COLUMN_NAME, INV_COLUMN_NAME, VOLGNR_COLUMN_NAME, TIFF_COLUMN_NAME]
+REQUIRED_COLUMNS = [OBJECT_COLUMN_NAME, INV_COLUMN_NAME, VOLGNR_COLUMN_NAME, MASTER_COLUMN_NAME]
 
 # Optional
-JPEG_COLUMN_NAME = 'jpeg'
+LEVEL1_COLUMN_NAME = 'jpeg'
 
-OPTIONAL_COLUMNS = [JPEG_COLUMN_NAME]
+OPTIONAL_COLUMNS = [LEVEL1_COLUMN_NAME]
 
 # Text (starts with)
 TEXT_COLUMN_NAME = 'text'
@@ -127,8 +127,8 @@ def check_sequence_numbers(items, line, header_columns, expected_nr):
 
 def test_relationships(items, line, header_columns):
     def execute_for_column(column_name, column):
-        if column_name is not TIFF_COLUMN_NAME:
-            org_tiff_name = items[header_columns[TIFF_COLUMN_NAME]]
+        if column_name is not MASTER_COLUMN_NAME:
+            org_tiff_name = items[header_columns[MASTER_COLUMN_NAME]]
             org_reference_name = column
 
             tiff_name = splitext(basename(normpath(org_tiff_name)))[0]
@@ -144,11 +144,11 @@ def test_relationships(items, line, header_columns):
 
 
 def test_file_name(items, i, header_columns, all_items):
-    tiff = items[header_columns[TIFF_COLUMN_NAME]]
+    tiff = items[header_columns[MASTER_COLUMN_NAME]]
     inv = items[header_columns[INV_COLUMN_NAME]]
 
     for cur_items in all_items[1:]:
-        if cur_items[header_columns[TIFF_COLUMN_NAME]] == tiff:
+        if cur_items[header_columns[MASTER_COLUMN_NAME]] == tiff:
             error('Duplicate file entry \'' + tiff + '\'', i, items)
 
     tiff_file = basename(normpath(tiff))
@@ -160,20 +160,15 @@ def test_file_name(items, i, header_columns, all_items):
 
 
 def test_file_existence_and_headers(items, line, header_columns, droid, basepath):
+    valid_signatures = ['x-fmt/14', 'x-fmt/15', 'x-fmt/16', 'x-fmt/111']  # Plain text
+    valid_signatures += ['fmt/101']  # XML
+
     objnr = items[header_columns[OBJECT_COLUMN_NAME]]
 
     def execute_for_column(column_name, path):
-        valid_signatures = []
-        if column_name == TIFF_COLUMN_NAME:
-            valid_signatures = ['fmt/353']
-        elif column_name == JPEG_COLUMN_NAME:
-            valid_signatures = ['fmt/41', 'fmt/42', 'fmt/43', 'fmt/44']
-        elif column_name in header_columns[TEXT_COLUMN_NAME]:
-            valid_signatures = ['x-fmt/14', 'x-fmt/15', 'x-fmt/16', 'x-fmt/111']  # Plain text
-            valid_signatures += ['fmt/101']  # XML
-
         found_file = False
         found_objnr = False
+        found_mimetype = None
 
         file_path = join_paths(basepath, path)
         objnr_path = join_paths(basepath, get_parent_directory_of_file(path), objnr)
@@ -186,19 +181,38 @@ def test_file_existence_and_headers(items, line, header_columns, droid, basepath
 
                 if droid_file_path == file_path:
                     found_file = True
+                    found_mimetype = file[Droid.MIME_TYPE]
 
-                    if file[Droid.PUID] not in valid_signatures:
-                        error('The file ' + file_path + ' does not have the correct signature.', line, items)
-
-                    # Text related files can be smaller than 1000 bytes
+                    # Text related files have different validation
                     if column_name in header_columns[TEXT_COLUMN_NAME]:
                         if int(file[Droid.SIZE]) == 0:
                             error('The file ' + file_path + ' is empty.', line, items)
-                    elif int(file[Droid.SIZE]) < 1000:
-                        error('The file ' + file_path + ' has size smaller than limit of 1000 bytes.', line, items)
+                        if file[Droid.PUID] not in valid_signatures:
+                            error('The file ' + file_path + ' does not have the correct signature.', line, items)
+                    else:
+                        if int(file[Droid.SIZE]) < 1000:
+                            error('The file ' + file_path + ' has size smaller than limit of 1000 bytes.', line, items)
+                        if file[Droid.EXTENSION_MISMATCH] == 'true':
+                            error('The extension of the file ' + file_path +
+                                  ' does not correspond with the content identified as ' +
+                                  file[Droid.MIME_TYPE], line, items)
 
                 if droid_file_path == objnr_path:
                     found_objnr = True
+
+        if path and column_name == LEVEL1_COLUMN_NAME:
+            master_path = join_paths(basepath, items[header_columns[MASTER_COLUMN_NAME]]).strip()
+            with open(droid, 'r') as csvfile:
+                reader = csv.reader(csvfile, delimiter=',', quotechar='"')
+                for file in reader:
+                    if file[Droid.FILE_PATH] == master_path:
+                        master_type = file[Droid.MIME_TYPE].split('/')[0]
+                        level1_type = found_mimetype.split('/')[0]
+
+                        if master_type != level1_type:
+                            error('The type of the level 1 derivative (' + level1_type + ') ' +
+                                  'does not equal the type of the master file (' + master_type + ')', line, items)
+
 
         if path and not found_file:
             error('File entry in concordance table does not exist in directory: ' + file_path, line, items)
@@ -257,7 +271,7 @@ def test_droid_existence(all_items, header_columns, droid, basepath, objnr_count
                     if file[Droid.PARENT_ID] and int(file[Droid.PARENT_ID]) in folder_ids:
                         file_names.append(file[Droid.NAME].strip())
 
-        if objnr_count != len(folder_names) and column_name not in header_columns[TEXT_COLUMN_NAME]:
+        if objnr_count != len(folder_names) and column_name == MASTER_COLUMN_NAME:
             error_str = 'Amount of directories found in ' + path_parent + ' (' + str(len(folder_ids)) + ') ' + \
                         'is not the same as the amount of objects found in concordance file ' + \
                         '(' + str(objnr_count) + ')\n'
@@ -275,33 +289,33 @@ def test_droid_existence(all_items, header_columns, droid, basepath, objnr_count
 
 
 def for_all_columns_with_items(header_columns, items, exec_for_column):
-    column = items[header_columns[TIFF_COLUMN_NAME]]
-    exec_for_column(TIFF_COLUMN_NAME, normpath(column) if column else '')
+    column = items[header_columns[MASTER_COLUMN_NAME]]
+    exec_for_column(MASTER_COLUMN_NAME, normpath(column) if column else '')
 
-    if JPEG_COLUMN_NAME in header_columns:
-        column = items[header_columns[JPEG_COLUMN_NAME]]
-        exec_for_column(JPEG_COLUMN_NAME, normpath(column) if column else '')
+    if LEVEL1_COLUMN_NAME in header_columns:
+        column = items[header_columns[LEVEL1_COLUMN_NAME]]
+        if column:  # Level 1 files are optional, so skip if empty
+            exec_for_column(LEVEL1_COLUMN_NAME, normpath(column))
 
     if TEXT_COLUMN_NAME in header_columns:
         header_text_columns = header_columns[TEXT_COLUMN_NAME]
         for column_name in header_text_columns:
             column = items[header_text_columns[column_name]]
-            # Textual files are optional, so skip if empty
-            if column:
-                exec_for_column(column_name, normpath(column) if column else '')
+            if column:  # Textual files are optional, so skip if empty
+                exec_for_column(column_name, normpath(column))
 
 
 def for_all_columns(header_columns, all_items, exec_for_column):
-    parent_directory = find_parent_folder_for_column(header_columns, TIFF_COLUMN_NAME, all_items) \
+    parent_directory = find_parent_folder_for_column(header_columns, MASTER_COLUMN_NAME, all_items) \
         if all_items else None
     if parent_directory:
-        exec_for_column(TIFF_COLUMN_NAME, parent_directory)
+        exec_for_column(MASTER_COLUMN_NAME, parent_directory)
 
-    if JPEG_COLUMN_NAME in header_columns:
-        parent_directory = find_parent_folder_for_column(header_columns, JPEG_COLUMN_NAME, all_items) \
+    if LEVEL1_COLUMN_NAME in header_columns:
+        parent_directory = find_parent_folder_for_column(header_columns, LEVEL1_COLUMN_NAME, all_items) \
             if all_items else None
         if parent_directory:
-            exec_for_column(JPEG_COLUMN_NAME, parent_directory)
+            exec_for_column(LEVEL1_COLUMN_NAME, parent_directory)
 
     if TEXT_COLUMN_NAME in header_columns:
         header_text_columns = header_columns[TEXT_COLUMN_NAME]
