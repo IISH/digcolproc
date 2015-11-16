@@ -7,7 +7,7 @@
 # The folder setup is:
 # [ARCHIVAL ID]
 # [ARCHIVAL ID]/ARCHIVAL ID.bad.csv
-#     Tiff
+#     master
 #         [Inventory number]
 #             [Files]
 #
@@ -71,11 +71,11 @@ def parse_csv(fileset):
                 print("Invalid sequence. Not a number in filename " + master_folder + '/' + filename)
                 sequence="NaN"
 
-            tiff_file = relative(fileset + '/master/' + object_number + '/' + name + '.tif', fileset)
+            master_file = relative(fileset + '/master/' + object_number + '/' + name + '.tif', fileset)
             level1_file = relative(fileset + '/level1/' + object_number + '/' + name + '.jpg', fileset)
             if object_number in our_list:
                 inventory_number = our_list[object_number]
-                fh.write(object_number + ',' + inventory_number + ',' + tiff_file + ',' + level1_file + ',' +
+                fh.write(object_number + ',' + inventory_number + ',' + master_file + ',' + level1_file + ',' +
                          sequence + CR)
             else:
                 print "Warning: no such object_number: " + object_number
