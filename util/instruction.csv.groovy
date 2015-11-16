@@ -27,6 +27,7 @@ class SorInstruction {
     }
 
     void start() {
+        def defaultAccess = getCustom(new File(orAttributes.fileSet, '.access.txt')) ?: 'open'
 
         final fileSetFolder = new File(orAttributes.fileSet)
         def file = new File(fileSetFolder, "instruction.xml")
@@ -60,7 +61,7 @@ class SorInstruction {
                                     pid(split[5])
                                     location(split[2])
                                     md5(_md5)
-                                    if (_access) access(_access)
+                                    (_access) ? access(_access) : access(defaultAccess)
                                     objid(_objid)
                                     seq(split[4])
                                 }

@@ -10,7 +10,8 @@ import os.path
 
 
 def usage():
-    print('Usage: concordance_to_directory.py --concordance [concordance file] --fileset [file set]')
+    print('Usage: concordance_to_directory.py ' +
+          '--concordance [concordance file] --fileset [file set] --access [default access]')
 
 
 def init_fileset(fileset):
@@ -25,7 +26,7 @@ def init_fileset(fileset):
     os.chdir(os.path.join(fileset, 'tmp'))
 
 
-def parse_csv(concordance):
+def parse_csv(concordance, access):
     columns = {}
     with open(concordance, 'r') as csvfile:
         reader = csv.reader(csvfile, delimiter=',', quotechar='"')
@@ -33,7 +34,7 @@ def parse_csv(concordance):
             if i == 0:
                 columns = identify_columns(items)
             else:
-                move_files(columns, items)
+                move_files(columns, items, access)
 
 
 def identify_columns(items):
@@ -46,7 +47,7 @@ def identify_columns(items):
     return columns
 
 
-def move_files(columns, items):
+def move_files(columns, items, access):
     archive_id = os.path.basename(os.path.dirname(os.getcwd()))
     dir_name = archive_id + '.' + items[columns['objnr']]
     volgnr = items[columns['volgnr']]
@@ -58,6 +59,8 @@ def move_files(columns, items):
 
     for name in columns['text']:
         move_files_for(dir_name, items[columns['text'][name]], name, volgnr)
+
+    determine_access_for(dir_name, items[columns['master']], access)
 
 
 def move_files_for(parent_dir, cur_path, dir_name, volgnr):
@@ -80,6 +83,24 @@ def move_files_for(parent_dir, cur_path, dir_name, volgnr):
             os.rename(cur_path, os.path.join(new_dir, new_filename))
 
 
+def determine_access_for(parent_dir, cur_master_path, default):
+    new_access_path = os.path.join(parent_dir, '.access.txt')
+    if not os.path.isfile(new_access_path):
+        if cur_master_path.startswith('/'):
+            cur_master_path = cur_master_path[1:]
+        parent_path = os.path.dirname(os.path.dirname(os.getcwd()))
+        cur_master_path = os.path.join(parent_path, os.path.normpath(cur_master_path))
+        cur_access_dir = os.path.dirname(cur_master_path)
+        cur_access_path = os.path.join(cur_access_dir, '.access.txt')
+
+        if os.path.isfile(cur_access_path):
+            os.rename(cur_access_path, new_access_path)
+        else:
+            file = open(new_access_path, 'w')
+            file.write(default)
+            file.close()
+
+
 def end_fileset(fileset):
     fileset = os.path.normpath(fileset)
     os.chdir(fileset)
@@ -100,10 +121,10 @@ def remove_empty_folders(fileset):
 
 
 def main(argv):
-    concordance = fileset = 0
+    concordance = fileset = access = 0
 
     try:
-        opts, args = getopt.getopt(argv, 'c:f:hd', ['concordance=', 'fileset=', 'help', 'debug'])
+        opts, args = getopt.getopt(argv, 'c:f:a:hd', ['concordance=', 'fileset=', 'access=', 'help', 'debug'])
     except getopt.GetoptError:
         usage()
         sys.exit(2)
@@ -119,12 +140,15 @@ def main(argv):
             concordance = arg
         elif opt in ('-f', '--fileset'):
             fileset = arg
+        elif opt in ('-a', '--access'):
+            access = arg
 
     assert concordance
     assert fileset
+    assert access
 
     init_fileset(fileset)
-    parse_csv(concordance)
+    parse_csv(concordance, access)
     end_fileset(fileset)
 
 

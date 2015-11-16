@@ -26,8 +26,8 @@ md5sum $fileSet/$archiveID.csv > $work/$archiveID.csv.md5
 #-----------------------------------------------------------------------------------------------------------------------
 # Lock the folder and it's contents
 #-----------------------------------------------------------------------------------------------------------------------
-orgOwner=$(stat -c %U $fileSet)
-orgGroup=$(stat -c %G $fileSet)
+orgOwner=$(stat -c %u $fileSet)
+orgGroup=$(stat -c %g $fileSet)
 chown -R root:root $fileSet
 
 
