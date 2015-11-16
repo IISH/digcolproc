@@ -45,9 +45,10 @@ fi
 
 
 #-----------------------------------------------------------------------------------------------------------------------
-# Transform to flow 4 directory layout
+# Transform to MARC directory layout
 #-----------------------------------------------------------------------------------------------------------------------
-python ${DIGCOLPROC_HOME}/util/concordance_to_directory.py --concordance $cf --fileset $fileSet --access $access >> $log
+profile=$fs_parent/.work/$archiveID/validate/profile.csv
+python ${DIGCOLPROC_HOME}/util/concordance_to_directory.py --concordance $cf --droid $profile --fileset $fileSet --access $access >> $log
 rc=$?
 if [[ $rc != 0 ]] ; then
     exit_error "Failed to transform the directory layout."

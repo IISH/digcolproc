@@ -59,8 +59,8 @@ def move_files(columns, items, droid, access):
 
     move_files_for(dir_name, items[columns['master']], use, volgnr)
 
-    if 'jpeg' in columns:
-        move_files_for(dir_name, items[columns['jpeg']], use + '/.level1', volgnr)
+    if 'level1' in columns:
+        move_files_for(dir_name, items[columns['level1']], use + '/.level1', volgnr)
 
     for name in columns['text']:
         move_files_for(dir_name, items[columns['text'][name]], name, volgnr)
