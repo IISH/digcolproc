@@ -9,7 +9,7 @@ import shutil
 import os.path
 
 from droid import Droid
-from exceptions import ValueError
+from exceptions import ValueError, OSError
 
 
 def usage():
@@ -29,7 +29,7 @@ def init_fileset(fileset):
     os.chdir(os.path.join(fileset, 'tmp'))
 
 
-def parse_csv(concordance, droid, access):
+def parse_csv(fileset, concordance, droid, access):
     columns = {}
     with open(concordance, 'r') as csvfile:
         reader = csv.reader(csvfile, delimiter=',', quotechar='"')
@@ -37,7 +37,7 @@ def parse_csv(concordance, droid, access):
             if i == 0:
                 columns = identify_columns(items)
             else:
-                move_files(columns, items, droid, access)
+                move_files(columns, items, fileset, droid, access)
 
 
 def identify_columns(items):
@@ -50,54 +50,51 @@ def identify_columns(items):
     return columns
 
 
-def move_files(columns, items, droid, access):
-    archive_id = os.path.basename(os.path.dirname(os.getcwd()))
-    dir_name = archive_id + '.' + items[columns['objnr']]
+def move_files(columns, items, fileset, droid, access):
+    parent_dir, archive_id = os.path.split(fileset)
+    new_dir_name = archive_id + '.' + items[columns['objnr']]
     volgnr = items[columns['volgnr']]
+    use = determine_use_for(parent_dir, items[columns['master']], droid)
+    new_dir_path = archive_id + os.path.sep + 'tmp' + os.path.sep + new_dir_name
 
-    use = determine_use_for(items[columns['master']], droid)
-
-    move_files_for(dir_name, items[columns['master']], use, volgnr)
+    new_file_path = new_dir_path + os.path.sep + use
+    move_files_for(parent_dir, archive_id, items[columns['master']], new_file_path, volgnr)
 
     if 'level1' in columns:
-        move_files_for(dir_name, items[columns['level1']], use + '/.level1', volgnr)
+        new_file_path = new_dir_path + os.path.sep + use + os.path.sep + '.level1'
+        move_files_for(parent_dir, archive_id, items[columns['level1']], new_file_path, volgnr)
 
     for name in columns['text']:
-        move_files_for(dir_name, items[columns['text'][name]], name, volgnr)
+        new_file_path = new_dir_path + os.path.sep + name
+        move_files_for(parent_dir, archive_id, items[columns['text'][name]], new_file_path, volgnr)
 
-    determine_access_for(dir_name, items[columns['master']], access)
+    new_file_path = new_dir_path + os.path.sep + '.access.txt'
+    determine_access_for(parent_dir, items[columns['master']], new_file_path, access)
 
 
-def move_files_for(parent_dir, cur_path, dir_name, volgnr):
-    if cur_path:
-        if cur_path.startswith('/'):
-            cur_path = cur_path[1:]
-        parent_path = os.path.dirname(os.path.dirname(os.getcwd()))
-        cur_path = os.path.join(parent_path, os.path.normpath(cur_path))
-
-        if os.path.exists(cur_path):
-            new_dir = os.path.join(parent_dir, dir_name)
-            new_filename = parent_dir + '.' + volgnr + os.path.splitext(cur_path)[1]
+def move_files_for(parent_dir, archive_id, cur_file_path, new_file_path, volgnr):
+    if cur_file_path:
+        full_cur_file_path = get_full_path(parent_dir, cur_file_path)
+        if os.path.exists(full_cur_file_path):
+            full_new_file_path = os.path.join(parent_dir, new_file_path)
+            new_filename = archive_id + '.' + volgnr + os.path.splitext(full_cur_file_path)[1]
 
             try:
-                os.makedirs(new_dir)  # Python 3.2 : exist_ok=True
+                os.makedirs(full_new_file_path)  # Python 3.2 : exist_ok=True
             except OSError:
-                if not os.path.isdir(new_dir):
+                if not os.path.isdir(full_new_file_path):
                     raise
 
-            os.rename(cur_path, os.path.join(new_dir, new_filename))
+            os.rename(full_cur_file_path, os.path.join(full_new_file_path, new_filename))
 
 
-def determine_use_for(file_path, droid):
-    if file_path.startswith('/'):
-        file_path = file_path[1:]
-    parent_path = os.path.dirname(os.path.dirname(os.getcwd()))
-    file_path = os.path.join(parent_path, os.path.normpath(file_path))
+def determine_use_for(parent_dir, file_path, droid):
+    full_path = get_full_path(parent_dir, file_path)
 
     with open(droid, 'r') as csvfile:
         reader = csv.reader(csvfile, delimiter=',', quotechar='"')
         for file in reader:
-            if file[Droid.FILE_PATH].strip() == file_path:
+            if file[Droid.FILE_PATH].strip() == full_path:
                 mime_type = file[Droid.MIME_TYPE]
                 type = mime_type.split('/')[0]
 
@@ -116,14 +113,11 @@ def determine_use_for(file_path, droid):
     raise ValueError('Unknown content type found for file ' + file_path)
 
 
-def determine_access_for(parent_dir, cur_master_path, default):
-    new_access_path = os.path.join(parent_dir, '.access.txt')
+def determine_access_for(parent_dir, cur_file_path, new_access_file, default):
+    new_access_path = os.path.join(parent_dir, new_access_file)
     if not os.path.isfile(new_access_path):
-        if cur_master_path.startswith('/'):
-            cur_master_path = cur_master_path[1:]
-        parent_path = os.path.dirname(os.path.dirname(os.getcwd()))
-        cur_master_path = os.path.join(parent_path, os.path.normpath(cur_master_path))
-        cur_access_dir = os.path.dirname(cur_master_path)
+        full_cur_file_path = get_full_path(parent_dir, cur_file_path)
+        cur_access_dir = os.path.dirname(full_cur_file_path)
         cur_access_path = os.path.join(cur_access_dir, '.access.txt')
 
         if os.path.isfile(cur_access_path):
@@ -151,6 +145,12 @@ def remove_empty_folders(fileset):
             remove_empty_folders(path)
             if not os.listdir(path):
                 os.rmdir(path)
+
+
+def get_full_path(parent_dir, file_path):
+    if file_path.startswith('/'):
+        file_path = file_path[1:]
+    return os.path.normpath(os.path.join(parent_dir, file_path))
 
 
 def main(argv):
@@ -185,7 +185,7 @@ def main(argv):
     assert access
 
     init_fileset(fileset)
-    parse_csv(concordance, droid, access)
+    parse_csv(fileset, concordance, droid, access)
     end_fileset(fileset)
 
 
