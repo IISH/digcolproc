@@ -73,49 +73,6 @@ done < <(python ${DIGCOLPROC_HOME}/util/concordance_to_list.py --concordance "$c
 
 
 #-----------------------------------------------------------------------------------------------------------------------
-# Declare PID for complete archive
-#-----------------------------------------------------------------------------------------------------------------------
-objid=$na/$archiveID
-soapenv="<?xml version='1.0' encoding='UTF-8'?>  \
-<soapenv:Envelope xmlns:soapenv='http://schemas.xmlsoap.org/soap/envelope/' xmlns:pid='http://pid.socialhistoryservices.org/'>  \
-    <soapenv:Body> \
-        <pid:UpsertPidRequest> \
-            <pid:na>$na</pid:na> \
-            <pid:handle> \
-                <<pid:pid>$objid</pid:pid> \
-                    <pid:locAtt> \
-                        <pid:location weight='1' href='$catalog/$archiveID'/> \
-                        <pid:location weight='0' href='$catalog/$archiveID' view='catalog'/> \
-                        <pid:location weight='0' href='$oai?verb=GetRecord&amp;identifier=oai:socialhistoryservices.org:$na/$archiveID&amp;metadataPrefix=ead' view='ead'/> \
-                        <pid:location weight='0' href='$or/file/master/$lastpid' view='master'/> \
-                        <pid:location weight='0' href='$or/file/level1/$lastpid' view='level1'/> \
-                        <pid:location weight='0' href='$or/file/level2/$lastpid' view='level2'/> \
-                        <pid:location weight='0' href='$or/file/level3/$lastpid' view='level3'/> \
-                    </pid:locAtt> \
-            </pid:handle> \
-        </pid:UpsertPidRequest> \
-    </soapenv:Body> \
-</soapenv:Envelope>"
-
-echo "Sending $objid" >> $log
-if [ "$environment" == "production" ] ; then
-    wget -O /dev/null --header="Content-Type: text/xml" \
-        --header="Authorization: oauth $pidwebserviceKey" --post-data "$soapenv" \
-        --no-check-certificate $pidwebserviceEndpoint
-
-    rc=$?
-    if [[ $rc != 0 ]]; then
-        echo "Message:" >> $log
-        echo $soapenv >> $log
-        exit_error "Error from PID webservice: $rc" >> $log
-    fi
-else
-    echo "Message send to PID webservice: $soapenv" >> $log
-fi
-
-
-
-#-----------------------------------------------------------------------------------------------------------------------
 # Update the EAD
 #-----------------------------------------------------------------------------------------------------------------------
 eadFile=$fileSet/$archiveID.xml
@@ -150,6 +107,55 @@ do
         exit_error "At least one of the items failed to ingest." >> $log
     fi
 done
+
+
+
+#-----------------------------------------------------------------------------------------------------------------------
+# Declare PID for complete archive
+#-----------------------------------------------------------------------------------------------------------------------
+filepidtxt=$(find "$work" -name filepid.txt | sort | head -1)
+filepid=$(<"$filepidtxt")
+if [ -z "$filepid" ] ; then
+    exit_error "No PID found for binding the PID of the archive."
+else
+    objid=$na/$archiveID
+    soapenv="<?xml version='1.0' encoding='UTF-8'?>  \
+    <soapenv:Envelope xmlns:soapenv='http://schemas.xmlsoap.org/soap/envelope/' xmlns:pid='http://pid.socialhistoryservices.org/'>  \
+        <soapenv:Body> \
+            <pid:UpsertPidRequest> \
+                <pid:na>$na</pid:na> \
+                <pid:handle> \
+                    <<pid:pid>$objid</pid:pid> \
+                        <pid:locAtt> \
+                            <pid:location weight='1' href='$catalog/$archiveID'/> \
+                            <pid:location weight='0' href='$catalog/$archiveID' view='catalog'/> \
+                            <pid:location weight='0' href='$oai?verb=GetRecord&amp;identifier=oai:socialhistoryservices.org:$na/$archiveID&amp;metadataPrefix=ead' view='ead'/> \
+                            <pid:location weight='0' href='$or/file/master/$filepid' view='master'/> \
+                            <pid:location weight='0' href='$or/file/level1/$filepid' view='level1'/> \
+                            <pid:location weight='0' href='$or/file/level2/$filepid' view='level2'/> \
+                            <pid:location weight='0' href='$or/file/level3/$filepid' view='level3'/> \
+                        </pid:locAtt> \
+                </pid:handle> \
+            </pid:UpsertPidRequest> \
+        </soapenv:Body> \
+    </soapenv:Envelope>"
+
+    echo "Sending $objid" >> $log
+    if [ "$environment" == "production" ] ; then
+        wget -O /dev/null --header="Content-Type: text/xml" \
+            --header="Authorization: oauth $pidwebserviceKey" --post-data "$soapenv" \
+            --no-check-certificate $pidwebserviceEndpoint
+
+        rc=$?
+        if [[ $rc != 0 ]]; then
+            echo "Message:" >> $log
+            echo $soapenv >> $log
+            exit_error "Error from PID webservice: $rc" >> $log
+        fi
+    else
+        echo "Message send to PID webservice: $soapenv" >> $log
+    fi
+fi
 
 
 

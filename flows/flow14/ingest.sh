@@ -176,13 +176,13 @@ fi
 #-----------------------------------------------------------------------------------------------------------------------
 # Declare objid PID
 #-----------------------------------------------------------------------------------------------------------------------
-lastpid=""
+filepid=""
 while read line
 do
     IFS=, read ID PARENT_ID URI FILE_PATH NAME METHOD STATUS SIZE TYPE EXT LAST_MODIFIED EXTENSION_MISMATCH HASH FORMAT_COUNT PUID MIME_TYPE FORMAT_NAME FORMAT_VERSION PID SEQ <<< "$line"
-    if [ -z "$lastpid" ] ; then
-        lastpid="${PID%\"}"
-        lastpid="${lastpid#\"}"
+    if [ -z "$filepid" ] && [ "$SEQ" == "\"2\"" ] && [[ "$FILE_PATH" != *"text"* ]] ; then
+        filepid="${PID%\"}"
+        filepid="${filepid#\"}"
 
         pidLocation=""
         if [ ! -z "$catalogUrl" ] ; then
@@ -202,10 +202,10 @@ do
                                 $pidLocation \
                                 <pid:location weight='0' href='$or/mets/$pid' view='mets'/> \
                                 <pid:location weight='0' href='$or/pdf/$pid' view='pdf'/> \
-                                <pid:location weight='0' href='$or/file/master/$lastpid' view='master'/> \
-                                <pid:location weight='0' href='$or/file/level1/$lastpid' view='level1'/> \
-                                <pid:location weight='0' href='$or/file/level2/$lastpid' view='level2'/> \
-                                <pid:location weight='0' href='$or/file/level3/$lastpid' view='level3'/> \
+                                <pid:location weight='0' href='$or/file/master/$filepid' view='master'/> \
+                                <pid:location weight='0' href='$or/file/level1/$filepid' view='level1'/> \
+                                <pid:location weight='0' href='$or/file/level2/$filepid' view='level2'/> \
+                                <pid:location weight='0' href='$or/file/level3/$filepid' view='level3'/> \
                             </pid:locAtt> \
 					</pid:handle> \
 				</pid:UpsertPidRequest> \
@@ -230,9 +230,11 @@ do
         fi
     fi
 done < $profile_extended_csv
-if [ -z "$lastpid" ] ; then
+if [ -z "$filepid" ] ; then
     chown -R "$orgOwner:$orgGroup" $fileSet
     exit_error "No PID found for binding the PID of the objid."
+else
+    echo "$filepid" >> "$work/filepid.txt"
 fi
 
 
