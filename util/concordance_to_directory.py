@@ -54,15 +54,16 @@ def move_files(columns, items, fileset, droid, access):
     parent_dir, archive_id = os.path.split(fileset)
     new_dir_name = archive_id + '.' + items[columns['objnr']]
     volgnr = items[columns['volgnr']]
-    use = determine_use_for(parent_dir, items[columns['master']], droid)
     new_dir_path = archive_id + os.path.sep + 'tmp' + os.path.sep + new_dir_name
 
-    new_file_path = new_dir_path + os.path.sep + use
-    move_files_for(parent_dir, archive_id, items[columns['master']], new_file_path, volgnr)
+    if items[columns['master']]:
+        use = determine_use_for(parent_dir, items[columns['master']], droid)
+        new_file_path = new_dir_path + os.path.sep + use
+        move_files_for(parent_dir, archive_id, items[columns['master']], new_file_path, volgnr)
 
-    if 'level1' in columns:
-        new_file_path = new_dir_path + os.path.sep + use + os.path.sep + '.level1'
-        move_files_for(parent_dir, archive_id, items[columns['level1']], new_file_path, volgnr)
+        if 'level1' in columns:
+            new_file_path = new_dir_path + os.path.sep + use + os.path.sep + '.level1'
+            move_files_for(parent_dir, archive_id, items[columns['level1']], new_file_path, volgnr)
 
     for name in columns['text']:
         new_file_path = new_dir_path + os.path.sep + name
