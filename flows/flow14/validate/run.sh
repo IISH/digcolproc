@@ -121,7 +121,7 @@ echo "Done validate.">>$log
 
 body="/tmp/report.txt"
 echo "Rapportage op $report">$body
-groovy -cp "$(cygpath --windows "$HOMEPATH\.m2\repository\javax\mail\javax.mail-api\1.5.0\javax.mail-api-1.5.0.jar");$(cygpath --windows "$HOMEPATH\.m2\repository\javax\mail\mail\1.4.7\mail-1.4.7.jar")" $(cygpath --windows "${DIGCOLPROC_HOME}util/mail.groovy") $(cygpath --windows "$body") $flow_client "$flow_notificationEMail" "flow1 validation" $mailrelay >>$log
+/usr/bin/sendmail --body "$body" --from "$flow_client" --to "$flow_notificationEMail" --subject "Flow 14 validation" --mail_relay "$mail_relay" --mail_user "$mail_user" --mail_password "$mail_password" >> $log
 rm $body
 
 exit $?
