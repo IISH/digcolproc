@@ -139,7 +139,7 @@ fi
 # Produce instruction from the report.
 #-----------------------------------------------------------------------------------------------------------------------
 work_instruction=$work/instruction.xml
-python ${DIGCOLPROC_HOME}/util/droid_to_instruction.py -s $profile_extended_csv -t $work_instruction --objid "$pid" --access "$access" --submission_date "$datestamp" --autoIngestValidInstruction "$flow_autoIngestValidInstruction" --label "$archiveID $flow_client" --action "add" --notificationEMail "$flow_notificationEMail" --plan "StagingfileIngestLevel3,StagingfileIngestLevel2,StagingfileIngestLevel1,StagingfileBindPIDs,StagingfileIngestMaster" >> $log
+python ${DIGCOLPROC_HOME}/util/droid_to_instruction.py --textLayerCheck -s $profile_extended_csv -t $work_instruction --objid "$pid" --access "$access" --submission_date "$datestamp" --autoIngestValidInstruction "$flow_autoIngestValidInstruction" --label "$archiveID $flow_client" --action "add" --notificationEMail "$flow_notificationEMail" --plan "StagingfileIngestLevel3,StagingfileIngestLevel2,StagingfileIngestLevel1,StagingfileBindPIDs,StagingfileIngestMaster" >> $log
 rc=$?
 if [[ $rc != 0 ]] ; then
     chown -R "$orgOwner:$orgGroup" $fileSet

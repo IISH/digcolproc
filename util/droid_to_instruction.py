@@ -10,6 +10,7 @@ import getopt
 import re
 import sys
 from xml.sax.saxutils import XMLGenerator
+from os.path import normpath, split
 
 
 _attributes = {u'xmlns': 'http://objectrepository.org/instruction/1.0/'}
@@ -52,9 +53,11 @@ class XmlInstruction:
         return
 
 
-def parse_csv():
+def parse_csv(text_layer_check):
     sourcefile = _attributes.get('sourcefile')
     targetfile = _attributes.get('targetfile')
+
+    text_layer_access = 'irsh' if _attributes.get('access') == 'open' else 'closed'
 
     manifest = open(targetfile, 'wb')
     xl = XmlInstruction(manifest)
@@ -66,6 +69,15 @@ def parse_csv():
         for items in reader:
             if items[Droid.TYPE] == 'File' or items[Droid.TYPE] == 'Container':
                 xl.open_entry(u'stagingfile')
+
+                # Use the folder pattern 'text ' to determine text layers, which have a slightly different access state
+                if text_layer_check:
+                    file_path = normpath(items[Droid.FILE_PATH])
+                    head, tail = split(file_path)
+                    while head and tail:
+                        if tail.startswith('text '):
+                            xl.write_entry(u'access', text_layer_access)
+                        head, tail = split(head)
 
                 assert PID_PATTERN.match(items[Droid.PID])
                 xl.write_entry(u'pid', items[Droid.PID])
@@ -82,14 +94,16 @@ def parse_csv():
 
 
 def usage():
-    print('Usage: droid_to_instruction.py --objid OBJID -s droid file.csv -t instruction')
+    print('Usage: droid_to_instruction.py --objid OBJID --textLayerCheck -s droid file.csv -t instruction')
 
 
 def main(argv):
+    text_layer_check = False
+
     try:
         opts, args = getopt.getopt(argv, 's:t:h',
-                                   ['help', 'objid=', 'access=', 'submission_date=', 'autoIngestValidInstruction=',
-                                    'label=', 'action=', 'notificationEMail=', 'plan='])
+                                   ['help', 'textLayerCheck', 'objid=', 'access=', 'submission_date=',
+                                    'autoIngestValidInstruction=', 'label=', 'action=', 'notificationEMail=', 'plan='])
     except getopt.GetoptError as e:
         print("Opt error: " + e.msg)
         usage()
@@ -102,6 +116,8 @@ def main(argv):
             _attributes['sourcefile'] = arg
         elif opt in ('-t'):
             _attributes['targetfile'] = arg
+        elif opt in ('--textLayerCheck'):
+            text_layer_check = True
 
         if opt.startswith('--'):
             _attributes[opt[2:]] = arg
@@ -112,7 +128,7 @@ def main(argv):
     assert _attributes.get('access')
     assert _attributes.get('plan')
 
-    parse_csv()
+    parse_csv(text_layer_check)
     return
 
 
