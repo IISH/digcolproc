@@ -31,7 +31,7 @@ FILE_NAME_REGEX = re.compile('^[\sa-zA-Z0-9-:\._\(\)\[\]\{@\$\}=\\\]{1,240}$')
 
 
 class ExpectedNr:
-    expected_seq_nr = 1
+    expected_seq_nr = None
     expected_obj_nr = None
 
 
@@ -112,7 +112,7 @@ def check_sequence_numbers(items, line, header_columns, expected_nr):
         expected_obj_nr = expected_nr.expected_obj_nr
         if expected_obj_nr is None or obj_nr.lower() != expected_obj_nr.lower():
             expected_nr.expected_obj_nr = obj_nr
-            expected_nr.expected_seq_nr = 1
+            expected_nr.expected_seq_nr = seq_nr_int
 
         if seq_nr_int != expected_nr.expected_seq_nr:
             error('Volgnummer \'' + seq_nr + '\' incorrect. ' +
