@@ -204,16 +204,16 @@ do
 				<pid:UpsertPidRequest> \
 					<pid:na>$na</pid:na> \
 					<pid:handle> \
-						<<pid:pid>$pid</pid:pid> \
-                            <pid:locAtt> \
-                                $pidLocation \
-                                <pid:location weight='0' href='$or/mets/$pid' view='mets'/> \
-                                <pid:location weight='0' href='$or/pdf/$pid' view='pdf'/> \
-                                <pid:location weight='0' href='$or/file/master/$filepid' view='master'/> \
-                                <pid:location weight='0' href='$or/file/level1/$filepid' view='level1'/> \
-                                <pid:location weight='0' href='$or/file/level2/$filepid' view='level2'/> \
-                                <pid:location weight='0' href='$or/file/level3/$filepid' view='level3'/> \
-                            </pid:locAtt> \
+						<pid:pid>$pid</pid:pid> \
+                        <pid:locAtt> \
+                            $pidLocation \
+                            <pid:location weight='0' href='$or/mets/$pid' view='mets'/> \
+                            <pid:location weight='0' href='$or/pdf/$pid' view='pdf'/> \
+                            <pid:location weight='0' href='$or/file/master/$filepid' view='master'/> \
+                            <pid:location weight='0' href='$or/file/level1/$filepid' view='level1'/> \
+                            <pid:location weight='0' href='$or/file/level2/$filepid' view='level2'/> \
+                            <pid:location weight='0' href='$or/file/level3/$filepid' view='level3'/> \
+                        </pid:locAtt> \
 					</pid:handle> \
 				</pid:UpsertPidRequest> \
 			</soapenv:Body> \
