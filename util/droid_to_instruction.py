@@ -119,7 +119,7 @@ def main(argv):
         elif opt in ('--textLayerCheck'):
             text_layer_check = True
 
-        if opt.startswith('--'):
+        if opt.startswith('--') and not opt == '--textLayerCheck':
             _attributes[opt[2:]] = arg
 
     assert _attributes.get('sourcefile')

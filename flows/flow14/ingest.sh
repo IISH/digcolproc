@@ -195,7 +195,7 @@ do
         if [ ! -z "$catalogUrl" ] ; then
             pidLocation="<pid:location weight='1' href='$catalogUrl'/> <pid:location weight='0' href='$catalogUrl' view='catalog'/>"
         else
-            pidLocation="<pid:location weight='1' href='$or/mets/$pid'/>"
+            pidLocation="<pid:location weight='1' href='$or/file/master/$pid'/>"
         fi
 
         soapenv="<?xml version='1.0' encoding='UTF-8'?>  \
@@ -207,7 +207,7 @@ do
 						<pid:pid>$pid</pid:pid> \
                         <pid:locAtt> \
                             $pidLocation \
-                            <pid:location weight='0' href='$or/mets/$pid' view='mets'/> \
+                            <pid:location weight='0' href='$or/file/master/$pid' view='mets'/> \
                             <pid:location weight='0' href='$or/pdf/$pid' view='pdf'/> \
                             <pid:location weight='0' href='$or/file/master/$filepid' view='master'/> \
                             <pid:location weight='0' href='$or/file/level1/$filepid' view='level1'/> \
