@@ -175,7 +175,7 @@ def create_filesec(xl, file_groups):
 
 
 def create_structmap_physical(xl, file_refs):
-    xl.elem('structMap', {'ID': 'physical'}).elem('div')
+    xl.elem('structMap', {'TYPE': 'physical'}).elem('div')
 
     seq_nr = 0
     found_files = []
