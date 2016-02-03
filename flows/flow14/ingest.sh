@@ -187,7 +187,7 @@ filepid=""
 while read line
 do
     IFS=, read ID PARENT_ID URI FILE_PATH NAME METHOD STATUS SIZE TYPE EXT LAST_MODIFIED EXTENSION_MISMATCH HASH FORMAT_COUNT PUID MIME_TYPE FORMAT_NAME FORMAT_VERSION PID SEQ <<< "$line"
-    if [ -z "$filepid" ] && [ "$SEQ" == "\"2\"" ] && [[ "$FILE_PATH" != *"text"* ]] ; then
+    if [ -z "$filepid" ] && [ "$SEQ" == "\"$refSeqNr\"" ] && [[ "$FILE_PATH" != *"text"* ]] ; then
         filepid="${PID%\"}"
         filepid="${filepid#\"}"
 

@@ -81,6 +81,7 @@ echo "$access" > ${fileSet}/.access.txt
 # Start the ingest followed by the METS creation
 #-----------------------------------------------------------------------------------------------------------------------
 pid=$na/$archiveID
+refSeqNr=1
 source ../ingest.sh
 # TODO: source ../mets.sh
 
