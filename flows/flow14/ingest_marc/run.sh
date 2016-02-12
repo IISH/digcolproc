@@ -27,7 +27,7 @@ source ../call_api_status.sh
 # Spaces in path: http://stackoverflow.com/questions/23356779/how-can-i-store-find-command-result-as-arrays-in-bash
 #-----------------------------------------------------------------------------------------------------------------------
 error_number=0
-regex_filename="^${archiveID}\.[a-zA-Z0-9]+$|^${archiveID}\.[0-9]+\.[a-zA-Z0-9]+$" # abcdefg.extension  or abcdefg.12345.extension
+regex_filename="^${archiveID}\.[0-9]+\.[a-zA-Z0-9]+$" # abcdefg.12345.extension
 while IFS=  read -r -d $'\0'; do
     f=("$REPLY")
 
