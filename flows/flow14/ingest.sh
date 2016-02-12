@@ -35,7 +35,7 @@ access=$(<"$access_file")
 #-----------------------------------------------------------------------------------------------------------------------
 # Download the currently existing METS file
 #-----------------------------------------------------------------------------------------------------------------------
-wget -O "$work/mets.xml" "http://disseminate.objectrepository.org/mets/$pid"
+wget -O "$work/mets.xml" "http://hdl.handle.net/$pid?locatt=view:mets"
 
 
 
