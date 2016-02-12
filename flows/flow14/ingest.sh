@@ -169,7 +169,7 @@ fi
 #-----------------------------------------------------------------------------------------------------------------------
 # Upload the instruction
 #-----------------------------------------------------------------------------------------------------------------------
-mv $work_instruction $file_instruction
+cp $work_instruction $file_instruction
 ftp_script=$ftp_script_base.instruction.txt
 bash ${DIGCOLPROC_HOME}util/ftp.sh "$ftp_script" "put -O /${archiveID} ${fileSet}/instruction.xml" "$flow_ftp_connection" "$log"
 rc=$?

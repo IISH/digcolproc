@@ -34,19 +34,20 @@ echo "Started removal procedure $pid" >> $log
 #-----------------------------------------------------------------------------------------------------------------------
 report="$log.report"
 echo $fileSet > $report
-file_instruction=$fileSet/instruction.xml
-instruction_mets=$fileSet/instruction_mets.xml
-groovy ${DIGCOLPROC_HOME}util/remove.file.groovy -file "$file_instruction" -access_token $flow_access_token -or $or -delete true >> $report
+instruction_mets=$fileSet/instruction.xml
+instruction_ead_ingest=$fs_parent/.work/$archiveID/ingest_ead/instruction.xml
+instruction_marc_ingest=$fs_parent/.work/$archiveID/ingest_marc/instruction.xml
 groovy ${DIGCOLPROC_HOME}util/remove.file.groovy -file "$instruction_mets" -access_token $flow_access_token -or $or -delete true >> $report
-# TODO: Delete true or false? Difference in flow 1 and flow 4.
+groovy ${DIGCOLPROC_HOME}util/remove.file.groovy -file "$instruction_ead_ingest" -access_token $flow_access_token -or $or -delete true >> $report
+groovy ${DIGCOLPROC_HOME}util/remove.file.groovy -file "$instruction_marc_ingest" -access_token $flow_access_token -or $or -delete true >> $report
 
 
 
 #-----------------------------------------------------------------------------------------------------------------------
-# When all files are processed and deleted, the total file count should be 2 (instruction.xml , instruction_mets.xml).
+# When all files are processed and deleted, the total file count should be one ( the instruction.xml file ).
 #-----------------------------------------------------------------------------------------------------------------------
 count=$(find $fileSet -type f \( ! -regex ".*/\..*/..*" \) | wc -l)
-if [[ $count == 2 ]] ; then
+if [[ $count == 1 ]] ; then
 	history="${fs_parent}/.history"
 	mkdir -p $history
 	mv $fileSet $history
@@ -57,7 +58,7 @@ fi
 #-----------------------------------------------------------------------------------------------------------------------
 # Notify
 #-----------------------------------------------------------------------------------------------------------------------
-/usr/bin/sendmail --body "$report" --from "$flow_client" --to "$flow_notificationEMail" --subject "Removal eport for $archiveID" --mail_relay "$mail_relay" --mail_user "$mail_user" --mail_password "$mail_password" >> $log
+/usr/bin/sendmail --body "$report" --from "$flow_client" --to "$flow_notificationEMail" --subject "Removal report for $archiveID" --mail_relay "$mail_relay" --mail_user "$mail_user" --mail_password "$mail_password" >> $log
 
 
 
