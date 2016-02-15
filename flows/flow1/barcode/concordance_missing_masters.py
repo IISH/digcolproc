@@ -26,11 +26,16 @@ def parse_csv(fileset, concordance, new):
                 master_path = master[master.find('/', 1):]
                 jpeg_path = jpeg[jpeg.find('/', 1):]
 
-                exit_code = os.system('convert -compress none ' + fileset + jpeg_path + ' ' + fileset + master_path)
-                if exit_code != 0:
-                    new_cc.close()
-                    print('Error during conversion of ' + jpeg + ' to ' + master)
-                    exit(exit_code)
+                master_file = fileset + master_path
+                if os.path.isfile(master_file):
+                    print('Skipping ' + master_file + ' because the master file already exists.')
+                else:
+                    exit_code = os.system('convert -compress none ' + fileset + jpeg_path + ' ' + master_file)
+                    if exit_code != 0:
+                        new_cc.close()
+                        print('Error during conversion of ' + jpeg + ' to ' + master)
+                        os.remove(master_file) # undo failed attempt.
+                        exit(exit_code)
 
             new_cc.write(','.join(items) + "\n")
 
