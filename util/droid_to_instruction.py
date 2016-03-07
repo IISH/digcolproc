@@ -103,7 +103,8 @@ def main(argv):
     try:
         opts, args = getopt.getopt(argv, 's:t:h',
                                    ['help', 'textLayerCheck', 'objid=', 'access=', 'submission_date=',
-                                    'autoIngestValidInstruction=', 'label=', 'action=', 'notificationEMail=', 'plan='])
+                                    'autoIngestValidInstruction=', 'label=', 'action=', 'notificationEMail=',
+                                    'plan=', 'deleteCompletedInstruction='])
     except getopt.GetoptError as e:
         print("Opt error: " + e.msg)
         usage()
