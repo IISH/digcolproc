@@ -116,7 +116,7 @@ def determine_use_for(parent_dir, file_path_master, file_path_level1, droid):
                     return 'archive video'
 
                 if mime_type == 'application/pdf' or mime_type == 'application/x-pdf':
-                    return 'pdf'
+                    return 'archive pdf'
 
     raise ValueError('Unknown content type found for file ' + file_path_master + ' or file ' + file_path_level1)
 
