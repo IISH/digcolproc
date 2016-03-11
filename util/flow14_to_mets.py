@@ -85,6 +85,11 @@ DERIVATIVES_USES = {
         'level1': 'reference video',
         'level2': 'stills video',
         'level3': 'thumbnail video',
+    },
+    'archive pdf': {
+        'level1': 'hires reference pdf',
+        'level2': 'reference pdf',
+        'level3': 'thumbnail pdf'
     }
 }
 
