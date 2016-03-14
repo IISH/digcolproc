@@ -15,7 +15,6 @@
 #-----------------------------------------------------------------------------------------------------------------------
 source "${DIGCOLPROC_HOME}setup.sh" $0 "$@"
 source ../call_api_status.sh
-STATUS=$UPLOADING_TO_PERMANENT_STORAGE
 pid=$na/$archiveID
 
 
@@ -23,7 +22,7 @@ pid=$na/$archiveID
 #-----------------------------------------------------------------------------------------------------------------------
 # Commence job. Tell what we are doing
 #-----------------------------------------------------------------------------------------------------------------------
-call_api_status $pid $STATUS
+call_api_status $pid $RESTORE $RUNNING
 
 
 
@@ -42,7 +41,7 @@ ftp_script=$ftp_script_base.files.txt
 bash ${DIGCOLPROC_HOME}util/ftp.sh "$ftp_script" "mirror --verbose --exclude-glob *.md5 --delete /${archiveID} ${fileSet}" "$flow_ftp_connection" "$log"
 rc=$?
 if [[ $rc != 0 ]] ; then
-    exit_error "$pid" ${STATUS} "FTP error."
+    exit_error "$pid" $RESTORE "FTP error."
 fi
 
 
@@ -58,5 +57,5 @@ chown -R $offloader:$na $fileSet
 # End job
 #-----------------------------------------------------------------------------------------------------------------------
 echo "Done. ALl went well at this side." >> $log
-call_api_status $pid ${RESTORE_FINISHED}
+call_api_status $pid $RESTORE $FINISHED
 exit 0
