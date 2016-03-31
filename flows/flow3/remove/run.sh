@@ -52,6 +52,8 @@ if [[ $count == 1 ]] ; then
 	mv $fileSet $history
 
 	call_api_status $pid $CLEANUP $FINISHED
+else
+    exit_error "$pid" $CLEANUP "Not all files were processed and could therefor not be deleted."
 fi
 
 
