@@ -12,16 +12,6 @@ echo "Started creation of METS for $pid" >> $log
 
 
 #-----------------------------------------------------------------------------------------------------------------------
-# Is the ingest of the METS already in progress?
-#-----------------------------------------------------------------------------------------------------------------------
-instruction_mets=$fileSet/instruction_mets.xml
-if [ -f "$instruction_mets" ] ; then
-    exit_error "METS instruction already present: $instruction_mets. This may indicate the SIP is staged or the ingest is already in progress. This is not an error." 2
-fi
-
-
-
-#-----------------------------------------------------------------------------------------------------------------------
 # TODO: Has the SOR processed the complete instruction?
 #-----------------------------------------------------------------------------------------------------------------------
 #echo "Waiting for instruction to be completely processed by the SOR." >> $log
@@ -70,7 +60,7 @@ fi
 #-----------------------------------------------------------------------------------------------------------------------
 md5_hash=$(md5sum $manifest | cut -d ' ' -f 1)
 profile_manifest=$work/profile_manifest.csv
-echo "ID,PARENT_ID,URI,FILE_PATH,NAME,METHOD,STATUS,SIZE,TYPE,EXT,LAST_MODIFIED,EXTENSION_MISMATCH,HASH,FORMAT_COUNT,PUID,MIME_TYPE,FORMAT_NAME,FORMAT_VERSION,PID,SEQ\n" >> $profile_manifest
+echo "ID,PARENT_ID,URI,FILE_PATH,NAME,METHOD,STATUS,SIZE,TYPE,EXT,LAST_MODIFIED,EXTENSION_MISMATCH,HASH,FORMAT_COUNT,PUID,MIME_TYPE,FORMAT_NAME,FORMAT_VERSION,PID,SEQ\n" > $profile_manifest
 echo ""","1","file:/${archiveID}/","/${archiveID}/manifest.xml","manifest.xml","METHOD","$STATUS","SIZE","File","xml","","EXTENSION_MISMATCH","${md5_hash}","FORMAT_COUNT","PUID","application/xml","Xml Document","FORMAT_VERSION","${pid}",""" >> $profile_manifest
 
 
@@ -78,7 +68,8 @@ echo ""","1","file:/${archiveID}/","/${archiveID}/manifest.xml","manifest.xml","
 #-----------------------------------------------------------------------------------------------------------------------
 # Produce instruction for the METS
 #-----------------------------------------------------------------------------------------------------------------------
-python ${DIGCOLPROC_HOME}/util/droid_to_instruction.py -s $profile_manifest -t $instruction_mets --objid "$pid" --access "$access" --submission_date "$datestamp" --autoIngestValidInstruction "$flow_autoIngestValidInstruction" --label "$archiveID $flow_client METS" --action "upsert" --notificationEMail "$flow_notificationEMail" --plan "StagingfileIngestMaster" >> $log
+instruction_mets=$fileSet/instruction.xml
+python ${DIGCOLPROC_HOME}/util/droid_to_instruction.py -s $profile_manifest -t $instruction_mets --objid "$pid" --access "irsh" --submission_date "$datestamp" --autoIngestValidInstruction "$flow_autoIngestValidInstruction" --label "$archiveID $flow_client METS" --action "upsert" --notificationEMail "$flow_notificationEMail" --plan "StagingfileIngestMaster" >> $log
 rc=$?
 if [[ $rc != 0 ]] ; then
     exit_error "Failed to create an instruction for the METS."
@@ -92,6 +83,8 @@ fi
 #-----------------------------------------------------------------------------------------------------------------------
 # Upload the METS file
 #-----------------------------------------------------------------------------------------------------------------------
+work_instruction_mets=$work/instruction.xml
+cp $instruction_mets $work_instruction_mets
 ftp_script_base=$work/ftp.$archiveID.$datestamp
 ftp_script=$ftp_script_base.mets.txt
 bash ${DIGCOLPROC_HOME}util/ftp.sh "$ftp_script" "put -O /${archiveID} ${fileSet}/manifest.xml" "$flow_ftp_connection" "$log"
@@ -106,7 +99,7 @@ fi
 # Upload the instruction
 #-----------------------------------------------------------------------------------------------------------------------
 ftp_script=$ftp_script_base.instruction.txt
-bash ${DIGCOLPROC_HOME}util/ftp.sh "$ftp_script" "put -O /${archiveID} ${fileSet}/instruction_mets.xml" "$flow_ftp_connection" "$log"
+bash ${DIGCOLPROC_HOME}util/ftp.sh "$ftp_script" "put -O /${archiveID} ${fileSet}/instruction.xml" "$flow_ftp_connection" "$log"
 rc=$?
 if [[ $rc != 0 ]] ; then
     exit_error "FTP Failed"

@@ -31,7 +31,7 @@ FILE_NAME_REGEX = re.compile('^[\sa-zA-Z0-9-:\._\(\)\[\]\{@\$\}=\\\]{1,240}$')
 
 
 class ExpectedNr:
-    expected_seq_nr = 1
+    expected_seq_nr = None
     expected_obj_nr = None
 
 
@@ -112,7 +112,7 @@ def check_sequence_numbers(items, line, header_columns, expected_nr):
         expected_obj_nr = expected_nr.expected_obj_nr
         if expected_obj_nr is None or obj_nr.lower() != expected_obj_nr.lower():
             expected_nr.expected_obj_nr = obj_nr
-            expected_nr.expected_seq_nr = 1
+            expected_nr.expected_seq_nr = seq_nr_int
 
         if seq_nr_int != expected_nr.expected_seq_nr:
             error('Volgnummer \'' + seq_nr + '\' incorrect. ' +
@@ -137,7 +137,7 @@ def test_relationships(items, line, header_columns):
             if master_name != reference_name:
                 if not org_reference_name:
                     error('Empty file name found in column ' + column_name, line, items)
-                else:
+                elif org_master_name:
                     error('Difference in filenames between ' + master_name + ' and ' + reference_name, line, items)
 
     for_all_columns_with_items(header_columns, items, execute_for_column)
@@ -147,9 +147,12 @@ def test_file_name(items, i, header_columns, all_items):
     master = items[header_columns[MASTER_COLUMN_NAME]]
     inv = items[header_columns[INV_COLUMN_NAME]]
 
-    for cur_items in all_items[1:]:
-        if cur_items[header_columns[MASTER_COLUMN_NAME]] == master:
-            error('Duplicate file entry \'' + master + '\'', i, items)
+    if master:
+        for cur_items in all_items[1:]:
+            if cur_items[header_columns[MASTER_COLUMN_NAME]] == master:
+                error('Duplicate file entry \'' + master + '\'', i, items)
+    else:
+        error('No master found', i, items)
 
     master_file = basename(normpath(master))
     if FILE_NAME_REGEX.match(master_file) is None:
@@ -327,7 +330,7 @@ def for_all_columns(header_columns, all_items, exec_for_column):
 
 
 def find_parent_folder_for_column(header_columns, column_name, all_items):
-    for item in all_items[1:]:
+    for item in reversed(all_items[1:]):
         if item[header_columns[column_name]]:
             parent_folder = get_parent_directory_of_file(item[header_columns[column_name]])
             return normpath(parent_folder)

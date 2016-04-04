@@ -56,10 +56,15 @@ def move_files(columns, items, fileset, droid, access):
     volgnr = items[columns['volgnr']]
     new_dir_path = archive_id + os.path.sep + 'tmp' + os.path.sep + new_dir_name
 
-    if items[columns['master']]:
-        use = determine_use_for(parent_dir, items[columns['master']], droid)
-        new_file_path = new_dir_path + os.path.sep + use
-        move_files_for(parent_dir, archive_id, items[columns['master']], new_file_path, volgnr)
+    use = None
+    if items[columns['master']] or 'level1' in columns:
+        level1 = items[columns['level1']] if 'level1' in columns else ''
+        use = determine_use_for(parent_dir, items[columns['master']], level1, droid)
+
+    if use:
+        if items[columns['master']]:
+            new_file_path = new_dir_path + os.path.sep + use
+            move_files_for(parent_dir, archive_id, items[columns['master']], new_file_path, volgnr)
 
         if 'level1' in columns:
             new_file_path = new_dir_path + os.path.sep + use + os.path.sep + '.level1'
@@ -89,13 +94,15 @@ def move_files_for(parent_dir, archive_id, cur_file_path, new_file_path, volgnr)
             os.rename(full_cur_file_path, os.path.join(full_new_file_path, new_filename))
 
 
-def determine_use_for(parent_dir, file_path, droid):
-    full_path = get_full_path(parent_dir, file_path)
+def determine_use_for(parent_dir, file_path_master, file_path_level1, droid):
+    full_path_master = get_full_path(parent_dir, file_path_master)
+    full_path_level1 = get_full_path(parent_dir, file_path_level1)
 
     with open(droid, 'r') as csvfile:
         reader = csv.reader(csvfile, delimiter=',', quotechar='"')
         for file in reader:
-            if file[Droid.FILE_PATH].strip() == full_path:
+            path = file[Droid.FILE_PATH].strip()
+            if path == full_path_master or path == full_path_level1:
                 mime_type = file[Droid.MIME_TYPE]
                 type = mime_type.split('/')[0]
 
@@ -109,9 +116,9 @@ def determine_use_for(parent_dir, file_path, droid):
                     return 'archive video'
 
                 if mime_type == 'application/pdf' or mime_type == 'application/x-pdf':
-                    return 'pdf'
+                    return 'archive pdf'
 
-    raise ValueError('Unknown content type found for file ' + file_path)
+    raise ValueError('Unknown content type found for file ' + file_path_master + ' or file ' + file_path_level1)
 
 
 def determine_access_for(parent_dir, cur_file_path, new_access_file, default):

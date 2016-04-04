@@ -69,8 +69,10 @@ def readInstruction(File instruction, def good, def bad, def arguments) {
             }
 
             if (inSor(l, arguments)) {
-                if (Boolean.parseBoolean(arguments.delete))
-                    new File(instruction.parentFile.parentFile, l.location).delete()
+                if (Boolean.parseBoolean(arguments.delete)) {
+                    def parentFile = arguments.parent_file ?: instruction.parentFile.parentFile
+                    new File(parentFile, l.location).delete()
+                }
                 String urlAppend = (arguments.access_token) ? "&urlappend=%3Faccess_token%3D" + arguments.access_token : ""
                 good << "http://hdl.handle.net/$l.pid?locatt=view:" + arguments.view + urlAppend
             } else {

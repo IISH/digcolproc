@@ -10,6 +10,7 @@
 objnr=$1
 id=$2
 
+refSeqNr=2
 catalogUrl="$catalog/$archiveID/ArchiveContentList#$ID"
 work=$work/$archiveID.$objnr
 pid=$na/$archiveID.$ID

@@ -35,7 +35,7 @@ access=$(<"$access_file")
 #-----------------------------------------------------------------------------------------------------------------------
 # Download the currently existing METS file
 #-----------------------------------------------------------------------------------------------------------------------
-wget -O "$work/mets.xml" "http://disseminate.objectrepository.org/mets/$pid"
+wget -O "$work/mets.xml" "http://hdl.handle.net/$pid?locatt=view:mets"
 
 
 
@@ -139,7 +139,7 @@ fi
 # Produce instruction from the report.
 #-----------------------------------------------------------------------------------------------------------------------
 work_instruction=$work/instruction.xml
-python ${DIGCOLPROC_HOME}/util/droid_to_instruction.py -s $profile_extended_csv -t $work_instruction --objid "$pid" --access "$access" --submission_date "$datestamp" --autoIngestValidInstruction "$flow_autoIngestValidInstruction" --label "$archiveID $flow_client" --action "add" --notificationEMail "$flow_notificationEMail" --plan "StagingfileIngestLevel3,StagingfileIngestLevel2,StagingfileIngestLevel1,StagingfileBindPIDs,StagingfileIngestMaster" >> $log
+python ${DIGCOLPROC_HOME}/util/droid_to_instruction.py --textLayerCheck -s $profile_extended_csv -t $work_instruction --objid "$pid" --access "$access" --submission_date "$datestamp" --autoIngestValidInstruction "$flow_autoIngestValidInstruction" --label "$archiveID $flow_client" --action "add" --notificationEMail "$flow_notificationEMail" --plan "StagingfileIngestLevel3,StagingfileIngestLevel2,StagingfileIngestLevel1,StagingfileBindPIDs,StagingfileIngestMaster" --deleteCompletedInstruction "true" >> $log
 rc=$?
 if [[ $rc != 0 ]] ; then
     chown -R "$orgOwner:$orgGroup" $fileSet
@@ -157,7 +157,7 @@ fi
 #-----------------------------------------------------------------------------------------------------------------------
 ftp_script_base=$work/ftp.$archiveID.$datestamp
 ftp_script=$ftp_script_base.files.txt
-bash ${DIGCOLPROC_HOME}util/ftp.sh "$ftp_script" "mirror --reverse --delete --verbose ${fileSet} /${archiveID}" "$flow_ftp_connection" "$log"
+bash ${DIGCOLPROC_HOME}util/ftp.sh "$ftp_script" "mirror --reverse --delete --verbose --exclude ^\.access\.txt$ ${fileSet} /${archiveID}" "$flow_ftp_connection" "$log"
 rc=$?
 if [[ $rc != 0 ]] ; then
     chown -R "$orgOwner:$orgGroup" $fileSet
@@ -169,7 +169,7 @@ fi
 #-----------------------------------------------------------------------------------------------------------------------
 # Upload the instruction
 #-----------------------------------------------------------------------------------------------------------------------
-mv $work_instruction $file_instruction
+cp $work_instruction $file_instruction
 ftp_script=$ftp_script_base.instruction.txt
 bash ${DIGCOLPROC_HOME}util/ftp.sh "$ftp_script" "put -O /${archiveID} ${fileSet}/instruction.xml" "$flow_ftp_connection" "$log"
 rc=$?
@@ -187,7 +187,7 @@ filepid=""
 while read line
 do
     IFS=, read ID PARENT_ID URI FILE_PATH NAME METHOD STATUS SIZE TYPE EXT LAST_MODIFIED EXTENSION_MISMATCH HASH FORMAT_COUNT PUID MIME_TYPE FORMAT_NAME FORMAT_VERSION PID SEQ <<< "$line"
-    if [ -z "$filepid" ] && [ "$SEQ" == "\"2\"" ] && [[ "$FILE_PATH" != *"text"* ]] ; then
+    if [ -z "$filepid" ] && [ "$SEQ" == "\"$refSeqNr\"" ] && [[ "$FILE_PATH" != *"text"* ]] ; then
         filepid="${PID%\"}"
         filepid="${filepid#\"}"
 
@@ -195,7 +195,7 @@ do
         if [ ! -z "$catalogUrl" ] ; then
             pidLocation="<pid:location weight='1' href='$catalogUrl'/> <pid:location weight='0' href='$catalogUrl' view='catalog'/>"
         else
-            pidLocation="<pid:location weight='1' href='$or/mets/$pid'/>"
+            pidLocation="<pid:location weight='1' href='$or/file/master/$pid'/>"
         fi
 
         soapenv="<?xml version='1.0' encoding='UTF-8'?>  \
@@ -204,16 +204,16 @@ do
 				<pid:UpsertPidRequest> \
 					<pid:na>$na</pid:na> \
 					<pid:handle> \
-						<<pid:pid>$pid</pid:pid> \
-                            <pid:locAtt> \
-                                $pidLocation \
-                                <pid:location weight='0' href='$or/mets/$pid' view='mets'/> \
-                                <pid:location weight='0' href='$or/pdf/$pid' view='pdf'/> \
-                                <pid:location weight='0' href='$or/file/master/$filepid' view='master'/> \
-                                <pid:location weight='0' href='$or/file/level1/$filepid' view='level1'/> \
-                                <pid:location weight='0' href='$or/file/level2/$filepid' view='level2'/> \
-                                <pid:location weight='0' href='$or/file/level3/$filepid' view='level3'/> \
-                            </pid:locAtt> \
+						<pid:pid>$pid</pid:pid> \
+                        <pid:locAtt> \
+                            $pidLocation \
+                            <pid:location weight='0' href='$or/file/master/$pid' view='mets'/> \
+                            <pid:location weight='0' href='$or/pdf/$pid' view='pdf'/> \
+                            <pid:location weight='0' href='$or/file/master/$filepid' view='master'/> \
+                            <pid:location weight='0' href='$or/file/level1/$filepid' view='level1'/> \
+                            <pid:location weight='0' href='$or/file/level2/$filepid' view='level2'/> \
+                            <pid:location weight='0' href='$or/file/level3/$filepid' view='level3'/> \
+                        </pid:locAtt> \
 					</pid:handle> \
 				</pid:UpsertPidRequest> \
 			</soapenv:Body> \
