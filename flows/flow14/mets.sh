@@ -83,6 +83,8 @@ fi
 #-----------------------------------------------------------------------------------------------------------------------
 # Upload the METS file
 #-----------------------------------------------------------------------------------------------------------------------
+work_instruction_mets=$work/instruction.xml
+cp $instruction_mets $work_instruction_mets
 ftp_script_base=$work/ftp.$archiveID.$datestamp
 ftp_script=$ftp_script_base.mets.txt
 bash ${DIGCOLPROC_HOME}util/ftp.sh "$ftp_script" "put -O /${archiveID} ${fileSet}/manifest.xml" "$flow_ftp_connection" "$log"
