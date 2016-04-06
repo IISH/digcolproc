@@ -6,7 +6,13 @@
 #
 # Usage: run.sh [na] [fileSet] [work directory]
 
+#-----------------------------------------------------------------------------------------------------------------------
+# load environment variables
+#-----------------------------------------------------------------------------------------------------------------------
 source "${DIGCOLPROC_HOME}setup.sh" $0 "$@"
+source ../call_api_status.sh
+STATUS=$UPLOADING_TO_PERMANENT_STORAGE
+pid=$na/$archiveID
 
 
 
@@ -22,12 +28,21 @@ fi
 
 
 #-----------------------------------------------------------------------------------------------------------------------
-# Removal procedure. Use -delete true to remove a file when it is confirmed that is exists in the object repository 
+# Report the status for each file in the instruction.
+# This procedure will return a zero exit status if all files are accounted for.
 #-----------------------------------------------------------------------------------------------------------------------
-report="$log.report"
+report="$log.report_ingest"
 echo $fileSet > $report
-groovy ${DIGCOLPROC_HOME}util/remove.file.groovy -file "$file_instruction" -access_token $flow_access_token -or $or -delete true >> $report
+python ${DIGCOLPROC_HOME}util/report_ingest.py --instruction "$file_instruction" >> $report
+rc=$?
 
+
+#-----------------------------------------------------------------------------------------------------------------------
+# Provided there are no errors remove the files.
+#-----------------------------------------------------------------------------------------------------------------------
+if [[ $rc == 0 ]] ; then
+    echo "Remove file files mentioned in the report."
+fi
 
 
 #-----------------------------------------------------------------------------------------------------------------------
