@@ -59,13 +59,12 @@ function call_api_status() {
     endpoint="${acquisition_database}/service/status"
     echo "endpoint=${endpoint}">>$log
     echo "request_data=${request_data}">>$log
-    curl --insecure --max-time 5 --data "$request_data" "$endpoint"
-    rc=$?
-    if [[ $rc != 0 ]] ; then
-        echo "Error when contacting ${endpoint} ">>$log
+    rc=$(curl -o /dev/null -s --insecure --max-time 5 --data "$request_data" "$endpoint")
+    if [[ $rc != 200 ]] ; then
+        echo "Error when contacting ${endpoint} got statuscode ${rc}">>$log
         exit 1
     fi
-    return $rc
+    return 0
 }
 
 
@@ -74,13 +73,12 @@ function call_api_manifest() {
     archiveID=$2
     file=$3
     endpoint="${acquisition_database}/service/manifest"
-    curl --insecure --max-time 180 --form "access_token=${acquisition_database_access_token}" --form "pid=${pid}" --form manifest_csv="@${file};type=text/csv;filename=manifest.${archiveID}.csv" "$endpoint"
-    rc=$?
-    if [[ $rc != 0 ]] ; then
-        echo "Error when contacting ${endpoint} ">>$log
+    rc=$(curl -o /dev/null -s --insecure --max-time 180 --form "access_token=${acquisition_database_access_token}" --form "pid=${pid}" --form manifest_csv="@${file};type=text/csv;filename=manifest.${archiveID}.csv" "$endpoint")
+    if [[ $rc != 200 ]] ; then
+        echo "Error when contacting ${endpoint} got statuscode ${rc}">>$log
         exit 1
     fi
-    return $rc
+    return 0
 }
 
 #-----------------------------------------------------------------------------------------------------------------------
