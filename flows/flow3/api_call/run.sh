@@ -63,7 +63,7 @@ function call_api_folders {
                 echo "\$id = $id">>$log
 
                 # Tell what we are doing
-                call_api_status $pid $FOLDER $RUNNING
+                call_api_status $pid $FOLDER_CREATION_RUNNING
 
                 # Create a folder for the PID
                 folder=$offloader/$id
@@ -73,7 +73,7 @@ function call_api_folders {
                     # TODO: Question: shouldn't we also do the chmod and chown commands, to be sure the rights are set okay?
                     #msg="The folder ${folder} already exists."
                     #call_api_status $pid $FOLDER_CREATED true "$msg"
-                    call_api_status $pid $FOLDER $FINISHED
+                    call_api_status $pid $FOLDER_CREATED
 
 					# set permissions
 	                chmod -R 775 "$folder"
@@ -94,13 +94,13 @@ function call_api_folders {
                     echo "Directory created: $folder">>$log
 
                     # Update the status using the 'status' web service
-                    call_api_status $pid $FOLDER $FINISHED
+                    call_api_status $pid $FOLDER_CREATED
                 else
                     # directory doesn't exist
                     msg="Directory does not exists. Failed to create: $folder"
 
                     # Update the status using the 'status' web service
-                    call_api_status $pid $FOLDER $FAILED $msg
+                    call_api_status $pid $FOLDER_CREATED true $msg
                 fi
             done
         done
@@ -129,6 +129,7 @@ function call_api_backup() {
         pid="${pid%\"}"
         pid="${pid#\"}"
         id=$(basename $pid) # And remove the prefix
+        call_api_status $pid $BACKUP_RUNNING
         if [[ $? == 0 ]] ; then
             "${DIGCOLPROC_HOME}util/place_event.sh" flow3 backup.txt $id
         fi
@@ -157,6 +158,7 @@ function call_api_restore() {
         pid="${pid%\"}"
         pid="${pid#\"}"
         id=$(basename $pid) # And remove the prefix
+        call_api_status $pid $RESTORE_RUNNING
         if [[ $? == 0 ]] ; then
             "${DIGCOLPROC_HOME}util/place_event.sh" flow3 restore.txt $id
         fi
@@ -185,6 +187,7 @@ function call_api_ingest() {
         pid="${pid%\"}"
         pid="${pid#\"}"
         id=$(basename $pid) # And remove the prefix
+        call_api_status $pid $UPLOADING_TO_PERMANENT_STORAGE
         if [[ $? == 0 ]] ; then
             "${DIGCOLPROC_HOME}util/place_event.sh" flow3 ingest.txt $id
         fi
@@ -204,8 +207,7 @@ function call_api(){
     call_api_folders
     call_api_backup
     call_api_restore
-    # temporary disabled
-    # call_api_ingest
+    call_api_ingest
 
     return 0
 }
