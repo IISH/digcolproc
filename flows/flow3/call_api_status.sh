@@ -59,7 +59,7 @@ function call_api_status() {
     endpoint="${acquisition_database}/service/status"
     echo "endpoint=${endpoint}">>$log
     echo "request_data=${request_data}">>$log
-    rc=$(curl -o /dev/null -s --insecure --max-time 5 --data "$request_data" "$endpoint")
+    rc=$(curl -o /dev/null -s --insecure --max-time 5 -w "%{http_code}" --data "$request_data" "$endpoint")
     if [[ $rc != 200 ]] ; then
         echo "Error when contacting ${endpoint} got statuscode ${rc}">>$log
         exit 1
