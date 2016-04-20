@@ -12,13 +12,13 @@ import getopt
 from lxml import etree
 
 
-def parse_ead(xml_file, xsl_file, result_file):
-    dom = etree.parse(xml_file)
-    xslt = etree.parse(xsl_file)
-    transform = etree.XSLT(xslt)
-    result = transform(dom)
+def parse_xml(xml_file, xsl_file, result_file):
+    xml_tree = etree.parse(xml_file)
+    xsl_tree = etree.parse(xsl_file)
+    transform = etree.XSLT(xsl_tree)
+    result = transform(xml_tree)
     f = open(result_file, 'w')
-    f.write(etree.tostring(result, pretty_print=True))
+    f.write(str(result))
     f.close()
 
 
@@ -54,7 +54,7 @@ def main(argv):
     print('xml_file=' + xml_file)
     print('xsl_file=' + xsl_file)
 
-    parse_ead(xml_file, xsl_file, result_file)
+    parse_xml(xml_file, xsl_file, result_file)
 
 
 if __name__ == '__main__':

@@ -34,8 +34,32 @@ fi
 #-----------------------------------------------------------------------------------------------------------------------
 file_concordancetable="${work}/${archiveID}"
 python create_concordancetable.py --xml_file="$file" --xsl_file="create_concordancetable.xsl" --result_file="$file_concordancetable" >> $log
+rc=$?
+if [[ $rc != 0 ]] ; then
+    echo "create_concordancetable.py threw an error ${rc}">>$log
+    exit 1
+fi
+if [ ! -f $file_concordancetable ]
+then
+    echo "Unable to create ${file_concordancetable}">>$log
+    exit 1
+fi
 
 
+#-----------------------------------------------------------------------------------------------------------------------
+# For each unitid in the csv, append the second item.
+#-----------------------------------------------------------------------------------------------------------------------
+while read line
+do
+    IFS=, read Objectnummer Inventarisnummer <<< "$line"
+    if [ "$Objectnummer" == "Objectnummer" ] ; then
+        echo "header"
+    else
+        pid="${na}/${archiveID}.${Inventarisnummer}"
+        pid_url="${or}/mets/${pid}/2"
+        wget --no-certificate "$pid_url" > "${work}"
+    fi
+done < $file_concordancetable
 
 exit 0
 
