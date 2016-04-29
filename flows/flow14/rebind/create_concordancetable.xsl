@@ -8,7 +8,6 @@
     </xsl:template>
 
     <xsl:template match="ead:dsc">
-        <xsl:text>"Objectnummer","Inventarisnummer"</xsl:text>
         <xsl:for-each select="node()//ead:unitid[not(../../*/ead:did/ead:unitid)]">
 
             <xsl:variable name="file_title">
@@ -28,7 +27,7 @@
             <xsl:text>
 </xsl:text>
             <xsl:value-of
-                    select="concat('&quot;', position(), '&quot;,&quot;', text(), '&quot;')"/>
+                    select="text()"/>
         </xsl:for-each>
     </xsl:template>
 

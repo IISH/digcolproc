@@ -17,14 +17,14 @@ source ../call_api_status.sh
 #-----------------------------------------------------------------------------------------------------------------------
 # Download the EAD file
 #-----------------------------------------------------------------------------------------------------------------------
-file="${work}/${oai_request}.txt"
+file="${work}/${archiveID}.xml"
 pid="${na}/${archiveID}"
-oai_request="${oai}?verb=GetRecord&amp;identifier=oai:socialhistoryservices.org:${pid}&amp;metadataPrefix=ead"
+oai_request="${oai}?verb=GetRecord&identifier=oai:socialhistoryservices.org:${pid}&metadataPrefix=ead"
 rm $file
-wget --no-check-certificate -O $file
+wget --no-check-certificate -O "$file" "$oai_request"
 if [ ! -f $file ]
 then
-    echo "Unable to download to ${file}">>$log
+    echo "Unable to get ${oai_request} to ${file}">>$log
     exit 1
 fi
 
@@ -32,8 +32,8 @@ fi
 #-----------------------------------------------------------------------------------------------------------------------
 # Pull out the unitid values. Create a concordance list as used by the PID bind procedure.
 #-----------------------------------------------------------------------------------------------------------------------
-file_concordancetable="${work}/${archiveID}"
-python ${DIGCOLPROC_HOME}/util/xslt_transformer.py --xml_file="$file" --xsl_file="create_concordancetable.xsl" --result_file="$file_concordancetable" >> $log
+file_concordancetable="${work}/${archiveID}_concordancetable.csv"
+python ${DIGCOLPROC_HOME}/util/xslt_transformer.py --xml_file="$file" --xsl_file="create_concordancetable.xsl" --result_file="$file_concordancetable" >> $log 2>&1
 rc=$?
 if [[ $rc != 0 ]] ; then
     echo "xslt_transformer.py threw an error ${rc}">>$log
@@ -51,7 +51,7 @@ fi
 #-----------------------------------------------------------------------------------------------------------------------
 while read line
 do
-    IFS=, read Objectnummer Inventarisnummer <<< "$line"
+    IFS=, read Inventarisnummer <<< "$line"
     mets_item_2="${or}/mets/10622/${na}/${archiveID}.${Inventarisnummer}/2" # e.g. http://disseminate.objectrepository.org/mets/10622/ARCH00720.1/2
     file_item_2="${work}/${archiveID}.${Inventarisnummer}.xml"
     wget -O "$file_item_2" "$mets_item_2"
@@ -143,7 +143,7 @@ do
 done < $file_concordancetable
 
 
-echo 
+echo "I think we are done...">>$log
 
 exit 0
 
