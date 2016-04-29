@@ -63,12 +63,10 @@ do
         rm "$file_item"
         if [[ $rc != 0 ]]
         then
-            echo "Could not get a PID for Inventarisnummer ${Inventarisnummer}. Error ${rc}">>$log
             continue
         fi
         if [ -z "$pid" ]
         then
-            echo "Could not get a PID for Inventarisnummer ${Inventarisnummer}. Empty">>$log
             continue
         fi
         break # We got our PID
