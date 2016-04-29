@@ -52,12 +52,13 @@ fi
 while read line
 do
     IFS=, read Inventarisnummer <<< "$line"
-    mets_item_2="${or}/mets/10622/${na}/${archiveID}.${Inventarisnummer}/2" # e.g. http://disseminate.objectrepository.org/mets/10622/ARCH00720.1/2
+    mets_item_2="${or}/mets/${na}/${archiveID}.${Inventarisnummer}/2" # e.g. http://disseminate.objectrepository.org/mets/10622/ARCH00720.1/2
     file_item_2="${work}/${archiveID}.${Inventarisnummer}.xml"
     wget -O "$file_item_2" "$mets_item_2"
 
-    pid=$(python ${DIGCOLPROC_HOME}/util/xslt_transformer.py --xml_file="$mets_item_2" --xsl_file="get_item_pid.xsl" --result_file="$file_concordancetable")
+    pid=$(python ${DIGCOLPROC_HOME}/util/xslt_transformer.py --xml_file="$mets_item_2" --xsl_file="get_item_pid.xsl")
     rc=$?
+    rm "$file_item_2"
     if [[ $rc != 0 ]]
     then
         echo "Could not get a PID for Inventarisnummer ${Inventarisnummer}. Error ${rc}">>$log
@@ -68,6 +69,7 @@ do
         echo "Could not get a PID for Inventarisnummer ${Inventarisnummer}.">>$log
         continue
     fi
+    last_pid="$pid"
 
     objid="${na}/${archiveID}.${Inventarisnummer}"
     soapenv="<?xml version='1.0' encoding='UTF-8'?>  \
@@ -107,7 +109,7 @@ do
 
     # The main archival ID
 	# This will bind to the catalog as well.
-	pid=$na/$archiveID
+	pid="$na/$archiveID"
 	soapenv="<?xml version='1.0' encoding='UTF-8'?>  \
 		<soapenv:Envelope xmlns:soapenv='http://schemas.xmlsoap.org/soap/envelope/' xmlns:pid='http://pid.socialhistoryservices.org/'>  \
 			<soapenv:Body> \
@@ -119,10 +121,10 @@ do
 								<pid:location weight='1' href='$catalog/$archiveID'/> \
 								<pid:location weight='0' href='$catalog/$archiveID' view='catalog'/> \
 								<pid:location weight='0' href='$oai?verb=GetRecord&amp;identifier=oai:socialhistoryservices.org:$na/$archiveID&amp;metadataPrefix=ead' view='ead'/> \
-								<pid:location weight='0' href='$or/file/master/$pid' view='master'/> \
-								<pid:location weight='0' href='$or/file/level1/$pid' view='level1'/> \
-								<pid:location weight='0' href='$or/file/level2/$pid' view='level2'/> \
-								<pid:location weight='0' href='$or/file/level3/$pid' view='level3'/> \
+								<pid:location weight='0' href='$or/file/master/$last_pid' view='master'/> \
+								<pid:location weight='0' href='$or/file/level1/$last_pid' view='level1'/> \
+								<pid:location weight='0' href='$or/file/level2/$last_pid' view='level2'/> \
+								<pid:location weight='0' href='$or/file/level3/$last_pid' view='level3'/> \
 							</pid:locAtt> \
 					</pid:handle> \
 				</pid:UpsertPidRequest> \
