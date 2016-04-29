@@ -71,6 +71,7 @@ do
             echo "Could not get a PID for Inventarisnummer ${Inventarisnummer}. Empty">>$log
             continue
         fi
+        break # We got our PID
     done
 
     if [ -z "$pid" ]

@@ -9,7 +9,7 @@
     </xsl:template>
 
     <xsl:template match="mets:fileGrp[@USE='thumbnail image']/mets:file/mets:FLocat[@LOCTYPE='HANDLE']">
-    <xsl:value-of select="substring-after(substring-before(@xlink:href, '?'), 'hdl.handle.net/')"/>
+    <xsl:value-of select="concat(substring-after(substring-before(@xlink:href, '?'), 'hdl.handle.net/'), '&#xa;')"/>
     </xsl:template>
 
 
