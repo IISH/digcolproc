@@ -52,18 +52,27 @@ fi
 while read line
 do
     IFS=, read Inventarisnummer <<< "$line"
-    mets_item_2="${or}/mets/${na}/${archiveID}.${Inventarisnummer}/2" # e.g. http://disseminate.objectrepository.org/mets/10622/ARCH00720.1/2
-    file_item_2="${work}/${archiveID}.${Inventarisnummer}.xml"
-    wget -O "$file_item_2" "$mets_item_2"
 
-    pid=$(python ${DIGCOLPROC_HOME}/util/xslt_transformer.py --xml_file="$mets_item_2" --xsl_file="get_item_pid.xsl")
-    rc=$?
-    rm "$file_item_2"
-    if [[ $rc != 0 ]]
-    then
-        echo "Could not get a PID for Inventarisnummer ${Inventarisnummer}. Error ${rc}">>$log
-        continue
-    fi
+    for seq in 2 1 0 # Check sequence 2 first, then one, then nothing.
+    do
+        mets_item="${or}/mets/${na}/${archiveID}.${Inventarisnummer}/${seq}" # e.g. http://disseminate.objectrepository.org/mets/10622/ARCH00720.1/2
+        file_item="${work}/${archiveID}.${Inventarisnummer}.xml"
+        wget -O "$file_item" "$mets_item"
+        pid=$(python ${DIGCOLPROC_HOME}/util/xslt_transformer.py --xml_file="$mets_item" --xsl_file="get_item_pid.xsl")
+        rc=$?
+        rm "$file_item"
+        if [[ $rc != 0 ]]
+        then
+            echo "Could not get a PID for Inventarisnummer ${Inventarisnummer}. Error ${rc}">>$log
+            continue
+        fi
+        if [ -z "$pid" ]
+        then
+            echo "Could not get a PID for Inventarisnummer ${Inventarisnummer}. Empty">>$log
+            continue
+        fi
+    done
+
     if [ -z "$pid" ]
     then
         echo "Could not get a PID for Inventarisnummer ${Inventarisnummer}.">>$log
