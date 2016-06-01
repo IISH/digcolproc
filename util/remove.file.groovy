@@ -11,18 +11,7 @@ for (int i = 0; i < args.length; i++) {
 
 assert arguments.or, "Expect -or argument: base url of the object repository"
 assert arguments.file, "Expect -file argument: full path of the instruction file"
-assert arguments.access_token, "Expect -access_token argument: object repository webservice key"
-
-if ( ! arguments.view ) {
-    arguments.view = 'level2'
-    println "Default view set to ${arguments.view}"
-}
-
-if ( ! arguments.delete ) {
-    arguments.delete = "false"
-    println "Default delete when file is in the sor is set to ${arguments.delete}"
-}
-
+//assert arguments.access_token, "Expect -access_token argument: object repository webservice key"
 
 println("Arguments: " + arguments)
 
@@ -69,12 +58,10 @@ def readInstruction(File instruction, def good, def bad, def arguments) {
             }
 
             if (inSor(l, arguments)) {
-                if (Boolean.parseBoolean(arguments.delete)) {
-                    def parentFile = arguments.parent_file ?: instruction.parentFile.parentFile
-                    new File(parentFile, l.location).delete()
-                }
+                if (Boolean.parseBoolean(arguments.delete))
+                    new File(instruction.parentFile.parentFile, l.location).delete()
                 String urlAppend = (arguments.access_token) ? "&urlappend=%3Faccess_token%3D" + arguments.access_token : ""
-                good << "http://hdl.handle.net/$l.pid?locatt=view:" + arguments.view + urlAppend
+                good << "http://hdl.handle.net/$l.pid?locatt=view:level2" + urlAppend
             } else {
                 bad << "$l.pid not in the object repository."
             }
