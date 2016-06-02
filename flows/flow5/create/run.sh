@@ -28,6 +28,7 @@ if [[ $count == 0 ]] ; then
 	echo "There is no System folder." >> $log
 	mkdir $fs_parent/DO_NOT_REMOVE_THIS_FOLDER
 	touch $fs_parent/DO_NOT_REMOVE_THIS_FOLDER/system
+	count=1
 fi
 
 if [[ $count == 1 ]] ; then
