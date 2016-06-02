@@ -26,7 +26,7 @@ ftp_script=${ftp_script_base}.files.txt
 bash ${DIGCOLPROC_HOME}util/ftp.sh "$ftp_script" "mirror --reverse --verbose ${fileSet}/Tiff /${archiveID}/Tiff" "$flow_ftp_connection" "$log"
 rc=$?
 if [[ $rc != 0 ]] ; then
-    exit_error "$pid" $STAGINGAREA "FTP error with uploading the Tiff files."
+    exit_error "FTP error with uploading the Tiff files." $rc
 fi
 
 
@@ -36,7 +36,7 @@ fi
 bash ${DIGCOLPROC_HOME}util/ftp.sh "$ftp_script" "mirror --reverse --verbose ${fileSet}/.level1 /${archiveID}/Jpeg" "$flow_ftp_connection" "$log"
 rc=$?
 if [[ $rc != 0 ]] ; then
-    exit_error "$pid" $STAGINGAREA "FTP error with uploading the Tiff files."
+    exit_error "FTP error with uploading the Tiff files." $rc
 fi
 
 
@@ -48,7 +48,7 @@ do
     bash ${DIGCOLPROC_HOME}util/ftp.sh "$ftp_script" "mirror --reverse --verbose ${fileSet}/${bucket} /${archiveID}/${bucket}" "$flow_ftp_connection" "$log"
     rc=$?
     if [[ $rc != 0 ]] ; then
-        exit_error "$pid" $STAGINGAREA "FTP error with uploading the Tiff files."
+        exit_error "FTP error with uploading the Tiff files." $rc
     fi
 done
 
@@ -72,7 +72,7 @@ ftp_script=$work/instruction.txt
 bash ${DIGCOLPROC_HOME}util/ftp.sh "$ftp_script" "put -O /${archiveID} ${file_instruction}" "$flow_ftp_connection" "$log"
 rc=$?
 if [[ $rc != 0 ]] ; then
-    exit_error "$pid" $STAGINGAREA "FTP error with uploading the object repository instruction."
+    exit_error "FTP error with uploading the object repository instruction." $rc
 fi
 
 

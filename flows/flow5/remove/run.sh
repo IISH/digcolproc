@@ -6,7 +6,12 @@
 # Usage:
 # run.sh [na] [folder name]
 
-source $FLOWS_HOME/src/main/global/setup.sh $0 "$@"
+
+#-----------------------------------------------------------------------------------------------------------------------
+# load environment variables
+#-----------------------------------------------------------------------------------------------------------------------
+source "${DIGCOLPROC_HOME}setup.sh" $0 "$@"
+
 
 report=$work/report.txt
 file_access=$fileSet/.ingest/access.txt
