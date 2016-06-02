@@ -6,7 +6,12 @@
 #
 # Usage: run.sh [na] [fileSet] [work directory]
 
+
+#-----------------------------------------------------------------------------------------------------------------------
+# load environment variables
+#-----------------------------------------------------------------------------------------------------------------------
 source "${DIGCOLPROC_HOME}setup.sh" $0 "$@"
+
 
 echo "Start preparing ingest...">>$log
 cf=$fileSet/.validate/concordanceValidWithPID.csv
@@ -25,4 +30,7 @@ fi
 
 source ./file.sh
 source ../pid/run.sh
-source ./ead.sh
+
+echo "I think we are done." >> $log
+
+exit 0

@@ -6,7 +6,12 @@
 # Usage:
 # run.sh [na] [folder name]
 
+
+#-----------------------------------------------------------------------------------------------------------------------
+# load environment variables
+#-----------------------------------------------------------------------------------------------------------------------
 source "${DIGCOLPROC_HOME}setup.sh" $0 "$@"
+
 
 report=$work/report.txt
 file_access=$fileSet/.ingest/access.txt
@@ -53,7 +58,7 @@ echo "Successfull: ${successfull}" >> $report
 echo "Ignored: ${ignored}" >> $report
 echo "Failed: ${failed}" >> $report
 
-groovy -cp "$(cygpath --windows "$HOMEPATH\.m2\repository\javax\mail\javax.mail-api\1.5.0\javax.mail-api-1.5.0.jar");$(cygpath --windows "$HOMEPATH\.m2\repository\javax\mail\mail\1.4.7\mail-1.4.7.jar")" $(cygpath --windows "${DIGCOLPROC_HOME}util/mail.groovy") $(cygpath --windows "$report") $flow_client "$flow_notificationEMail" "Dagelijkste Sor access status updates." $mailrelay >> $log
+groovy -cp "$(cygpath --windows "$HOMEPATH\.m2\repository\javax\mail\javax.mail-api\1.5.0\javax.mail-api-1.5.0.jar");$(cygpath --windows "$HOMEPATH\.m2\repository\javax\mail\mail\1.4.7\mail-1.4.7.jar")" $(cygpath --windows "$global_home/mail.groovy") $(cygpath --windows "$report") $flow_client "$flow_notificationEMail" "Dagelijkste Sor access status updates." $mailrelay >> $log
 
 if [[ $failed == 0 ]] ; then
     history="$(dirname $fileSet)/.history"

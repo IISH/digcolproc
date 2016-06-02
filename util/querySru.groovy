@@ -45,7 +45,7 @@ class QuerySru {
                 .append(URLEncoder.encode(query, 'UTF-8'))
                 .append('&version=1.1')
                 .append('&operation=searchRetrieve')
-                .append('?query=&operation=searchRetrieve&recordSchema=info:srw/schema/1/marcxml-v1.1&maximumRecords=1&version=1.1&startRecord=1&resultSetTTL=0&recordPacking=xml')
+                .append('&recordSchema=info:srw/schema/1/marcxml-v1.1')
                 .append('&maximumRecords=1')
                 .append('&startRecord=1')
                 .append('&resultSetTTL=0')

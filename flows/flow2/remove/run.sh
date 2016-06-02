@@ -6,7 +6,12 @@
 #
 # Usage: run.sh [na] [fileSet] [work directory]
 
+
+#-----------------------------------------------------------------------------------------------------------------------
+# load environment variables
+#-----------------------------------------------------------------------------------------------------------------------
 source "${DIGCOLPROC_HOME}setup.sh" $0 "$@"
+
 
 file_instruction=$fileSet/instruction.xml
 if [ ! -f "$file_instruction" ] ; then
@@ -17,12 +22,19 @@ fi
 report="$log.report"
 echo $fileSet > $report
 groovy ${DIGCOLPROC_HOME}util/remove.file.groovy -file "$file_instruction" -access_token $flow_access_token -or $or -delete true >> $report
-groovy -cp "${DIGCOLPROC_HOME}util/bin/javax.mail-api-1.5.0.jar;${DIGCOLPROC_HOME}util/bin/mail-1.4.7.jar ${DIGCOLPROC_HOME}util/mail.groovy "$report $flow_client "$flow_notificationEMail" "Dagelijkste Sor import van de scans" $mailrelay >> $log
+
+#-----------------------------------------------------------------------------------------------------------------------
+# Notify
+#-----------------------------------------------------------------------------------------------------------------------
+echo "Sent mail to" >> $log
+/usr/bin/sendmail --body "$report" --from "$flow_client" --to "$flow_notificationEMail" --subject "Removal report for $archiveID" --mail_relay "$mail_relay" --mail_user "$mail_user" --mail_password "$mail_password" >> $log
+
+
 
 # When all files are processed, the total file count should be one ( the instruction.xml file ).
 count=$(find $fileSet -type f \( ! -regex ".*/\..*/..*" \) | wc -l)
 if [[ $count == 1 ]] ; then
-	history="${fs_parent}/.history"
+	history="$(dirname $fileSet)/.history"
 	mkdir -p $history
 	mv $fileSet $history
 fi

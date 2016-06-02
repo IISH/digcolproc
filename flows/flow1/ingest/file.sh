@@ -15,29 +15,46 @@ if [[ ! -d $fileSet/Tiff ]] ; then
 	echo "Expecting the folder $fileSet/Tiff"
 	echo "Stopping procedure."
 	exit -1
-fi 
-
-# Upload the files
-ftp_script=$work/$archiveID.txt
-${DIGCOLPROC_HOME}util/ftp.sh "$ftp_script" "synchronize remote -mirror -criteria=size $fileSet_windows\Tiff $archiveID/Tiff" "$flow_ftp_connection" "$log"
-rc=$?
-if [[ $rc != 0 ]] ; then
-    exit -1
 fi
 
-# Upload the derivatives
-${DIGCOLPROC_HOME}util/ftp.sh "$ftp_script" "synchronize remote -mirror -criteria=size $fileSet_windows\jpeg $archiveID/.level1" "$flow_ftp_connection" "$log"
-${DIGCOLPROC_HOME}util/ftp.sh "$ftp_script" "synchronize remote -mirror -criteria=size $fileSet_windows\.level2 $archiveID/.level2" "$flow_ftp_connection" "$log"
-${DIGCOLPROC_HOME}util/ftp.sh "$ftp_script" "synchronize remote -mirror -criteria=size $fileSet_windows\.level3 $archiveID/.level3" "$flow_ftp_connection" "$log"
-${DIGCOLPROC_HOME}util/ftp.sh "$ftp_script" "synchronize remote -mirror -criteria=size $fileSet_windows\.level4 $archiveID/.level4" "$flow_ftp_connection" "$log"
+
+#-----------------------------------------------------------------------------------------------------------------------
+# Now start the reverse mirror for the master Tiff
+#-----------------------------------------------------------------------------------------------------------------------
+ftp_script_base=${work}/ftp.$archiveID.$datestamp
+ftp_script=${ftp_script_base}.files.txt
+bash ${DIGCOLPROC_HOME}util/ftp.sh "$ftp_script" "mirror --reverse --verbose ${fileSet}/Tiff /${archiveID}/Tiff" "$flow_ftp_connection" "$log"
 rc=$?
 if [[ $rc != 0 ]] ; then
-    exit -1
+    exit_error "FTP error with uploading the Tiff files." $rc
 fi
+
+
+#-----------------------------------------------------------------------------------------------------------------------
+# Now start the reverse mirror for the jpegs. The jpeg folder correspondents with .level1
+#-----------------------------------------------------------------------------------------------------------------------
+bash ${DIGCOLPROC_HOME}util/ftp.sh "$ftp_script" "mirror --reverse --verbose ${fileSet}/.level1 /${archiveID}/Jpeg" "$flow_ftp_connection" "$log"
+rc=$?
+if [[ $rc != 0 ]] ; then
+    exit_error "FTP error with uploading the Tiff files." $rc
+fi
+
+
+#-----------------------------------------------------------------------------------------------------------------------
+# Now start the reverse mirror for the other levels
+#-----------------------------------------------------------------------------------------------------------------------
+for bucket in .level2 .level3 .level4
+do
+    bash ${DIGCOLPROC_HOME}util/ftp.sh "$ftp_script" "mirror --reverse --verbose ${fileSet}/${bucket} /${archiveID}/${bucket}" "$flow_ftp_connection" "$log"
+    rc=$?
+    if [[ $rc != 0 ]] ; then
+        exit_error "FTP error with uploading the Tiff files." $rc
+    fi
+done
+
 
 echo "Create instruction for our files with arguments: groovy">>$log
-echo $(cygpath --windows "${DIGCOLPROC_HOME}util/instruction.csv.groovy") -fileSet $(cygpath --windows "$fileSet") -csv $(cygpath --windows "$cf") -label "$archiveID $flow_client" -action add -contentType image/tiff -autoIngestValidInstruction $flow_autoIngestValidInstruction -notificationEMail $flow_notificationEMail  -plan "StagingfileIngestLevel3,StagingfileIngestLevel2,StagingfileIngestLevel1,StagingfileBindPIDs,StagingfileIngestMaster">>$log
-groovy $(cygpath --windows "${DIGCOLPROC_HOME}util/instruction.csv.groovy") -fileSet $(cygpath --windows "$fileSet") -csv $(cygpath --windows "$cf") -label "$archiveID $flow_client" -action add -contentType image/tiff -autoIngestValidInstruction $flow_autoIngestValidInstruction -notificationEMail $flow_notificationEMail  -plan "StagingfileIngestLevel3,StagingfileIngestLevel2,StagingfileIngestLevel1,StagingfileBindPIDs,StagingfileIngestMaster">>$log
+groovy "${DIGCOLPROC_HOME}util/instruction.csv.groovy" -fileSet "$fileSet" -csv "$cf" -label "$archiveID $flow_client" -access open -action add -contentType image/tiff -autoIngestValidInstruction $flow_autoIngestValidInstruction -notificationEMail $flow_notificationEMail  -plan "StagingfileIngestLevel3,StagingfileIngestLevel2,StagingfileIngestLevel1,StagingfileBindPIDs,StagingfileIngestMaster">>$log
 rc=$?
 if [[ $rc != 0 ]] ; then
 	echo "Problem when creating the instruction.">>$log
@@ -48,14 +65,18 @@ if [ ! -f $fileSet/instruction.xml ] ; then
     exit -1
 fi
 
+
 echo "Upload remaining instruction...">>$log
-${DIGCOLPROC_HOME}util/ftp.sh "$ftp_script" "put $fileSet_windows\instruction.xml $archiveID/instruction.xml" "$flow_ftp_connection" "$log"
+file_instruction=$fileSet/instruction.xml
+ftp_script=$work/instruction.txt
+bash ${DIGCOLPROC_HOME}util/ftp.sh "$ftp_script" "put -O /${archiveID} ${file_instruction}" "$flow_ftp_connection" "$log"
 rc=$?
-mv $fileSet/.level1 $fileSet/Jpeg
-rm $ftp_script
 if [[ $rc != 0 ]] ; then
-    exit -1
+    exit_error "FTP error with uploading the object repository instruction." $rc
 fi
+
+
+rm $ftp_script
 
 echo $(date)>>$log
 echo "Done files update.">>$log
