@@ -65,7 +65,7 @@ chmod 444 $profile_csv
 #-----------------------------------------------------------------------------------------------------------------------
 # POST our manifest.csv
 #-----------------------------------------------------------------------------------------------------------------------
-call_api_manifest "$pid" "$profile_csv"
+call_api_manifest "$pid" "$archiveID" "$profile_csv"
 if [[ $? != 0 ]] ; then
     exit_error "$pid" ${STATUS} "Droid reporting threw an error."
 fi
