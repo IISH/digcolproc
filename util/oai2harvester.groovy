@@ -17,7 +17,7 @@ class Oai2Harvester {
     private def required = ['na', 'baseURL', 'verb']
     private static String ACCESS_DEFAULT = 'closed'
     private static int PAUSE_SECONDS = 10
-    private static access_stati = ['open', 'restricted', 'closed', 'irsh', 'pictoright']
+    private static access_stati = ['closed', 'irsh', 'minimal', 'open', 'pictoright', 'restricted']
 
     public Oai2Harvester(def args) {
         orAttributes = args
