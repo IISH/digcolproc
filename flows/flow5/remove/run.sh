@@ -58,8 +58,6 @@ echo "Successfull: ${successfull}" >> $report
 echo "Ignored: ${ignored}" >> $report
 echo "Failed: ${failed}" >> $report
 
-groovy -cp "$(cygpath --windows "$HOMEPATH\.m2\repository\javax\mail\javax.mail-api\1.5.0\javax.mail-api-1.5.0.jar");$(cygpath --windows "$HOMEPATH\.m2\repository\javax\mail\mail\1.4.7\mail-1.4.7.jar")" $(cygpath --windows "$global_home/mail.groovy") $(cygpath --windows "$report") $flow_client "$flow_notificationEMail" "Dagelijkste Sor access status updates." $mailrelay >> $log
-
 if [[ $failed == 0 ]] ; then
     history="$(dirname $fileSet)/.history"
     mkdir -p $history
@@ -67,3 +65,14 @@ if [[ $failed == 0 ]] ; then
 else
     echo "There were ${count} failures" >> $report
 fi
+
+
+#-----------------------------------------------------------------------------------------------------------------------
+# Notify
+#-----------------------------------------------------------------------------------------------------------------------
+/usr/bin/sendmail --body "$report" --from "$flow_client" --to "$flow_notificationEMail" --subject "Removal report for $archiveID" --mail_relay "$mail_relay" --mail_user "$mail_user" --mail_password "$mail_password" >> $log
+
+
+echo "Done..." >> $log
+
+exit 0
