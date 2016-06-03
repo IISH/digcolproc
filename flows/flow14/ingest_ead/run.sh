@@ -65,9 +65,12 @@ while read line
 do
     IFS=, read objnr ID <<< "$line"
 
-    i=$i+1
-    (source ./ingest_ead_item.sh "$objnr" "$ID") &
-    pids[$i]=$!
+    (source ./ingest_ead_item.sh "$objnr" "$ID")
+
+    rc=$?
+    if [[ $rc != 0 && $rc != 2 ]] ; then
+        exit_error "At least one of the items failed to ingest." >> $log
+    fi
 done < <(python ${DIGCOLPROC_HOME}/util/concordance_to_list.py --concordance "$cf")
 
 
@@ -93,20 +96,6 @@ else
         exit_error "Unable to add daoloc elements to $ead"
     fi
 fi
-
-
-
-#-----------------------------------------------------------------------------------------------------------------------
-# Wait for each item to finish ingest and METS creation
-#-----------------------------------------------------------------------------------------------------------------------
-for i in ${!pids[@]}
-do
-    wait ${pids[i]}
-    rc=$?
-    if [[ $rc != 0 && $rc != 2 ]] ; then
-        exit_error "At least one of the items failed to ingest." >> $log
-    fi
-done
 
 
 

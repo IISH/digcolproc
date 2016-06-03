@@ -12,6 +12,11 @@ from droid import Droid
 from exceptions import ValueError, OSError
 
 
+CONTENT_TYPE_ALTERNATIVES = {
+    'application/mxf': 'video/mxf'
+}
+
+
 def usage():
     print('Usage: concordance_to_directory.py ' +
           '--concordance [concordance file] --droid [droid file] --fileset [file set] --access [default access]')
@@ -104,6 +109,8 @@ def determine_use_for(parent_dir, file_path_master, file_path_level1, droid):
             path = file[Droid.FILE_PATH].strip()
             if path == full_path_master or path == full_path_level1:
                 mime_type = file[Droid.MIME_TYPE]
+                if mime_type in CONTENT_TYPE_ALTERNATIVES:
+                    mime_type = CONTENT_TYPE_ALTERNATIVES[mime_type]
                 type = mime_type.split('/')[0]
 
                 if type == 'image':
