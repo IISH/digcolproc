@@ -5,17 +5,23 @@
 #-----------------------------------------------------------------------------------------------------------------------
 # load environment variables
 #-----------------------------------------------------------------------------------------------------------------------
-FOLDER=10
-BACKUP=20
-RESTORE=30
-STAGINGAREA=40
-SOR=50
-CLEANUP=60
+NEW_DIGITAL_MATERIAL_COLLECTION=10
+FOLDER_CREATION_RUNNING=20
+FOLDER_CREATED=30
 
-REQUESTED=1
-RUNNING=2
-FINISHED=3
-FAILED=4
+MATERIAL_UPLOADED=40
+BACKUP_RUNNING=50
+BACKUP_FINISHED=60
+
+READY_FOR_RESTORE=70
+RESTORE_RUNNING=80
+RESTORE_FINISHED=90
+
+READY_FOR_PERMANENT_STORAGE=100
+UPLOADING_TO_PERMANENT_STORAGE=110
+MOVED_TO_PERMANENT_STORAGE=120
+
+
 
 #-----------------------------------------------------------------------------------------------------------------------
 # call_api_status
@@ -24,7 +30,7 @@ FAILED=4
 function call_api_status() {
     pid=$1
     status=$2
-    subStatus=$3
+    failure=$3
     message="$4"
 
     if [ -z "$pid" ]; then
@@ -35,27 +41,25 @@ function call_api_status() {
         echo "Error: status argument is empty.">>$log
         exit 1
     fi
-    if [ -z "$subStatus" ]; then
-        echo "Error: subStatus argument is empty.">>$log
-        exit 1
-    fi
+    if [ -z "$failure" ]; then
+        failure=false
+	fi
 
+	#
 	if [ -z "$message" ]; then
-		if [ $subStatus -eq $REQUESTED ]; then
+		if [ $status -eq 40 ] || [ $status -eq 70 ] || [ $status -eq 100 ]; then
 			message="Requested";
-		elif [ $subStatus -eq $RUNNING ]; then
+		elif [ $status -eq 20 ] || [ $status -eq 50 ] || [ $status -eq 80 ] || [ $status -eq 110 ]; then
 			message="Processing";
-		elif [ $status -eq $FINISHED ]; then
+		elif [ $status -eq 30 ] || [ $status -eq 60 ] || [ $status -eq 90 ] || [ $status -eq 120 ]; then
 			message="Done";
-        elif [ $status -eq $FAILED ]; then
-			message="Failure";
 		else
-			message="OK";
+			message="ok";
 		fi
 	fi
 
     # Update the status using the 'status' web service
-    request_data="pid=${pid}&status=${status}&subStatus=${subStatus}&access_token=${acquisition_database_access_token}&message=${message}"
+    request_data="pid=${pid}&status=${status}&failure=${failure}&access_token=${acquisition_database_access_token}&message=${message}"
     endpoint="${acquisition_database}/service/status"
     echo "endpoint=${endpoint}">>$log
     echo "request_data=${request_data}">>$log
@@ -89,7 +93,7 @@ function exit_error() {
     pid=$1
     status=$2
     message=$3
-    call_api_status "$pid" "$status" $FAILED "$message"
+    call_api_status "$pid" "$status" true "$message"
 
     echo $message >> $log
     /usr/bin/sendmail --body "$log" --from "$flow_client" --to "$flow_notificationEMail" --subject "Error report for $archiveID" --mail_relay "$mail_relay" --mail_user "$mail_user" --mail_password "$mail_password" >> $log
