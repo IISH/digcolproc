@@ -52,8 +52,8 @@ fi
 
 # Upload the instruction
 echo "Upload remaining instruction...">>$log
-ftp_script=$work/instruction.txt
-bash ${DIGCOLPROC_HOME}util/ftp.sh "$ftp_script" "put -O /${archiveID} ${file_instruction}" "$flow_ftp_connection" "$log"
+ftp_script=$work/instruction.ftp
+bash ${DIGCOLPROC_HOME}util/ftp.sh "$ftp_script" "mirror --reverse --delete --verbose ${fileSet} /${archiveID}" "$flow_ftp_connection" "$log"
 rc=$?
 if [[ $rc != 0 ]] ; then
     exit_error "FTP error with uploading the object repository instruction." $rc
