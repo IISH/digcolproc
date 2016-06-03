@@ -6,21 +6,7 @@
 #
 # Usage: run.sh [na] [fileSet] [work directory]
 
-
-
-#-----------------------------------------------------------------------------------------------------------------------
-# load environment variables
-#-----------------------------------------------------------------------------------------------------------------------
 source "${DIGCOLPROC_HOME}setup.sh" $0 "$@"
-source ../call_api_status.sh
-pid=$na/$archiveID
-
-
-
-#-----------------------------------------------------------------------------------------------------------------------
-# Commence job. Tell what we are doing
-#-----------------------------------------------------------------------------------------------------------------------
-call_api_status $pid $CLEANUP $RUNNING
 
 
 
@@ -29,8 +15,10 @@ call_api_status $pid $CLEANUP $RUNNING
 #-----------------------------------------------------------------------------------------------------------------------
 file_instruction=$fileSet/instruction.xml
 if [ ! -f "$file_instruction" ] ; then
-    exit_error "$pid" $CLEANUP "Instruction not found: $file_instruction"
+	echo "Instruction not found: $file_instruction">>$log
+	exit 0
 fi
+
 
 
 #-----------------------------------------------------------------------------------------------------------------------
@@ -50,8 +38,6 @@ if [[ $count == 1 ]] ; then
 	history="${fs_parent}/.history"
 	mkdir -p $history
 	mv $fileSet $history
-
-	call_api_status $pid $CLEANUP $FINISHED
 fi
 
 
