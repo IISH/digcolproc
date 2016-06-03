@@ -4,8 +4,8 @@
 #
 # usage: place_event [event] [optional 'filename']
 #
-# Iterates over all application folders and starts the startup.sh routine.
-# if a filename is given, only folders that contain the filename will be processed.
+# Iterates over all application folders and places an event in the fileSets.
+# If a archivalID was set, it will create a fileSet and placed the event in that.
 
 #-----------------------------------------------------------------------------------------------------------------------
 # load environment variables
@@ -13,7 +13,7 @@
 source "${DIGCOLPROC_HOME}config.sh" $0 "$@"
 flow=$1
 event=$2
-fileName=$3
+archivalID=$3
 
 if [ -z "$flow" ] ; then
 	echo "No flow given"
@@ -37,11 +37,22 @@ do
 
     for na in $hotfolder/*
     do
-        for fileSet in $na/*
+        for offloader in $na/*
         do
-			if [ -d $fileSet ] ; then
-			    if [[ -z "$fileName" ]] || [[ -e $fileSet/$fileName ]] ; then
-			        echo $(date)>$fileSet/$event
+			if [ -d $offloader ] ; then
+			    if [ -z "$archivalID" ]
+			    then
+			        for fileset in $offloader/*
+			        do
+			            if [ -d $fileset ]
+			            then
+			                echo $(date)>"${fileset}/${event}"
+			            fi
+			        done
+			    else
+			        fileset="${offloader}/${archivalID}"
+			        mkdir -p "$fileset"
+			        echo $(date)>"${fileset}/${event}"
 			    fi
 			fi
 		done

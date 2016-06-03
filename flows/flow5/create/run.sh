@@ -21,18 +21,11 @@ fi
 
 # We will not make fileSets whilst others are still running.
 # That is, there should only be:
-# one folder and a slot is available
+# one folder in the offfloaders folder and a slot is available
 # two folders and the slot is in use. We skip the procedure.
 count=$(ls $fs_parent | wc -l)
-if [[ $count == 0 ]] ; then
-	echo "There is no System folder." >> $log
-	mkdir $fs_parent/DO_NOT_REMOVE_THIS_FOLDER
-	touch $fs_parent/DO_NOT_REMOVE_THIS_FOLDER/system
-	count=1
-fi
-
 if [[ $count == 1 ]] ; then
-	# Remember we are in a fileset: .../create_flow5_commands/
+	# Remember we are in a system fileset: .../create_flow5_commands/
 	# We need to step back to the parent and set /datestamp/
 	fileSet=$fs_parent/$datestamp
 	instruction=$fileSet/instruction.xml
@@ -48,5 +41,5 @@ if [[ $count == 1 ]] ; then
 	exit 0
 fi
 
-echo "Slot in use." >> $log
+echo "Count: ${count}. Slot in use." >> $log
 exit 1
