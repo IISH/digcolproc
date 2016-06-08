@@ -280,8 +280,9 @@ if [ -z "$filepid" ] ; then
          echo "Message send to PID webservice: $soapenv" >> $log
     fi
 
-    chown -R "$orgOwner:$orgGroup" $fileSet
-    exit_error "No PID found for binding the PID of the objid. In case of a merge, this is ok!"
+    message="No PID found for binding the PID of the objid. In case of a merge, this is ok!"
+    echo $message >> $log
+    /usr/bin/sendmail --body "$log" --from "$flow_client" --to "$flow_notificationEMail" --subject "Error report for $archiveID" --mail_relay "$mail_relay" --mail_user "$mail_user" --mail_password "$mail_password" >> $log
 else
     echo "$filepid" >> "$work/filepid.txt"
 fi

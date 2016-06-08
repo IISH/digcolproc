@@ -105,7 +105,9 @@ fi
 filepidtxt=$(find "$work" -name filepid.txt | sort | head -1)
 filepid=$(<"$filepidtxt")
 if [ -z "$filepid" ] ; then
-    exit_error "No PID found for binding the PID of the archive. In case of a merge, this is ok!"
+    message="No PID found for binding the PID of the archive. In case of a merge, this is ok!"
+    echo $message >> $log
+    /usr/bin/sendmail --body "$log" --from "$flow_client" --to "$flow_notificationEMail" --subject "Error report for $archiveID" --mail_relay "$mail_relay" --mail_user "$mail_user" --mail_password "$mail_password" >> $log
 else
     objid=$na/$archiveID
     soapenv="<?xml version='1.0' encoding='UTF-8'?>  \
