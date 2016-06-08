@@ -238,48 +238,6 @@ do
     fi
 done < $profile_extended_csv
 if [ -z "$filepid" ] ; then
-    # At least bind the catalog URL, the METS and the PDF
-    pidLocation=""
-    if [ ! -z "$catalogUrl" ] ; then
-        pidLocation="<pid:location weight='1' href='$catalogUrl'/> <pid:location weight='0' href='$catalogUrl' view='catalog'/>"
-    else
-        pidLocation="<pid:location weight='1' href='$or/file/master/$pid'/>"
-    fi
-
-    soapenv="<?xml version='1.0' encoding='UTF-8'?>  \
-    <soapenv:Envelope xmlns:soapenv='http://schemas.xmlsoap.org/soap/envelope/' xmlns:pid='http://pid.socialhistoryservices.org/'>  \
-        <soapenv:Body> \
-            <pid:UpsertPidRequest> \
-                <pid:na>$na</pid:na> \
-                <pid:handle> \
-                    <pid:pid>$pid</pid:pid> \
-                    <pid:locAtt> \
-                        $pidLocation \
-                        <pid:location weight='0' href='$or/file/master/$pid' view='mets'/> \
-                        <pid:location weight='0' href='$or/pdf/$pid' view='pdf'/> \
-                    </pid:locAtt> \
-                </pid:handle> \
-            </pid:UpsertPidRequest> \
-        </soapenv:Body> \
-    </soapenv:Envelope>"
-
-    echo "Sending $objid" >> $log
-    if [ "$environment" == "production" ] ; then
-        wget -O /dev/null --header="Content-Type: text/xml" \
-            --header="Authorization: oauth $pidwebserviceKey" --post-data "$soapenv" \
-            --no-check-certificate $pidwebserviceEndpoint
-
-        rc=$?
-        if [[ $rc != 0 ]]; then
-            chown -R "$orgOwner:$orgGroup" $fileSet
-            echo "Message:" >> $log
-            echo $soapenv >> $log
-            exit_error "Error from PID webservice: $rc" >> $log
-        fi
-    else
-         echo "Message send to PID webservice: $soapenv" >> $log
-    fi
-
     message="No PID found for binding the PID of the objid. In case of a merge, this is ok!"
     echo $message >> $log
     /usr/bin/sendmail --body "$log" --from "$flow_client" --to "$flow_notificationEMail" --subject "Error report for $archiveID" --mail_relay "$mail_relay" --mail_user "$mail_user" --mail_password "$mail_password" >> $log
