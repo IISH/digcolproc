@@ -41,6 +41,7 @@ errors_found = False
 def parse_csv(basepath, droid, concordance):
     files = []
     all_items = []
+    all_objnrs = set()
     header_columns = {}
     expected_nr = ExpectedNr()
 
@@ -56,7 +57,7 @@ def parse_csv(basepath, droid, concordance):
                 print('Validating column ' + str(i))
 
                 # Perform validation for the current item in the concordance table
-                expected_nr = check_sequence_numbers(items, i, header_columns, expected_nr)
+                expected_nr = check_sequence_numbers(items, i, header_columns, expected_nr, all_objnrs)
                 test_relationships(items, i, header_columns)
                 test_file_name(items, i, header_columns, all_items)
                 test_file_existence_and_headers(items, i, header_columns, droid, basepath)
@@ -68,7 +69,7 @@ def parse_csv(basepath, droid, concordance):
 
     # Perform validation for the complete concordance table
     print('Comparing files on disk with files in concordance table')
-    test_droid_existence(all_items, header_columns, droid, basepath, int(expected_nr.expected_obj_nr), files)
+    test_droid_existence(all_items, header_columns, droid, basepath, all_objnrs, files)
     print('Compared files on disk with files in concordance table')
 
     global errors_found
@@ -101,7 +102,7 @@ def identify_columns(items, header_columns):
     print('Parsing columns complete. No errors detected.')
 
 
-def check_sequence_numbers(items, line, header_columns, expected_nr):
+def check_sequence_numbers(items, line, header_columns, expected_nr, all_objnrs):
     obj_nr = items[header_columns[OBJECT_COLUMN_NAME]]
     seq_nr = items[header_columns[VOLGNR_COLUMN_NAME]]
 
@@ -119,6 +120,7 @@ def check_sequence_numbers(items, line, header_columns, expected_nr):
                   'Expected: ' + str(expected_nr.expected_seq_nr), line, items)
 
         expected_nr.expected_seq_nr = seq_nr_int + 1
+        all_objnrs.add(obj_nr)
     except ValueError:
         error('Incorrect entry \'' + seq_nr + '\' in volgnummer column', line, items)
 
@@ -235,11 +237,11 @@ def update_files(items, header_columns, files):
     for_all_columns_with_items(header_columns, items, execute_for_column)
 
 
-def test_droid_existence(all_items, header_columns, droid, basepath, objnr_count, files):
+def test_droid_existence(all_items, header_columns, droid, basepath, all_objnrs, files):
     def execute_for_column(column_name, parent_directory):
         identifier = -1
         folder_ids = []
-        folder_names = []
+        folder_names = set()
         file_names = []
         path_parent = join_paths(basepath, parent_directory)
 
@@ -263,7 +265,7 @@ def test_droid_existence(all_items, header_columns, droid, basepath, objnr_count
                     if file[Droid.PARENT_ID] and int(file[Droid.PARENT_ID]) == identifier \
                             and file[Droid.TYPE].strip() == 'Folder':
                         folder_ids.append(int(file[Droid.ID]))
-                        folder_names.append(file[Droid.NAME].strip())
+                        folder_names.add(file[Droid.NAME].strip())
 
             with open(droid, 'r') as csvfile:
                 reader = csv.reader(csvfile, delimiter=',', quotechar='"')
@@ -274,12 +276,12 @@ def test_droid_existence(all_items, header_columns, droid, basepath, objnr_count
                     if file[Droid.PARENT_ID] and int(file[Droid.PARENT_ID]) in folder_ids:
                         file_names.append(file[Droid.NAME].strip())
 
-        if objnr_count != len(folder_names) and column_name == MASTER_COLUMN_NAME:
+        if all_objnrs != folder_names and column_name == MASTER_COLUMN_NAME:
             error_str = 'Amount of directories found in ' + path_parent + ' (' + str(len(folder_ids)) + ') ' + \
                         'is not the same as the amount of objects found in concordance file ' + \
-                        '(' + str(objnr_count) + ')\n'
+                        '(' + str(len(all_objnrs)) + ')\n'
             missing_folders = ['Folder: ' + missing_folder for missing_folder
-                               in set(folder_names) - set(range(1, objnr_count))]
+                               in folder_names - all_objnrs]
             error(error_str + '\n'.join(missing_folders))
 
         files_to_ignore = ['.access.txt']
