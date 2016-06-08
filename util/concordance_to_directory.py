@@ -137,11 +137,10 @@ def determine_access_for(parent_dir, cur_file_path, new_access_file, default):
 
         if os.path.isfile(cur_access_path):
             os.rename(cur_access_path, new_access_path)
-        else:
+        elif os.path.isdir(os.path.split(new_access_path)[0]):
             file = open(new_access_path, 'w')
             file.write(default)
             file.close()
-
 
 def end_fileset(fileset):
     fileset = os.path.normpath(fileset)
