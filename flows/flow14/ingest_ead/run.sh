@@ -105,7 +105,7 @@ fi
 filepidtxt=$(find "$work" -name filepid.txt | sort | head -1)
 filepid=$(<"$filepidtxt")
 if [ -z "$filepid" ] ; then
-    exit_error "No PID found for binding the PID of the archive."
+    exit_error "No PID found for binding the PID of the archive. In case of a merge, this is ok!"
 else
     objid=$na/$archiveID
     soapenv="<?xml version='1.0' encoding='UTF-8'?>  \
