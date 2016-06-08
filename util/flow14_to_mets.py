@@ -374,7 +374,7 @@ def main(argv):
     assert droid
     assert targetfile
     assert objid
-    assert access in ['closed', 'restricted', 'minimal', 'open']
+    assert access in ['closed', 'irsh', 'minimal', 'open', 'pictoright', 'restricted']
 
     print('droid=' + droid)
     print('targetfile=' + targetfile)

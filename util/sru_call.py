@@ -28,7 +28,7 @@ class MarcHandler(xml.sax.handler.ContentHandler):
         if self._tag == '001':
             self.identifier = content
         elif self._tag == '542' and self._code == 'm':
-            if content in ('open', 'restricted', 'closed'):
+            if content in ('closed', 'irsh', 'minimal', 'open', 'pictoright', 'restricted'):
                 self.access = content
 
 
