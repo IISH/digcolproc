@@ -184,59 +184,65 @@ fi
 # Declare objid PID
 #-----------------------------------------------------------------------------------------------------------------------
 filepid=""
-while read line
+while [ -z "$filepid" ] && [ $refSeqNr -ge 0 ]
 do
-    IFS=, read ID PARENT_ID URI FILE_PATH NAME METHOD STATUS SIZE TYPE EXT LAST_MODIFIED EXTENSION_MISMATCH HASH FORMAT_COUNT PUID MIME_TYPE FORMAT_NAME FORMAT_VERSION PID SEQ <<< "$line"
-    if [ -z "$filepid" ] && [ "$SEQ" == "\"$refSeqNr\"" ] && [[ "$FILE_PATH" != *"text"* ]] ; then
-        filepid="${PID%\"}"
-        filepid="${filepid#\"}"
+    while read line
+    do
+        IFS=, read ID PARENT_ID URI FILE_PATH NAME METHOD STATUS SIZE TYPE EXT LAST_MODIFIED EXTENSION_MISMATCH HASH FORMAT_COUNT PUID MIME_TYPE FORMAT_NAME FORMAT_VERSION PID SEQ <<< "$line"
+        if [ -z "$filepid" ] && [ "$SEQ" == "\"$refSeqNr\"" ] && [[ "$FILE_PATH" != *"text"* ]] ; then
+            filepid="${PID%\"}"
+            filepid="${filepid#\"}"
 
-        pidLocation=""
-        if [ ! -z "$catalogUrl" ] ; then
-            pidLocation="<pid:location weight='1' href='$catalogUrl'/> <pid:location weight='0' href='$catalogUrl' view='catalog'/>"
-        else
-            pidLocation="<pid:location weight='1' href='$or/file/master/$pid'/>"
-        fi
-
-        soapenv="<?xml version='1.0' encoding='UTF-8'?>  \
-		<soapenv:Envelope xmlns:soapenv='http://schemas.xmlsoap.org/soap/envelope/' xmlns:pid='http://pid.socialhistoryservices.org/'>  \
-			<soapenv:Body> \
-				<pid:UpsertPidRequest> \
-					<pid:na>$na</pid:na> \
-					<pid:handle> \
-						<pid:pid>$pid</pid:pid> \
-                        <pid:locAtt> \
-                            $pidLocation \
-                            <pid:location weight='0' href='$or/file/master/$pid' view='mets'/> \
-                            <pid:location weight='0' href='$or/pdf/$pid' view='pdf'/> \
-                            <pid:location weight='0' href='$or/file/master/$filepid' view='master'/> \
-                            <pid:location weight='0' href='$or/file/level1/$filepid' view='level1'/> \
-                            <pid:location weight='0' href='$or/file/level2/$filepid' view='level2'/> \
-                            <pid:location weight='0' href='$or/file/level3/$filepid' view='level3'/> \
-                        </pid:locAtt> \
-					</pid:handle> \
-				</pid:UpsertPidRequest> \
-			</soapenv:Body> \
-		</soapenv:Envelope>"
-
-        echo "Sending $objid" >> $log
-        if [ "$environment" == "production" ] ; then
-            wget -O /dev/null --header="Content-Type: text/xml" \
-                --header="Authorization: oauth $pidwebserviceKey" --post-data "$soapenv" \
-                --no-check-certificate $pidwebserviceEndpoint
-
-            rc=$?
-            if [[ $rc != 0 ]]; then
-                chown -R "$orgOwner:$orgGroup" $fileSet
-                echo "Message:" >> $log
-                echo $soapenv >> $log
-                exit_error "Error from PID webservice: $rc" >> $log
+            pidLocation=""
+            if [ ! -z "$catalogUrl" ] ; then
+                pidLocation="<pid:location weight='1' href='$catalogUrl'/> <pid:location weight='0' href='$catalogUrl' view='catalog'/>"
+            else
+                pidLocation="<pid:location weight='1' href='$or/file/master/$pid'/>"
             fi
-        else
-             echo "Message send to PID webservice: $soapenv" >> $log
+
+            soapenv="<?xml version='1.0' encoding='UTF-8'?>  \
+            <soapenv:Envelope xmlns:soapenv='http://schemas.xmlsoap.org/soap/envelope/' xmlns:pid='http://pid.socialhistoryservices.org/'>  \
+                <soapenv:Body> \
+                    <pid:UpsertPidRequest> \
+                        <pid:na>$na</pid:na> \
+                        <pid:handle> \
+                            <pid:pid>$pid</pid:pid> \
+                            <pid:locAtt> \
+                                $pidLocation \
+                                <pid:location weight='0' href='$or/file/master/$pid' view='mets'/> \
+                                <pid:location weight='0' href='$or/pdf/$pid' view='pdf'/> \
+                                <pid:location weight='0' href='$or/file/master/$filepid' view='master'/> \
+                                <pid:location weight='0' href='$or/file/level1/$filepid' view='level1'/> \
+                                <pid:location weight='0' href='$or/file/level2/$filepid' view='level2'/> \
+                                <pid:location weight='0' href='$or/file/level3/$filepid' view='level3'/> \
+                            </pid:locAtt> \
+                        </pid:handle> \
+                    </pid:UpsertPidRequest> \
+                </soapenv:Body> \
+            </soapenv:Envelope>"
+
+            echo "Sending $objid" >> $log
+            if [ "$environment" == "production" ] ; then
+                wget -O /dev/null --header="Content-Type: text/xml" \
+                    --header="Authorization: oauth $pidwebserviceKey" --post-data "$soapenv" \
+                    --no-check-certificate $pidwebserviceEndpoint
+
+                rc=$?
+                if [[ $rc != 0 ]]; then
+                    chown -R "$orgOwner:$orgGroup" $fileSet
+                    echo "Message:" >> $log
+                    echo $soapenv >> $log
+                    exit_error "Error from PID webservice: $rc" >> $log
+                fi
+            else
+                 echo "Message send to PID webservice: $soapenv" >> $log
+            fi
         fi
-    fi
-done < $profile_extended_csv
+    done < $profile_extended_csv
+
+    refSeqNr=$(($refSeqNr-1))
+done
+
 if [ -z "$filepid" ] ; then
     message="No PID found for binding the PID of the objid. In case of a merge, this is ok!"
     echo $message >> $log
