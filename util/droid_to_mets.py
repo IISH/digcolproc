@@ -8,6 +8,7 @@ from droid import Droid
 import sys
 import csv
 import getopt
+import urllib
 from xml.sax.saxutils import XMLGenerator
 
 _attributes = {u'xmlns:METS': 'http://www.loc.gov/METS/',
@@ -110,7 +111,7 @@ def create_filesec(xl, csvfile):
                                                                                       'MIMETYPE': file[Droid.MIME_TYPE],
                                                                                       'SIZE': file[Droid.SIZE]}).elem(
                     'METS:FLocat', {'LOCTYPE': 'HANDLE',
-                                    'xlink:href': 'http://hdl.handle.net/' + file[Droid.PID] + '?locatt=view:master',
+                                    'xlink:href': 'http://hdl.handle.net/' + _attributes['OBJID'] + '?locatt=view:package&urlappend=?file=' + urllib.quote( file[Droid.FILE_PATH].encode('utf8'), safe='' ),
                                     'xlink:type': 'simple'}).close_entry(4)
     csvfile.close()
     xl.close_entry()
