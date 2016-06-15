@@ -111,7 +111,7 @@ def create_filesec(xl, csvfile):
                                                                                       'MIMETYPE': file[Droid.MIME_TYPE],
                                                                                       'SIZE': file[Droid.SIZE]}).elem(
                     'METS:FLocat', {'LOCTYPE': 'HANDLE',
-                                    'xlink:href': 'http://hdl.handle.net/' + _attributes['OBJID'] + '?locatt=view:package&urlappend=?file=' + base64.urlsafe_b64encode(file[Droid.FILE_PATH]),
+                                    'xlink:href': 'http://hdl.handle.net/' + _attributes['OBJID'] + '?locatt=view:package&urlappend=?file=' + base64.urlsafe_b64encode(file[Droid.FILE_PATH]) + '&pid=' + file[Droid.PID],
                                     'xlink:type': 'simple'}).close_entry(4)
     csvfile.close()
     xl.close_entry()
