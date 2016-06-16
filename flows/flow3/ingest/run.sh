@@ -104,7 +104,7 @@ fi
 # Add the mets file to the manifest.csv, in order for it to be in the xml instruction
 #-----------------------------------------------------------------------------------------------------------------------
 md5_hash=$(md5sum $manifest | cut -d ' ' -f 1)
-echo ""","1","file:/${archiveID}/","/${archiveID}/manifest.xml","manifest.xml","METHOD","$STATUS","SIZE","File","xml","","EXTENSION_MISMATCH","${md5_hash}","FORMAT_COUNT","PUID","application/xml","Xml Document","FORMAT_VERSION","${pid}",""">>$profile_extended_csv
+echo "\"\",\"1\",\"file:/${archiveID}/\",\"/${archiveID}/manifest.xml\",\"manifest.xml\",\"METHOD\",\"$STATUS\",\"SIZE\",\"File\",\"xml\",\"\",\"EXTENSION_MISMATCH\",\"${md5_hash}\",\"FORMAT_COUNT\",\"PUID\",\"application/xml\",\"Xml Document\",\"FORMAT_VERSION\",\"${pid}\",\"\"">>$profile_extended_csv
 
 
 
@@ -112,7 +112,7 @@ echo ""","1","file:/${archiveID}/","/${archiveID}/manifest.xml","manifest.xml","
 # Produce instruction from the report.
 #-----------------------------------------------------------------------------------------------------------------------
 work_instruction=$work/instruction.xml
-python ${DIGCOLPROC_HOME}/util/droid_to_instruction.py -s $profile_extended_csv -t $work_instruction --objid "$pid" --access "$flow_access" --submission_date "$datestamp" --autoIngestValidInstruction "$flow_autoIngestValidInstruction" --label "$archiveID $flow_client" --action "add" --notificationEMail "$flow_notificationEMail" --plan "InstructionPackage" >> $log
+python ${DIGCOLPROC_HOME}/util/droid_to_instruction.py -s $profile_extended_csv -t $work_instruction --objid "$pid" --access "$flow_access" --submission_date "$datestamp" --autoIngestValidInstruction "$flow_autoIngestValidInstruction" --deleteCompletedInstruction "$flow_deleteCompletedInstruction" --label "$archiveID $flow_client" --action "add" --notificationEMail "$flow_notificationEMail" --plan "InstructionPackage" >> $log
 rc=$?
 if [[ $rc != 0 ]] ; then
     exit_error "$pid" ${STATUS} "Failed to create an instruction."
