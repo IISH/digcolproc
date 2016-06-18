@@ -49,6 +49,7 @@ chown -R root:root $fileSet
 # Produce a droid analysis. Remove the old profile if it is there.
 #-----------------------------------------------------------------------------------------------------------------------
 if [ -f $fileSet/manifest.csv ] ; then rm $fileSet/manifest.csv ; fi
+if [ -f $fileSet/manifest.xml ] ; then rm $fileSet/manifest.xml ; fi
 profile=$work/profile.droid
 droid --recurse -p $profile --profile-resources $fileSet>>$log
 rc=$?
