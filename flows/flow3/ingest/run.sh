@@ -177,23 +177,6 @@ fi
 
 
 #-----------------------------------------------------------------------------------------------------------------------
-# Obtain the first found PID of a file in the BULK
-#-----------------------------------------------------------------------------------------------------------------------
-filepid=""
-while read line
-do
-    IFS=, read ID PARENT_ID URI FILE_PATH NAME METHOD STATUS SIZE TYPE EXT LAST_MODIFIED EXTENSION_MISMATCH HASH FORMAT_COUNT PUID MIME_TYPE FORMAT_NAME FORMAT_VERSION PID SEQ <<< "$line"
-    if [ -z "$filepid" ] ; then
-        filepid="${PID%\"}"
-        filepid="${filepid#\"}"
-    fi
-done < $profile_extended_csv
-if [ -z "$filepid" ] ; then
-    exit_error "$pid" $STAGINGAREA "No PID of a file found for monitoring the instruction process in the SOR."
-fi
-
-
-#-----------------------------------------------------------------------------------------------------------------------
 # End job
 #-----------------------------------------------------------------------------------------------------------------------
 echo "Done. ALl went well at this side." >> $log
@@ -208,7 +191,7 @@ call_api_status $pid $SOR $REQUESTED
 running_confirmed=false
 while true
 do
-    sor_status_code=$(python ${DIGCOLPROC_HOME}/util/instruction_status.py --pid "$filepid" --token "$flow_access_token")
+    sor_status_code=$(python ${DIGCOLPROC_HOME}/util/instruction_status.py --pid "$pid" --token "$flow_access_token")
     rc=$?
 
     if [[ $rc == 0 ]] ; then
@@ -230,7 +213,7 @@ done
 
 
 #-----------------------------------------------------------------------------------------------------------------------
-# Attempt to start the removal procedure automatically
+# TODO: Attempt to start the removal procedure automatically
 #-----------------------------------------------------------------------------------------------------------------------
 #source ../remove/run.sh
 exit 0
