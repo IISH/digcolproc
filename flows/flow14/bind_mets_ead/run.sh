@@ -1,46 +1,40 @@
 #!/bin/bash
 #
-# ingest_ead_item.sh
+# run.sh
+#
+# Usage:
+# run.sh [na] [folder name]
+#
+
+source "${DIGCOLPROC_HOME}setup.sh" $0 "$@"
+source ../call_api_status.sh
 
 
 
 #-----------------------------------------------------------------------------------------------------------------------
-# Preperations
+# Is the dataset validated?
 #-----------------------------------------------------------------------------------------------------------------------
-objnr=$1
-ID=$2
-
-refSeqNr=2
-catalogUrl="$catalog/$archiveID/ArchiveContentList#$ID"
-work=$work/$archiveID.$objnr
-pid=$na/$archiveID.$ID
-fileSet=$fileSet/$archiveID.$objnr
-archiveID=$(basename "$fileSet")
-log="${work}/${datestamp}T${time}.log"
-
-if [ ! -d "$work" ] ; then
-    mkdir -p $work
+echo "Start preparing bind mets..." >> $log
+cf=$fs_parent/.work/$archiveID/validate/concordanceValid.csv
+if [ ! -f $cf ] ; then
+    exit_error "Error... did not find $cf Is the dataset validated?"
 fi
 
-echo "Starting an ingest for item $ID with objnr $objnr" >> $log
-echo "Item $ID : catalogUrl: $catalogUrl" >> $log
-echo "Item $ID : work : $work" >> $log
-echo "Item $ID : pid : $pid" >> $log
-echo "Item $ID : fileSet : $fileSet" >> $log
-echo "Item $ID : archiveID : $archiveID" >> $log
-echo "Item $ID : log : $log" >> $log
-
 
 
 #-----------------------------------------------------------------------------------------------------------------------
-# Start the ingest followed by METS creation
+# Start bind mets for each item
 #-----------------------------------------------------------------------------------------------------------------------
-source ../ingest.sh
-# TODO: source ../mets.sh
+while read line
+do
+    IFS=, read objnr ID <<< "$line"
+    (source ./bind_mets_ead_item.sh "$objnr" "$ID")
+done < <(python ${DIGCOLPROC_HOME}/util/concordance_to_list.py --concordance "$cf")
 
 
 
 #-----------------------------------------------------------------------------------------------------------------------
 # End job
 #-----------------------------------------------------------------------------------------------------------------------
+echo "Done. All went well at this side." >> $log
 exit 0

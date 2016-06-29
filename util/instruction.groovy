@@ -21,7 +21,7 @@ class SorInstruction {
     private def mimeRepository = [:]
     private MessageDigest digest = MessageDigest.getInstance("MD5")
     private boolean recurse = false
-    private static access_stati = ['open', 'restricted', 'closed', 'irsh']
+    private static access_stati = ['closed', 'irsh', 'minimal', 'open', 'pictoright', 'restricted']
     private static String ACCESS_DEFAULT = 'closed'
 
     public SorInstruction(def args) {

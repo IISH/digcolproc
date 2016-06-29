@@ -8,7 +8,7 @@
 # Preperations
 #-----------------------------------------------------------------------------------------------------------------------
 objnr=$1
-id=$2
+ID=$2
 
 catalogUrl="$catalog/$archiveID/ArchiveContentList#$ID"
 work=$work/$archiveID.$objnr

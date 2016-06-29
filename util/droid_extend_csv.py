@@ -42,9 +42,6 @@ def parse_csv(sourcefile, targetfile, na, fileset, force_seq):
 
             if items[Droid.TYPE] == 'File' or items[Droid.TYPE] == 'Container':
 
-                statinfo = os.stat(items[Droid.FILE_PATH])
-                assert not statinfo.st_size == 0, 'A file size cannot be zero in length but it was for ' + file
-
                 if force_seq:
                     seq+=1
                 items[Droid.HASH] = hashfile(items[Droid.FILE_PATH])

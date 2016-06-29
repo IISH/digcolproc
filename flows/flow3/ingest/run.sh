@@ -49,6 +49,7 @@ chown -R root:root $fileSet
 # Produce a droid analysis. Remove the old profile if it is there.
 #-----------------------------------------------------------------------------------------------------------------------
 if [ -f $fileSet/manifest.csv ] ; then rm $fileSet/manifest.csv ; fi
+if [ -f $fileSet/manifest.xml ] ; then rm $fileSet/manifest.xml ; fi
 profile=$work/profile.droid
 droid --recurse -p $profile --profile-resources $fileSet>>$log
 rc=$?
@@ -104,7 +105,7 @@ fi
 # Add the mets file to the manifest.csv, in order for it to be in the xml instruction
 #-----------------------------------------------------------------------------------------------------------------------
 md5_hash=$(md5sum $manifest | cut -d ' ' -f 1)
-echo ""","1","file:/${archiveID}/","/${archiveID}/manifest.xml","manifest.xml","METHOD","$STATUS","SIZE","File","xml","","EXTENSION_MISMATCH","${md5_hash}","FORMAT_COUNT","PUID","application/xml","Xml Document","FORMAT_VERSION","${pid}",""">>$profile_extended_csv
+echo "\"\",\"1\",\"file:/${archiveID}/\",\"/${archiveID}/manifest.xml\",\"manifest.xml\",\"METHOD\",\"$STATUS\",\"SIZE\",\"File\",\"xml\",\"\",\"EXTENSION_MISMATCH\",\"${md5_hash}\",\"FORMAT_COUNT\",\"PUID\",\"application/xml\",\"Xml Document\",\"FORMAT_VERSION\",\"${pid}\",\"\"">>$profile_extended_csv
 
 
 
@@ -112,7 +113,7 @@ echo ""","1","file:/${archiveID}/","/${archiveID}/manifest.xml","manifest.xml","
 # Produce instruction from the report.
 #-----------------------------------------------------------------------------------------------------------------------
 work_instruction=$work/instruction.xml
-python ${DIGCOLPROC_HOME}/util/droid_to_instruction.py -s $profile_extended_csv -t $work_instruction --objid "$pid" --access "$flow_access" --submission_date "$datestamp" --autoIngestValidInstruction "$flow_autoIngestValidInstruction" --label "$archiveID $flow_client" --action "add" --notificationEMail "$flow_notificationEMail" --plan "StagingfileBindPIDs,StagingfileIngestMaster" >> $log
+python ${DIGCOLPROC_HOME}/util/droid_to_instruction.py -s $profile_extended_csv -t $work_instruction --objid "$pid" --access "$flow_access" --submission_date "$datestamp" --autoIngestValidInstruction "$flow_autoIngestValidInstruction" --deleteCompletedInstruction "$flow_deleteCompletedInstruction" --label "$archiveID $flow_client" --action "add" --notificationEMail "$flow_notificationEMail" --plan "InstructionPackage" >> $log
 rc=$?
 if [[ $rc != 0 ]] ; then
     exit_error "$pid" ${STATUS} "Failed to create an instruction."
@@ -128,7 +129,7 @@ fi
 #-----------------------------------------------------------------------------------------------------------------------
 ftp_script_base=${work}/ftp.$archiveID.$datestamp
 ftp_script=${ftp_script_base}.files.txt
-bash ${DIGCOLPROC_HOME}util/ftp.sh "$ftp_script" "mirror --reverse --delete --verbose ${fileSet} /${archiveID}" "$flow_ftp_connection" "$log"
+bash ${DIGCOLPROC_HOME}util/ftp.sh "$ftp_script" "mirror --reverse --delete --verbose --exclude-glob *.md5 ${fileSet} /${archiveID}" "$flow_ftp_connection" "$log"
 rc=$?
 if [[ $rc != 0 ]] ; then
     exit_error "$pid" ${STATUS} "FTP error with uploading the files."
