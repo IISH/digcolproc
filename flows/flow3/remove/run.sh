@@ -20,25 +20,10 @@ if [ ! -f "$file_instruction" ] ; then
 fi
 
 
-
 #-----------------------------------------------------------------------------------------------------------------------
-# Removal procedure. Use -delete true to remove a file when it is confirmed that is exists in the object repository 
+# See if the instruction has the expected status code: InstructionIngest 900
 #-----------------------------------------------------------------------------------------------------------------------
-report="$log.report"
-echo $fileSet > $report
-groovy ${DIGCOLPROC_HOME}util/remove.file.groovy -file "$file_instruction" -access_token $flow_access_token -or $or -delete true >> $report
-
-
-
-#-----------------------------------------------------------------------------------------------------------------------
-# When all files are processed and deleted, the total file count should be one ( the instruction.xml file ). 
-#-----------------------------------------------------------------------------------------------------------------------
-count=$(find $fileSet -type f \( ! -regex ".*/\..*/..*" \) | wc -l)
-if [[ $count == 1 ]] ; then
-	history="${fs_parent}/.history"
-	mkdir -p $history
-	mv $fileSet $history
-fi
+sor_status_code=$(curl -o '$work/sor_status.txt' --header 'Authorization: Bearer $flow_access_token' '$or/instruction/$pid')
 
 
 

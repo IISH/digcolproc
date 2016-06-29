@@ -27,6 +27,9 @@ echo "Started creation of METS for $pid" >> $log
 #    fi
 #done
 
+#curl -O /tmp/a --post301 --post302 --post303 --silent --write-out '%{http_code}' 'http://disseminate.objectrepository.org/10622/instruction/status?pid=a'
+
+
 
 
 #-----------------------------------------------------------------------------------------------------------------------
