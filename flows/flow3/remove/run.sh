@@ -6,7 +6,21 @@
 #
 # Usage: run.sh [na] [fileSet] [work directory]
 
+
+
+#-----------------------------------------------------------------------------------------------------------------------
+# load environment variables
+#-----------------------------------------------------------------------------------------------------------------------
 source "${DIGCOLPROC_HOME}setup.sh" $0 "$@"
+source ../call_api_status.sh
+pid=$na/$archiveID
+
+
+
+#-----------------------------------------------------------------------------------------------------------------------
+# Commence job. Tell what we are doing
+#-----------------------------------------------------------------------------------------------------------------------
+call_api_status $pid $CLEANUP $RUNNING
 
 
 
@@ -15,10 +29,8 @@ source "${DIGCOLPROC_HOME}setup.sh" $0 "$@"
 #-----------------------------------------------------------------------------------------------------------------------
 file_instruction=$fileSet/instruction.xml
 if [ ! -f "$file_instruction" ] ; then
-	echo "Instruction not found: $file_instruction">>$log
-	exit 0
+    exit_error "$pid" $CLEANUP "Instruction not found: $file_instruction"
 fi
-
 
 
 #-----------------------------------------------------------------------------------------------------------------------
@@ -38,6 +50,10 @@ if [[ $count == 1 ]] ; then
 	history="${fs_parent}/.history"
 	mkdir -p $history
 	mv $fileSet $history
+
+	call_api_status $pid $CLEANUP $FINISHED
+else
+    exit_error "$pid" $CLEANUP "Not all files were processed and could therefor not be deleted."
 fi
 
 
@@ -45,4 +61,4 @@ fi
 #-----------------------------------------------------------------------------------------------------------------------
 # Notify
 #-----------------------------------------------------------------------------------------------------------------------
-/usr/bin/sendmail --body "$report" --from "$flow_client" --to "$flow_notificationEMail" --subject "Removal eport for $archiveID" --mail_relay "$mail_relay" --mail_user "$mail_user" --mail_password "$mail_password" >> $log
+/usr/bin/sendmail --body "$report" --from "$flow_client" --to "$flow_notificationEMail" --subject "Removal report for $archiveID" --mail_relay "$mail_relay" --mail_user "$mail_user" --mail_password "$mail_password" >> $log
