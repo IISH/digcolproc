@@ -10,28 +10,6 @@
 echo "Started creation of METS for $pid" >> $log
 
 
-
-#-----------------------------------------------------------------------------------------------------------------------
-# TODO: Has the SOR processed the complete instruction?
-#-----------------------------------------------------------------------------------------------------------------------
-#echo "Waiting for instruction to be completely processed by the SOR." >> $log
-#while true
-#do
-#    sor_status_code=$(curl -o /dev/null --silent --head --write-out '%{http_code}' "$or/instruction/$pid?access_token=$flow_access_token")
-#    if [[ sor_status_code -eq 404 ]] ; then
-#        sleep 300
-#    elif [[ sor_status_code -ne 200 ]] ; then
-#        exit_error "The SOR returned an unexpected status code $sor_status_code."
-#    else
-#        break
-#    fi
-#done
-
-#curl -O /tmp/a --post301 --post302 --post303 --silent --write-out '%{http_code}' 'http://disseminate.objectrepository.org/10622/instruction/status?pid=a'
-
-
-
-
 #-----------------------------------------------------------------------------------------------------------------------
 # Is there an access file ?
 #-----------------------------------------------------------------------------------------------------------------------

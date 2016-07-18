@@ -25,6 +25,13 @@ fi
 #-----------------------------------------------------------------------------------------------------------------------
 sor_status_code=$(curl -o '$work/sor_status.txt' --header 'Authorization: Bearer $flow_access_token' '$or/instruction/$pid')
 
+#-----------------------------------------------------------------------------------------------------------------------
+# TODO: Has the SOR processed the complete instruction?
+
+#curl -O /tmp/a --post301 --post302 --post303 --silent --write-out '%{http_code}' 'http://disseminate.objectrepository.org/10622/instruction/status?pid=a'
+
+
+
 
 
 #-----------------------------------------------------------------------------------------------------------------------
