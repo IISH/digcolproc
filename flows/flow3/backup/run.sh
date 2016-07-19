@@ -75,7 +75,7 @@ fi
 #-----------------------------------------------------------------------------------------------------------------------
 ftp_script_base=$work/ftp.$archiveID.$datestamp
 ftp_script=$ftp_script_base.files.txt
-bash ${DIGCOLPROC_HOME}util/ftp.sh "$ftp_script" "mirror --reverse --delete --verbose ${fileSet} /${archiveID}" "$flow_ftp_connection" "$log"
+bash ${DIGCOLPROC_HOME}util/ftp.sh "$ftp_script" "mirror --reverse --delete --verbose --exclude-glob *.md5 ${fileSet} /${archiveID}" "$flow_ftp_connection" "$log"
 if [[ $? != 0 ]] ; then
     exit_error "$pid" $BACKUP "FTP error"
 fi
