@@ -26,10 +26,10 @@ source "${DIGCOLPROC_HOME}setup.sh" $0 "$@"
 file="${fileSet}/report-data.csv"
 if [ -f "$file" ]
 then
-    echo "File not found: ${file}"
-    exit 1
-else
     python report_image_quality.py --file "$file" --na "$na" --url "${or}" >> $log
+else
+    echo "File not found: ${file}" >> $log
+    exit 1
 fi
 
 
