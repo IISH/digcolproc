@@ -29,7 +29,7 @@ then
     echo "File not found: ${file}"
     exit 1
 else
-    python report_image_quality.py --file "$file" --na 10622 --url "${or}" >> $log
+    python report_image_quality.py --file "$file" --na "$na" --url "${or}" >> $log
 fi
 
 
