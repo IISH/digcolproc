@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 #
-# file_content.py
+# report_image_quality.py
 #
 # Make a report based on a supplied CSV table.
 # The csv must be of the form: "TCN Value","Call Number Label","Barcode"
@@ -113,7 +113,7 @@ class Report(xml.sax.handler.ContentHandler):
 
 
 def usage():
-    print('Usage: file_content.py -f [source csv file] -n [naming authority] -u [endpoint disseminate]')
+    print('Usage: report_image_quality.py -f [source csv file] -n [naming authority] -u [endpoint disseminate]')
 
 
 def main(argv):
