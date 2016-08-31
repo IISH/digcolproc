@@ -53,7 +53,7 @@ while read line
 do
     IFS=, read Inventarisnummer <<< "$line"
 
-    for seq in 2 1 0 # Check sequence 2 first, then 1 then 0
+    for seq in 2 1 0 first # Check sequence 2 first, then 1 then 0 then the first you can find.
     do
         mets_item="${or}/mets/${na}/${archiveID}.${Inventarisnummer}/${seq}" # e.g. http://disseminate.objectrepository.org/mets/10622/ARCH00720.1/2
         file_item="${work}/${archiveID}.${Inventarisnummer}.xml"
