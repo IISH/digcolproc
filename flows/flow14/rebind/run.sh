@@ -76,32 +76,51 @@ do
     then
         echo "Could not get a PID for Inventarisnummer ${Inventarisnummer}.">>$log
         echo "Does not seem to be in the SOR">>$log
-        pid="${na}/${archiveID}.${Inventarisnummer}"
     fi
-    last_pid="$pid"
 
+    last_pid="$pid"
     objid="${na}/${archiveID}.${Inventarisnummer}"
-    soapenv="<?xml version='1.0' encoding='UTF-8'?>  \
-        <soapenv:Envelope xmlns:soapenv='http://schemas.xmlsoap.org/soap/envelope/' xmlns:pid='http://pid.socialhistoryservices.org/'>  \
-            <soapenv:Body> \
-                <pid:UpsertPidRequest> \
-                    <pid:na>$na</pid:na> \
-                    <pid:handle> \
-                        <pid:pid>$objid</pid:pid> \
-                        <pid:locAtt> \
-                                <pid:location weight='1' href='$catalog/$archiveID/ArchiveContentList#$Inventarisnummer'/> \
-                                <pid:location weight='0' href='$catalog/$archiveID/ArchiveContentList#$Inventarisnummer' view='catalog'/> \
-                                <pid:location weight='0' href='$or/mets/$objid' view='mets'/> \
-                                <pid:location weight='0' href='$or/pdf/$objid' view='pdf'/> \
-                                <pid:location weight='0' href='$or/file/master/$pid' view='master'/> \
-                                <pid:location weight='0' href='$or/file/level1/$pid' view='level1'/> \
-                                <pid:location weight='0' href='$or/file/level2/$pid' view='level2'/> \
-                                <pid:location weight='0' href='$or/file/level3/$pid' view='level3'/> \
-                            </pid:locAtt> \
-                    </pid:handle> \
-                </pid:UpsertPidRequest> \
-            </soapenv:Body> \
-        </soapenv:Envelope>"
+
+    if [ -z "$last_pid" ]
+    then
+        soapenv="<?xml version='1.0' encoding='UTF-8'?>  \
+            <soapenv:Envelope xmlns:soapenv='http://schemas.xmlsoap.org/soap/envelope/' xmlns:pid='http://pid.socialhistoryservices.org/'>  \
+                <soapenv:Body> \
+                    <pid:UpsertPidRequest> \
+                        <pid:na>$na</pid:na> \
+                        <pid:handle> \
+                            <pid:pid>$objid</pid:pid> \
+                            <pid:locAtt> \
+                                    <pid:location weight='1' href='$catalog/$archiveID/ArchiveContentList#$Inventarisnummer'/> \
+                                    <pid:location weight='0' href='$catalog/$archiveID/ArchiveContentList#$Inventarisnummer' view='catalog'/> \
+                                </pid:locAtt> \
+                        </pid:handle> \
+                    </pid:UpsertPidRequest> \
+                </soapenv:Body> \
+            </soapenv:Envelope>"
+    else
+        soapenv="<?xml version='1.0' encoding='UTF-8'?>  \
+            <soapenv:Envelope xmlns:soapenv='http://schemas.xmlsoap.org/soap/envelope/' xmlns:pid='http://pid.socialhistoryservices.org/'>  \
+                <soapenv:Body> \
+                    <pid:UpsertPidRequest> \
+                        <pid:na>$na</pid:na> \
+                        <pid:handle> \
+                            <pid:pid>$objid</pid:pid> \
+                            <pid:locAtt> \
+                                    <pid:location weight='1' href='$catalog/$archiveID/ArchiveContentList#$Inventarisnummer'/> \
+                                    <pid:location weight='0' href='$catalog/$archiveID/ArchiveContentList#$Inventarisnummer' view='catalog'/> \
+                                    <pid:location weight='0' href='$or/mets/$objid' view='mets'/> \
+                                    <pid:location weight='0' href='$or/pdf/$objid' view='pdf'/> \
+                                    <pid:location weight='0' href='$or/file/master/$pid' view='master'/> \
+                                    <pid:location weight='0' href='$or/file/level1/$pid' view='level1'/> \
+                                    <pid:location weight='0' href='$or/file/level2/$pid' view='level2'/> \
+                                    <pid:location weight='0' href='$or/file/level3/$pid' view='level3'/> \
+                                </pid:locAtt> \
+                        </pid:handle> \
+                    </pid:UpsertPidRequest> \
+                </soapenv:Body> \
+            </soapenv:Envelope>"
+    fi
 
 
     echo "Sending $objid" >> $log
