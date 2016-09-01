@@ -76,11 +76,11 @@ do
     then
         echo "Could not get a PID for Inventarisnummer ${Inventarisnummer}.">>$log
         echo "Does not seem to be in the SOR">>$log
+    else
+        last_pid="$pid"
     fi
 
-    last_pid="$pid"
     objid="${na}/${archiveID}.${Inventarisnummer}"
-
     if [ -z "$last_pid" ]
     then
         soapenv="<?xml version='1.0' encoding='UTF-8'?>  \
@@ -174,7 +174,6 @@ done < $file_concordancetable
 
 
 echo "I think we are done...">>$log
-
 exit 0
 
 
