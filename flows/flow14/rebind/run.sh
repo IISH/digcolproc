@@ -75,7 +75,8 @@ do
     if [ -z "$pid" ]
     then
         echo "Could not get a PID for Inventarisnummer ${Inventarisnummer}.">>$log
-        continue
+        echo "Does not seem to be in the SOR">>$log
+        pid="${na}/${archiveID}.${Inventarisnummer}"
     fi
     last_pid="$pid"
 
