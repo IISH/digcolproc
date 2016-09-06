@@ -121,10 +121,18 @@ event=$(basename $flow_run_folder)
 
 
 #-----------------------------------------------------------------------------------------------------------------------
-# work
-# The Working directory for log and reports
+# work_base
+# The base working directory for log and reports
 #-----------------------------------------------------------------------------------------------------------------------
-work=$fs_parent/.work/$archiveID/$event
+work_base=$fs_parent/.work/$archiveID
+
+
+
+#-----------------------------------------------------------------------------------------------------------------------
+# work
+# The working directory for log and reports
+#-----------------------------------------------------------------------------------------------------------------------
+work=$work_base/$event
 mkdir -p $work
 
 

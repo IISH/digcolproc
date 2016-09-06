@@ -5,7 +5,13 @@
 # Backup the folder with ftp
 # Then create a droid analysis
 #
-
+# The content is handles in one of two ways:
+# 1. Bulk files and folders
+# Here all files and folders are backup as is.
+#
+# 2. Package
+# If the offload content comes in the form of a single file named as [archiveId].[zip|tar|tar.gz|rar]
+# then the package is first backupped and then unpacked.
 
 
 #-----------------------------------------------------------------------------------------------------------------------
@@ -29,6 +35,25 @@ call_api_status $pid $BACKUP $RUNNING
 #-----------------------------------------------------------------------------------------------------------------------
 chown -R root:root $fileSet
 
+
+
+#-----------------------------------------------------------------------------------------------------------------------
+# Upload the files.
+#-----------------------------------------------------------------------------------------------------------------------
+ftp_script_base=$work/ftp.$archiveID.$datestamp
+ftp_script=$ftp_script_base.files.txt
+bash ${DIGCOLPROC_HOME}util/ftp.sh "$ftp_script" "mirror --reverse --delete --verbose --exclude-glob *.md5 ${fileSet} /${archiveID}" "$flow_ftp_connection" "$log"
+if [[ $? != 0 ]] ; then
+    exit_error "$pid" $BACKUP "FTP error"
+fi
+
+
+
+#-----------------------------------------------------------------------------------------------------------------------
+# Is this a package?
+#-----------------------------------------------------------------------------------------------------------------------
+package=""
+source ../unpack.sh
 
 
 #-----------------------------------------------------------------------------------------------------------------------
@@ -67,17 +92,6 @@ chmod 444 $profile_csv
 call_api_manifest "$pid" "$archiveID" "$profile_csv"
 if [[ $? != 0 ]] ; then
     exit_error "$pid" $BACKUP "Droid reporting threw an error."
-fi
-
-
-#-----------------------------------------------------------------------------------------------------------------------
-# Upload the files.
-#-----------------------------------------------------------------------------------------------------------------------
-ftp_script_base=$work/ftp.$archiveID.$datestamp
-ftp_script=$ftp_script_base.files.txt
-bash ${DIGCOLPROC_HOME}util/ftp.sh "$ftp_script" "mirror --reverse --delete --verbose --exclude-glob *.md5 ${fileSet} /${archiveID}" "$flow_ftp_connection" "$log"
-if [[ $? != 0 ]] ; then
-    exit_error "$pid" $BACKUP "FTP error"
 fi
 
 
