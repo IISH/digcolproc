@@ -48,31 +48,12 @@ if [ -z "$ENVIRONMENT" ] ; then
 fi
 
 
-# Are we running with vagrant ? 0=no
-VAGRANT=$3
-if [ -z "$VAGRANT" ] ; then
-    VAGRANT=0
-fi
-case $VAGRANT in
-    0)
-    ;;
-    1)
-    ;;
-    *)
-    echo "Invalid VAGRANT parameter. Must be 0 or 1."
-        exit 1
-    ;;
-esac
-
-
 # Tell:
 echo "OPERATING_SYSTEM=${OPERATING_SYSTEM}"
 echo "ENVIRONMENT=${ENVIRONMENT}"
-echo "VAGRANT=${VAGRANT}"
 
 
-# Working directory
-WD=/opt
+WD="/opt"
 
 
 # puppet_config
@@ -92,39 +73,22 @@ function puppet_config {
 }
 
 
-# install_module
-# Pull a module from git and install it. If it is already there we will not do anything.
-function install_module {
-    name=$1
-    package=$2
-    repo=$3
-
-    m=/etc/puppet/modules/$name
-    if [ -d $m ] ; then
-        echo "There is already a module in ${m}... skipping. If you want to reinstall, remove this module first manually"
-    else
-        wget -O /tmp/$package $repo
-        puppet module install /tmp/$package
-        rm -f /tmp/$package
-    fi
-}
-
 function main {
 
 
-    if [ ! -d $WD ] ; then
-      mkdir -p $WD
+    if [ ! -d "$WD" ] ; then
+      mkdir -p "$WD"
     fi
-    cd $WD
+    cd "$WD"
 
 
     # We will only update and install in the first provisioning step.
     # If ever you need to update again
-    FIRSTRUN=$WD/firstrun
-    if [ ! -f $FIRSTRUN ] ; then
+    FIRSTRUN="${WD}/firstrun"
+    if [ ! -f "$FIRSTRUN" ] ; then
 
         # Before we continue let us ensure we have puppet and run the latests packages at the first run.
-        case $OPERATING_SYSTEM in
+        case "$OPERATING_SYSTEM" in
             centos-6)
                 rpm -ivh https://yum.puppetlabs.com/puppetlabs-release-el-6.noarch.rpm
                 yum -y update
@@ -159,27 +123,9 @@ function main {
 
         puppet_config
 
-        # Install the non forged modules we need. These are declared in metadata.json.
-        # puppet module install rfletcher-jq --version 0.0.2
-
-        # When we provision with vagrant, it will set a mount point to the iqss puppet module from the host.
-        if [[ $VAGRANT -eq 0 ]] ; then
-            # Then again, if not we install the module from the repository.
-            install_module dataverse "lwo-dataverse-master.tar.gz" "https://github.com/IQSS/dataverse-puppet/archive/master.tar.gz"
-        fi
-
-        touch $FIRSTRUN
+        touch "$FIRSTRUN"
     else
         echo "Repositories are already updated and puppet modules are installed. To update and reinstall, remove the file ${FIRSTRUN}"
-    fi
-
-    if [[ $VAGRANT -eq 0 ]] ; then
-        # Apply puppet on the host.
-        echo "Running puppet agent"
-        if [ ! -e /etc/puppet/hiera.yaml ] ; then
-            ln -s /etc/puppet/modules/dataverse/conf/hiera.yaml /etc/puppet/hiera.yaml
-        fi
-        puppet apply /etc/puppet/modules/dataverse/manifests/example.pp --debug
     fi
 }
 

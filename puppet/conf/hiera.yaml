@@ -1,7 +1,0 @@
----
-:backends:
-  - yaml
-:hierarchy:
-  - defaults
-:yaml:
-  :datadir: /usr/bin/digcolproc/puppet/conf/hieradata

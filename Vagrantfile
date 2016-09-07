@@ -9,10 +9,5 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
     v.customize ["modifyvm", :id, "--memory", "2048"]
   end
 
-  config.vm.provision 'shell', path: 'puppet/setup.sh', args: ['ubuntu-12', 'test', '1']
-
-  config.vm.provision :puppet  do |puppet|
-    puppet.manifests_path = "puppet"
-    puppet.hiera_config_path = 'puppet/conf/hiera.yaml'
-  end
+  config.vm.provision 'shell', path: 'puppet.sh', args: ['ubuntu-12', 'test', '1']
 end
