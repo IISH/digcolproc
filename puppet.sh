@@ -1,8 +1,5 @@
 #!/bin/bash
 #
-# Puppet module for dataverse
-# Copyright (C) 2015
-#
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
@@ -17,23 +14,17 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 #
-# setup.sh
+# provision.sh
 #
-# Usage: ./setup [operating system] [environment=development|[what you would like]] [vagrant=0|1]
+# Usage: ./provision.sh [operating system] [environment=development|[what you would like]]
 #
 #
 # Ensure that the packager manager's latest repository settings are up to date.
-# Install the required puppet modules to provision the dataverse components.
-# Maybe we will use Puppet library for that later on.
-#
-#
-# Example: ./setup centos-6 masterless
-#          Will install dataverse by pulling the dataverse module from github and run it in the masterless environment.
-#
 #
 # This script will set an empty file '/opt/firstrun'
 # Once there, future vagrant provisioning skip the update steps.
 # Remove the file '/opt/firstrun' to repeat the update.
+#
 
 OPERATING_SYSTEM=$1
 if [ -z "$OPERATING_SYSTEM" ] ; then
@@ -59,23 +50,46 @@ WD="/opt"
 # puppet_config
 # Set the puppet config to avoid warnings about deprecated templates.
 function puppet_config {
-
+    echo "\nDEBUG: create /etc/puppet/puppet.conf file\n"
     echo "[main]
-    environment=${ENVIRONMENT}
-    logdir=/var/log/puppet
-    vardir=/var/lib/puppet
-    ssldir=/var/lib/puppet/ssl
-    rundir=/var/run/puppet
+    environment=development
     factpath=/lib/facter
+    logdir=/var/log/puppet
+    rundir=/var/run/puppet
+    ssldir=/var/lib/puppet/ssl
+    vardir=/var/lib/puppet
+
+    [agent]
+    allow_duplicate_certs=true
+    masterport=443
+    report=false
+    server=puppetmaster.socialhistoryservices.org
 
     [master]
-    # This is a masterless puppet agent'," > /etc/puppet/puppet.conf
+    # These are needed when the puppetmaster is run by passenger
+    # and can safely be removed if webrick is used.
+    ssl_client_header = SSL_CLIENT_S_DN
+    ssl_client_verify_header = SSL_CLIENT_VERIFY" > /etc/puppet/puppet.conf
 }
 
 
+
+function puppet_run {
+    echo "\nDEBUG: Puppet agent\n"
+    puppet agent -t --waitforcert 10
+}
+
+
+
+function mountit {
+    modprobe vboxsf
+    mount -t vboxsf -o uid=`id -u vagrant`,gid=`getent group vagrant | cut -d: -f3` usr_bin_digcolproc /usr/bin/digcolproc
+    mount -t vboxsf -o uid=`id -u vagrant`,gid=`id -g vagrant` usr_bin_digcolproc /usr/bin/digcolproc
+}
+
+
+
 function main {
-
-
     if [ ! -d "$WD" ] ; then
       mkdir -p "$WD"
     fi
@@ -122,11 +136,14 @@ function main {
         puppet resource package puppet ensure=latest
 
         puppet_config
+        puppet_run
 
         touch "$FIRSTRUN"
     else
         echo "Repositories are already updated and puppet modules are installed. To update and reinstall, remove the file ${FIRSTRUN}"
     fi
+
+    mountit
 }
 
 main
