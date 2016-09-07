@@ -109,18 +109,28 @@ echo "\"\",\"1\",\"file:/${archiveID}/\",\"/${archiveID}/manifest.xml\",\"manife
 
 
 #-----------------------------------------------------------------------------------------------------------------------
-# Produce instruction from the report.
+# Do we have to make a package? If so ,we expect there is a marker.file.
 #-----------------------------------------------------------------------------------------------------------------------
-work_instruction=$work/instruction.xml
-python ${DIGCOLPROC_HOME}/util/droid_to_instruction.py -s $profile_extended_csv -t $work_instruction --objid "$pid" --access "$flow_access" --submission_date "$datestamp" --autoIngestValidInstruction "$flow_autoIngestValidInstruction" --deleteCompletedInstruction "$flow_deleteCompletedInstruction" --label "$archiveID $flow_client" --action "add" --notificationEMail "$flow_notificationEMail" --plan "InstructionPackage" >> $log
-rc=$?
-if [[ $rc != 0 ]] ; then
-    exit_error "$pid" $STAGINGAREA "Failed to create an instruction."
+if [ -f "${work_base}/package.name" ]
+then
+    source pack.sh
+    package
+    instruction
+    move_dir
+else
+    #-----------------------------------------------------------------------------------------------------------------------
+    # Produce instruction from the report.
+    #-----------------------------------------------------------------------------------------------------------------------
+    work_instruction=$work/instruction.xml
+    python ${DIGCOLPROC_HOME}/util/droid_to_instruction.py -s $profile_extended_csv -t $work_instruction --objid "$pid" --access "$flow_access" --submission_date "$datestamp" --autoIngestValidInstruction "$flow_autoIngestValidInstruction" --deleteCompletedInstruction "$flow_deleteCompletedInstruction" --label "$archiveID $flow_client" --action "add" --notificationEMail "$flow_notificationEMail" --plan "InstructionPackage" >> $log
+    rc=$?
+    if [[ $rc != 0 ]] ; then
+        exit_error "$pid" $STAGINGAREA "Failed to create an instruction."
+    fi
+    if [ ! -f $work_instruction ] ; then
+        exit_error "$pid" $STAGINGAREA "Failed to find an instruction at ${file_instruction}"
+    fi
 fi
-if [ ! -f $work_instruction ] ; then
-    exit_error "$pid" $STAGINGAREA "Failed to find an instruction at ${file_instruction}"
-fi
-
 
 
 #-----------------------------------------------------------------------------------------------------------------------
