@@ -80,7 +80,7 @@ profile_extended_csv=$profile.extended.csv
 python ${DIGCOLPROC_HOME}/util/droid_extend_csv.py --sourcefile $profile_csv --targetfile $profile_extended_csv --na $na --fileset $fileSet >> $log
 rc=$?
 if [[ $rc != 0 ]] ; then
-	exit_error "$pid" $STAGINGAREA "Failed to extend the droid report with a PID and md5 checksum."
+	exit_error "$pid" $STAGINGAREA "Got error ${rc}. Failed to extend the droid report with a PID and md5 checksum."
 fi
 
 
@@ -113,8 +113,8 @@ echo "\"\",\"1\",\"file:/${archiveID}/\",\"/${archiveID}/manifest.xml\",\"manife
 #-----------------------------------------------------------------------------------------------------------------------
 if [ -f "${work_base}/package.name" ]
 then
-    source pack.sh
-    package
+    source ../package.sh
+    pack
     instruction
     move_dir
 else
@@ -131,6 +131,7 @@ else
         exit_error "$pid" $STAGINGAREA "Failed to find an instruction at ${file_instruction}"
     fi
 fi
+
 
 
 #-----------------------------------------------------------------------------------------------------------------------
