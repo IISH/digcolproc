@@ -117,6 +117,7 @@ then
     pack
     instruction
     move_dir
+    work_instruction="dummy"
 else
     #-----------------------------------------------------------------------------------------------------------------------
     # Produce instruction from the report.
