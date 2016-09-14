@@ -5,8 +5,8 @@
 # Usage:
 # run.sh [na] [folder name]
 #
-# This script ingests a fileSet
-# /a/b/c/10622/offloader/BULK12345
+# This script retrieves a package from the object repository and unpacks it.
+# It expects a manifest to be present to validate each folder and file.
 
 
 
@@ -16,14 +16,13 @@
 source "${DIGCOLPROC_HOME}setup.sh" $0 "$@"
 source ../call_api_status.sh
 pid=$na/$archiveID
-TASK_ID=$STAGINGAREA
 
 
 
 #-----------------------------------------------------------------------------------------------------------------------
 # Commence job. Tell what we are doing
 #-----------------------------------------------------------------------------------------------------------------------
-call_api_status $pid $TASK_ID $RUNNING
+call_api_status $pid $EXTRACT $RUNNING
 
 
 
@@ -32,7 +31,7 @@ call_api_status $pid $TASK_ID $RUNNING
 #-----------------------------------------------------------------------------------------------------------------------
 file_instruction=$fileSet/instruction.xml
 if [ -f "$file_instruction" ] ; then
-    exit_error "$pid" $TASK_ID "Instruction already present: ${file_instruction}. This may indicate the SIP is staged \
+    exit_error "$pid" $STAGINGAREA "Instruction already present: ${file_instruction}. This may indicate the SIP is staged \
     or the ingest is already in progress."
 fi
 
@@ -54,7 +53,7 @@ profile=$work/profile.droid
 droid --recurse -p $profile --profile-resources $fileSet>>$log
 rc=$?
 if [[ $rc != 0 ]] ; then
-    exit_error "$pid" $TASK_ID "Droid profiling threw an error."
+    exit_error "$pid" $STAGINGAREA "Droid profiling threw an error."
 fi
 
 
@@ -66,10 +65,10 @@ profile_csv=$profile.csv
 droid -p $profile --export-file $profile_csv >> $log
 rc=$?
 if [[ $rc != 0 ]] ; then
-    exit_error "$pid" $TASK_ID "Droid reporting threw an error."
+    exit_error "$pid" $STAGINGAREA "Droid reporting threw an error."
 fi
 if [ ! -f $profile_csv ] ; then
-	exit_error "$pid" $TASK_ID "Unable to create a droid profile: ${profile_csv}"
+	exit_error "$pid" $STAGINGAREA "Unable to create a droid profile: ${profile_csv}"
 fi
 
 
@@ -81,7 +80,7 @@ profile_extended_csv=$profile.extended.csv
 python ${DIGCOLPROC_HOME}/util/droid_extend_csv.py --sourcefile $profile_csv --targetfile $profile_extended_csv --na $na --fileset $fileSet >> $log
 rc=$?
 if [[ $rc != 0 ]] ; then
-	exit_error "$pid" $TASK_ID "Got error ${rc}. Failed to extend the droid report with a PID and md5 checksum."
+	exit_error "$pid" $STAGINGAREA "Got error ${rc}. Failed to extend the droid report with a PID and md5 checksum."
 fi
 
 
@@ -93,10 +92,10 @@ manifest=${fileSet}/manifest.xml
 python ${DIGCOLPROC_HOME}/util/droid_to_mets.py --sourcefile $profile_extended_csv --targetfile $manifest --objid "$pid"
 rc=$?
 if [[ $rc != 0 ]] ; then
-    exit_error "$pid" $TASK_ID "Failed to create a mets document."
+    exit_error "$pid" $STAGINGAREA "Failed to create a mets document."
 fi
 if [ ! -f $manifest ] ; then
-    exit_error "$pid" $TASK_ID "Failed to find a mets file at ${manifest}"
+    exit_error "$pid" $STAGINGAREA "Failed to find a mets file at ${manifest}"
 fi
 
 
@@ -127,10 +126,10 @@ else
     python ${DIGCOLPROC_HOME}/util/droid_to_instruction.py -s $profile_extended_csv -t $work_instruction --objid "$pid" --access "$flow_access" --submission_date "$datestamp" --autoIngestValidInstruction "$flow_autoIngestValidInstruction" --deleteCompletedInstruction "$flow_deleteCompletedInstruction" --label "$archiveID $flow_client" --action "add" --notificationEMail "$flow_notificationEMail" --plan "InstructionPackage" >> $log
     rc=$?
     if [[ $rc != 0 ]] ; then
-        exit_error "$pid" $TASK_ID "Failed to create an instruction."
+        exit_error "$pid" $STAGINGAREA "Failed to create an instruction."
     fi
     if [ ! -f $work_instruction ] ; then
-        exit_error "$pid" $TASK_ID "Failed to find an instruction at ${file_instruction}"
+        exit_error "$pid" $STAGINGAREA "Failed to find an instruction at ${file_instruction}"
     fi
 fi
 
@@ -144,7 +143,7 @@ ftp_script=${ftp_script_base}.files.txt
 bash ${DIGCOLPROC_HOME}util/ftp.sh "$ftp_script" "mirror --reverse --delete --verbose --exclude-glob *.md5 ${fileSet} /${archiveID}" "$flow_ftp_connection" "$log"
 rc=$?
 if [[ $rc != 0 ]] ; then
-    exit_error "$pid" $TASK_ID "FTP error with uploading the files."
+    exit_error "$pid" $STAGINGAREA "FTP error with uploading the files."
 fi
 
 
@@ -157,7 +156,7 @@ ftp_script=$ftp_script_base.instruction.txt
 bash ${DIGCOLPROC_HOME}util/ftp.sh "$ftp_script" "put -O /${archiveID} ${file_instruction}" "$flow_ftp_connection" "$log"
 rc=$?
 if [[ $rc != 0 ]] ; then
-    exit_error "$pid" $TASK_ID "FTP error with uploading the object repository instruction."
+    exit_error "$pid" $STAGINGAREA "FTP error with uploading the object repository instruction."
 fi
 
 
@@ -185,7 +184,7 @@ wget -O /dev/null --header="Content-Type: text/xml" \
     --header="Authorization: oauth $pidwebserviceKey" --post-data "$soapenv" \
     --no-check-certificate $pidwebserviceEndpoint
 if [[ $rc != 0 ]] ; then
-    exit_error "$pid" $TASK_ID "The submission to the object repository succeeded. However we failed to bind the pid to the url of the manifest."
+    exit_error "$pid" $STAGINGAREA "The submission to the object repository succeeded. However we failed to bind the pid to the url of the manifest."
 fi
 
 
@@ -193,7 +192,7 @@ fi
 # End job
 #-----------------------------------------------------------------------------------------------------------------------
 echo "Done. ALl went well at this side." >> $log
-call_api_status $pid $TASK_ID $FINISHED
+call_api_status $pid $STAGINGAREA $FINISHED
 
 
 #-----------------------------------------------------------------------------------------------------------------------

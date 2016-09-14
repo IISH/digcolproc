@@ -21,13 +21,11 @@ function move_dir {
             rc=$?
             if [[ $rc != 0 ]]
             then
-                echo "Error ${rc}. Unable to rsync ${PACKAGE_DIR} to ${fileSet}" >> $log
-                exit $rc
+                exit_error "$pid" "$TASK_ID" "Error ${rc}. Unable to rsync ${PACKAGE_DIR} to ${fileSet}"
             fi
         fi
     else
-        echo "Expected a working directory ${PACKAGE_DIR} to replace the fileSet ${fileSet}, but it is not there."
-        exit 1
+        exit_error "$pid" "$TASK_ID" "Expected a working directory ${PACKAGE_DIR} to replace the fileSet ${fileSet}, but it is not there."
     fi
 
 }
@@ -42,8 +40,7 @@ function stagingfile {
     then
         seq="${BASH_REMATCH[1]}"
     else
-        echo "Could not extract the sequence number from the file part: ${filename}"
-        exit 1
+        exit_error "$pid" "$TASK_ID" "Could not extract the sequence number from the file part: ${filename}"
     fi
 
     location="/${archiveID}/${filename}"
@@ -52,8 +49,7 @@ function stagingfile {
     rc=$?
     if [[ $rc != 0 ]]
     then
-        echo "Error ${rc}. Unable to produce a checksum: ${location}" >> $log
-        exit $rc
+        exit_error "$pid" "$TASK_ID" "Error ${rc}. Unable to produce a checksum: ${location}"
     fi
     md5=$(cat "$l" | cut -d ' ' -f 1)
     rm "$l"
@@ -79,8 +75,7 @@ function manifest {
     file="$1"
     if [ ! -f "$file" ]
     then
-        echo "${file} not found."
-        exit 1
+        exit_error "$pid" "$TASK_ID" "${file} not found."
     fi
 
     location="/${archiveID}/manifest.xml"
@@ -89,8 +84,7 @@ function manifest {
     rc=$?
     if [[ $rc != 0 ]]
     then
-        echo "Error ${rc}. Unable to produce a checksum: ${location}" >> $log
-        exit $rc
+        exit_error "$pid" "$TASK_ID" "Error ${rc}. Unable to produce a checksum: ${location}"
     fi
     md5=$(cat "$l" | cut -d ' ' -f 1)
     rm "$l"
@@ -145,9 +139,8 @@ function pack {
         rar a -ep1 -k -m0 -ola -r -rr5% -t -v2147483647b "$package" "$fileSet"  | tee -a $log
         rc=$?
         if [[ $rc != 0 ]] ; then
-            echo "rar 'a' command for ${package} for ${fileSet} returned an error ${rc}" >> $log
             rm "$package"
-            exit $rc
+            exit_error "$pid" "$TASK_ID" "rar 'a' command for ${package} for ${fileSet} returned an error ${rc}"
         fi
 
         #---------------------------------------------------------------------------------------------------------------
@@ -171,7 +164,7 @@ function pack {
         if [[ $rc != 0 ]]
         then
             echo "Error ${rc}. Unable to copy manifest for the packaging." >> $log
-            exit $rc
+            exit_error "$pid" "$TASK_ID" "Failed to find an instruction at ${file_instruction}"
         fi
 }
 
@@ -186,8 +179,7 @@ function unpack {
             number_of_files=$(ls "$fileSet" | wc -l)
             if [[ $number_of_files != 1 ]]
             then
-                echo "Found ${number_of_files} files, but only expect a single one: ${package}"
-                exit 1
+                exit_error "$pid" "$TASK_ID" "Found ${number_of_files} files, but only expect a single one: ${package}"
             fi
 
             cmd="a command"
@@ -213,9 +205,7 @@ function unpack {
                 # Keep the original name as a marker for the package.
                 echo -n "$package" > "${work_base}/package.name"
             else
-                echo "Unable to unpack ${rc}: ${cmd}" >> $log
-                echo "Remove all unpacked files first before attempting to make a new backup." >> $log
-                exit 1
+                exit_error "$pid" "$TASK_ID" "Unable to unpack ${rc}: ${cmd}. Remove all unpacked files first before attempting to make a new backup."
             fi
 
             packed_in_folder="${PACKAGE_DIR}/${archiveID}"
