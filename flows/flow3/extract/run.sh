@@ -44,14 +44,16 @@ fi
 #-----------------------------------------------------------------------------------------------------------------------
 # For each file in the manifest, download the rar
 #-----------------------------------------------------------------------------------------------------------------------
-manifest_urls="${work}/manifest_urls.txt"
-python ${DIGCOLPROC_HOME}/util/xslt_transformer.py --xml_file="$manifest_file" --xsl_file="urls.xsl" > "$manifest_urls"
-first_package=""
+package_dir="${work_base}/package"
+rm -rf "package_dir"
+mkdir -p "$package_dir"
+url_from_manfest="${work}/manifest_urls.txt"
+python ${DIGCOLPROC_HOME}/util/xslt_transformer.py --xml_file="$manifest_file" --xsl_file="url_from_manfest.xsl" > "$url_from_manfest"
 while read line
 do
     IFS=, read id title <<< "$line"
     url="${or}/file/master/${id}"
-    file="${work}/${title}"
+    file="${package_dir}/${title}"
     wget -O "$file" --header="Authorization: bearer ${pidwebserviceKey}" --no-check-certificate "$url"
     rc=$?
     if [[ $rc != 0 ]] || [ ! -f "$file" ]
@@ -64,15 +66,23 @@ done < "$manifest_urls"
 
 
 #-----------------------------------------------------------------------------------------------------------------------
-# Extract the package. Shoulld have a sequence of one in the name.
+# Extract the package amd cleanup the rar files.
 #-----------------------------------------------------------------------------------------------------------------------
-package="${work}/${archiveID}"
-unrar x "$package" "$fileSet" >> $log
+package="${package_dir}/${archiveID}"
+unrar x "$package" "$package_dir" >> $log
 rc=$?
 if [[ $rc != 0 ]]
 then
     exit_error "$pid" $TASK_ID "Unable to unpack ${package}"
 fi
+rm "${package_dir}/*.rar"
+rm "$manifest_file"
 
+
+#-----------------------------------------------------------------------------------------------------------------------
+# Validate the files with the manifest that was in the package
+#-----------------------------------------------------------------------------------------------------------------------
+file_from_manifest="${work}/file_from_manifest.txt"
+python ${DIGCOLPROC_HOME}/util/xslt_transformer.py --xml_file="$manifest_file" --xsl_file="file_from_manifest.xsl" > "$file_from_manifest"
 
 exit 0

@@ -134,7 +134,11 @@ do
         echo $soapenv >> $log
         cat $file >> $log
     fi
+done < $file_concordancetable
 
+
+if [ ! -z "$last_pid" ]
+then
     # The main archival ID
 	# This will bind to the catalog as well.
 	pid="$na/$archiveID"
@@ -169,11 +173,9 @@ do
 		echo "Error from PID webservice: $rc">>$log
 		echo $soapenv >> $log
 	fi
+fi
 
-done < $file_concordancetable
 
 
 echo "I think we are done...">>$log
 exit 0
-
-

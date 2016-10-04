@@ -19,8 +19,10 @@ function move_dir {
             echo "Rsync fileSet from ${PACKAGE_DIR} to ${fileSet}"
             rsync -av --delete "$PACKAGE_DIR/" "$fileSet"
             rc=$?
-            if [[ $rc != 0 ]]
+            if [[ $rc == 0 ]]
             then
+                rm -rf "$PACKAGE_DIR"
+            else
                 exit_error "$pid" "$TASK_ID" "Error ${rc}. Unable to rsync ${PACKAGE_DIR} to ${fileSet}"
             fi
         fi
@@ -173,52 +175,64 @@ function pack {
 function unpack {
     for package_extension in rar tar tar.gz zip
     do
-        package="${fileSet}/${archiveID}.${package_extension}"
-        if [ -f "$package" ]
-        then
-            number_of_files=$(ls "$fileSet" | wc -l)
-            if [[ $number_of_files != 1 ]]
+        for seq in "" ".part1" ".part01" ".part001" ".part0001" ".part00001"
+        do
+            package="${fileSet}/${archiveID}${seq}.${package_extension}"
+            if [ -f "$package" ]
             then
-                exit_error "$pid" "$TASK_ID" "Found ${number_of_files} files, but only expect a single one: ${package}"
-            fi
+                cmd="a command"
+                case "$package_extension" in
+                    rar)
+                        cmd="unrar x ${package} ${PACKAGE_DIR}"
+                    ;;
+                    tar)
+                        cmd="tar -C ${PACKAGE_DIR} -xvf ${package}"
+                    ;;
+                    tar.gz)
+                        cmd="tar -C ${PACKAGE_DIR} -xvzf ${package}"
+                    ;;
+                    zip)
+                        cmd="unzip ${package} -d ${PACKAGE_DIR}"
+                    ;;
+                esac
 
-            cmd="a command"
-            case "$package_extension" in
-                rar)
-                    cmd="unrar x ${package} ${PACKAGE_DIR}"
-                ;;
-                tar)
-                    cmd="tar -C ${PACKAGE_DIR} -xvf ${package}"
-                ;;
-                tar.gz)
-                    cmd="tar -C ${PACKAGE_DIR} -xvzf ${package}"
-                ;;
-                zip)
-                    cmd="unzip ${package} -d ${PACKAGE_DIR}"
-                ;;
-            esac
+                eval "$cmd" | tee -a $log
+                rc=$?
+                if [[ $rc == 0 ]]
+                then
+                    # Keep the original name as a marker for the package.
+                    echo -n "$package" > "${work_base}/package.name"
+                else
+                    exit_error "$pid" "$TASK_ID" "Unable to unpack ${rc}: ${cmd}. Remove all unpacked files first before attempting to make a new backup."
+                fi
 
-            eval "$cmd" | tee -a $log
-            rc=$?
-            if [[ $rc == 0 ]]
-            then
-                # Keep the original name as a marker for the package.
-                echo -n "$package" > "${work_base}/package.name"
-            else
-                exit_error "$pid" "$TASK_ID" "Unable to unpack ${rc}: ${cmd}. Remove all unpacked files first before attempting to make a new backup."
+                #  Below will remove ALL content placed there during the offloading.
+                packed_in_folder="${PACKAGE_DIR}/${archiveID}"
+                if [ -d "$packed_in_folder" ]
+                then
+                    # Here we move the main folder straight to the fileset
+                    # as it was packed as [ARCHIVEID]/folders and files
+                    rsync -av --delete "$packed_in_folder/" "$fileSet" >> $log
+                    if [[ $? == 0 ]]
+                    then
+                        rm -rf "$packed_in_folder"
+                    else
+                        echo "The rsync gave an error, so I will not remove ${packed_in_folder}." >> $log
+                        exit 1
+                    fi
+                else
+                    # Here we move the content that had no main folder to the fileset
+                    # as it was packed as just /folders and files
+                    rsync -av --delete "${PACKAGE_DIR}/" "$fileSet"
+                    if [[ $? == 0 ]]
+                    then
+                        rm -rf "$PACKAGE_DIR"
+                    else
+                        echo "The rsync gave an error, so I will not remove ${PACKAGE_DIR}." >> $log
+                        exit 1
+                    fi
+                fi
             fi
-
-            packed_in_folder="${PACKAGE_DIR}/${archiveID}"
-            if [ -d "$packed_in_folder" ]
-            then
-                # Here we move the main folder straight to the fileset
-                # as it was packed as [ARCHIVEID]/folders and files
-                rsync -av --delete "$packed_in_folder/" "$fileSet" >> $log
-            else
-                # Here we move the content that had no main gfolder to the fileset
-                # as it was packed as folders and files
-                rsync -av --delete "${PACKAGE_DIR}/" "$fileSet"
-            fi
-        fi
+        done
     done
 }
