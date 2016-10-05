@@ -28,7 +28,7 @@ class MetsParser():
                 fileid = self.findId(div, 'dc')
                 title = self.findTitle(fileid)
                 folder = parent + '/' + title
-                items = ['"{0}"'.format(item.replace('"', '""')) for item in ['D', folder, '']]  # Escape our quotes.
+                items = ['"{0}"'.format(item.encode('utf-8').replace('"', '""')) for item in ['D', folder, '']]  # Escape our quotes.
                 print(','.join(items))
                 self.div(div.findall('METS:div', self.METS_NS), parent + '/' + title)
             if type == 'file':
@@ -36,7 +36,7 @@ class MetsParser():
                 title = self.findTitle(fileid)
                 fileid = self.findId(div, 'content')
                 md5 = self.findMD5(fileid)
-                items = ['"{0}"'.format(item.replace('"', '""')) for item in ['F', parent + '/' + title, md5]]
+                items = ['"{0}"'.format(item.encode('utf-8').replace('"', '""')) for item in ['F', parent + '/' + title, md5]]
                 print(','.join(items))
 
     def findId(self, div, type):

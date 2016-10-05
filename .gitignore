@@ -16,3 +16,4 @@ work
 .level3
 config.sh
 .vagrant
+__init__.py
