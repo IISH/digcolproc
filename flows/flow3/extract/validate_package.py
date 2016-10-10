@@ -1,3 +1,10 @@
+#!/usr/bin/env python
+#
+# validate_package.py
+#
+# Now verify each file that is in the list. Does it exist and does the checksum match.
+
+
 import csv
 import getopt
 import hashlib

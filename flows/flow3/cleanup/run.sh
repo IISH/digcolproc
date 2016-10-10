@@ -5,8 +5,7 @@
 # Usage:
 # run.sh [na] [folder name]
 #
-# This script retrieves a package from the object repository and unpacks it.
-# It expects a manifest to be present to validate each folder and file.
+# This uses the extract/run/sh script to determine the package is valid.
 
 
 
@@ -16,7 +15,8 @@
 source "${DIGCOLPROC_HOME}setup.sh" $0 "$@"
 source ../call_api_status.sh
 pid=$na/$archiveID
-TASK_ID=$EXTRACT
+TASK_ID=$CLEANUP
+
 
 
 #-----------------------------------------------------------------------------------------------------------------------
@@ -27,12 +27,26 @@ call_api_status $pid $TASK_ID $RUNNING
 
 
 #-----------------------------------------------------------------------------------------------------------------------
+# Create a dummy fileset
+#-----------------------------------------------------------------------------------------------------------------------
+fileSet="${work}/cleanup"
+if [ -d "$fileSet" ]
+then
+    rm -rf "$fileSet"
+fi
+mkdir "$fileSet"
+
+
+
+#-----------------------------------------------------------------------------------------------------------------------
 # Extract
 #-----------------------------------------------------------------------------------------------------------------------
-source ./extract.sh
+source ../extract/extract.sh
+rc=$?
+rm -rf "$fileSet"
 
+if [[ $rc != 0 ]] # This should never happen as the extract procedure exits when an error occurs.
+then
+    exit_error "$pid" $TASK_ID "Error ${rc}: unable to cleanup ${fileSet}. The extraction reported problems."
+fi
 
-
-call_api_status $pid $TASK_ID $FINISHED
-echo "I think we are done for today." >> $log
-exit 0
