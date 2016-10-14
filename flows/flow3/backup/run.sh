@@ -92,7 +92,13 @@ chmod 444 $profile_csv
 #-----------------------------------------------------------------------------------------------------------------------
 call_api_manifest "$pid" "$archiveID" "$profile_csv"
 if [[ $? != 0 ]] ; then
-    exit_error "$pid" $TASK_ID "Droid reporting threw an error."
+    package="${work_base}/package.name"
+    if [ -f "$package" ]
+    then
+        echo "Unable to upload manifest, but ignoring the error because of ${package}"
+    else
+        exit_error "$pid" $TASK_ID "Unable to upload manifest"
+    fi
 fi
 
 

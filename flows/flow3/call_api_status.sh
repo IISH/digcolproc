@@ -78,11 +78,13 @@ function call_api_manifest() {
     file=$3
     endpoint="${acquisition_database}/service/manifest"
     rc=$(curl -o /dev/null -s --insecure --max-time 180 -w "%{http_code}" --form "access_token=${acquisition_database_access_token}" --form "pid=${pid}" --form manifest_csv="@${file};type=text/csv;filename=manifest.${archiveID}.csv" "$endpoint")
-    if [[ $rc != 200 ]] ; then
+    if [[ $rc == 200 ]]
+    then
+        return 0
+    else
         echo "Error when contacting ${endpoint} got statuscode ${rc}">>$log
-        exit 1
+        return 1
     fi
-    return 0
 }
 
 #-----------------------------------------------------------------------------------------------------------------------
