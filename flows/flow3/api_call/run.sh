@@ -153,7 +153,7 @@ function call_api_backup() {
 
 #-----------------------------------------------------------------------------------------------------------------------
 # call_api_restore
-# Call the restore web service and extract the PIDs from the resulting JSON
+# Call the web service and extract the PIDs from the resulting JSON
 # Create a backup.txt event for each PID we find.
 #-----------------------------------------------------------------------------------------------------------------------
 function call_api_restore() {
@@ -189,7 +189,7 @@ function call_api_restore() {
 
 #-----------------------------------------------------------------------------------------------------------------------
 # call_api_ingest
-# Call the restore web service and extract the PIDs from the resulting JSON
+# Call the web service and extract the PIDs from the resulting JSON
 # Create a backup.txt event for each PID we find.
 #-----------------------------------------------------------------------------------------------------------------------
 function call_api_ingest() {
@@ -224,6 +224,42 @@ function call_api_ingest() {
 
 
 #-----------------------------------------------------------------------------------------------------------------------
+# call_api_cleanup
+# Call the web service and kickstart a removal procedure
+# Create a cleanup.txt event for each PID we find.
+#-----------------------------------------------------------------------------------------------------------------------
+function call_api_cleanup() {
+    echo -e "\n\nfunction: call_api_ingest" | tee -a $log # debug info
+
+    # Get all the PIDs with a status READY_FOR_PERMANENT_STORAGE
+    request="curl --insecure $acquisition_database/service/startCleanup?access_token=${acquisition_database_access_token} | jq .pids[]"
+    echo "request: ${request}" | tee -a $log # debug info
+
+    pids=$(eval ${request})
+    echo "Returned pids: ${pids}" | tee -a $log # debug info
+
+    for pid in ${pids}
+    do
+        # Remove the quotes around the PID
+        pid="${pid%\"}"
+        pid="${pid#\"}"
+        id=$(basename $pid) # And remove the prefix
+
+        echo "\$pid = $pid" | tee -a $log # debug info
+        echo "\$id = $id" | tee -a $log # debug info
+
+        if [[ $? == 0 ]] ; then
+            echo "${DIGCOLPROC_HOME}util/place_event.sh flow3 cleanup.txt ${id}" | tee -a $log # debug info
+            "${DIGCOLPROC_HOME}util/place_event.sh" flow3 cleanup.txt $id
+        fi
+    done
+
+    return 0
+}
+
+
+
+#-----------------------------------------------------------------------------------------------------------------------
 # call_api
 # Run each api method
 #-----------------------------------------------------------------------------------------------------------------------
@@ -233,7 +269,7 @@ function call_api(){
     call_api_folders
     call_api_backup
     call_api_restore
-    # TODO: Temp disable call_api_ingest
+    call_api_cleanup
 
     return 0
 }

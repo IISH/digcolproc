@@ -204,23 +204,15 @@ call_api_status $pid $SOR $REQUESTED
 running_confirmed=false
 while true
 do
-    sor_status_code=$(python ${DIGCOLPROC_HOME}/util/instruction_status.py --pid "$pid" --token "$flow_access_token")
-    rc=$?
+    call_api_status $pid $SOR $RUNNING
 
-    if [[ $rc == 0 ]] ; then
-        if [ "$running_confirmed" = false ] ; then
-            call_api_status $pid $SOR $RUNNING
-            running_confirmed=true
-        fi
-
-        if [[ $sor_status_code -eq 700 ]] ; then
-            exit_error "$pid" $SOR "There were problems processing the instruction."
-        elif [[ $sor_status_code -eq 900 ]] ; then
-            call_api_status $pid $SOR $FINISHED
-            break
-        fi
+    url="${or}/${na}/instruction/status?pid=${pid}&access_token=${flow_access_token}"
+    sor_status_code=$(python ${DIGCOLPROC_HOME}/util/instruction_status.py --url "$url")
+    if [ "$sor_status_code" == "InstructionIngest900" ]
+    then
+        call_api_status $pid $SOR $FINISHED
+        exit 0
     fi
-
     sleep 15m
 done
 
