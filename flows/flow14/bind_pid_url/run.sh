@@ -20,6 +20,7 @@ then
 fi
 
 
+"" >> "$bind_pid_url"
 while read line
 do
     IFS=";" read resolve_url pid <<< "$line"
