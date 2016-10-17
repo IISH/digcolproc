@@ -53,7 +53,7 @@ while read line
 do
     IFS=, read Inventarisnummer <<< "$line"
 
-    for seq in 2 1 0 # Check sequence 2 first, then 1 then 0
+    for seq in 2 1 -1 # Check sequence 2 first, then 1 and then -1. A -1 will just take the first file reference.
     do
         mets_item="${or}/mets/${na}/${archiveID}.${Inventarisnummer}/${seq}" # e.g. http://disseminate.objectrepository.org/mets/10622/ARCH00720.1/2
         file_item="${work}/${archiveID}.${Inventarisnummer}.xml"
@@ -75,32 +75,52 @@ do
     if [ -z "$pid" ]
     then
         echo "Could not get a PID for Inventarisnummer ${Inventarisnummer}.">>$log
-        continue
+        echo "Does not seem to be in the SOR">>$log
+    else
+        last_pid="$pid"
     fi
-    last_pid="$pid"
 
     objid="${na}/${archiveID}.${Inventarisnummer}"
-    soapenv="<?xml version='1.0' encoding='UTF-8'?>  \
-        <soapenv:Envelope xmlns:soapenv='http://schemas.xmlsoap.org/soap/envelope/' xmlns:pid='http://pid.socialhistoryservices.org/'>  \
-            <soapenv:Body> \
-                <pid:UpsertPidRequest> \
-                    <pid:na>$na</pid:na> \
-                    <pid:handle> \
-                        <pid:pid>$objid</pid:pid> \
-                        <pid:locAtt> \
-                                <pid:location weight='1' href='$catalog/$archiveID/ArchiveContentList#$Inventarisnummer'/> \
-                                <pid:location weight='0' href='$catalog/$archiveID/ArchiveContentList#$Inventarisnummer' view='catalog'/> \
-                                <pid:location weight='0' href='$or/mets/$objid' view='mets'/> \
-                                <pid:location weight='0' href='$or/pdf/$objid' view='pdf'/> \
-                                <pid:location weight='0' href='$or/file/master/$pid' view='master'/> \
-                                <pid:location weight='0' href='$or/file/level1/$pid' view='level1'/> \
-                                <pid:location weight='0' href='$or/file/level2/$pid' view='level2'/> \
-                                <pid:location weight='0' href='$or/file/level3/$pid' view='level3'/> \
-                            </pid:locAtt> \
-                    </pid:handle> \
-                </pid:UpsertPidRequest> \
-            </soapenv:Body> \
-        </soapenv:Envelope>"
+    if [ -z "$last_pid" ]
+    then
+        soapenv="<?xml version='1.0' encoding='UTF-8'?>  \
+            <soapenv:Envelope xmlns:soapenv='http://schemas.xmlsoap.org/soap/envelope/' xmlns:pid='http://pid.socialhistoryservices.org/'>  \
+                <soapenv:Body> \
+                    <pid:UpsertPidRequest> \
+                        <pid:na>$na</pid:na> \
+                        <pid:handle> \
+                            <pid:pid>$objid</pid:pid> \
+                            <pid:locAtt> \
+                                    <pid:location weight='1' href='$catalog/$archiveID/ArchiveContentList#$Inventarisnummer'/> \
+                                    <pid:location weight='0' href='$catalog/$archiveID/ArchiveContentList#$Inventarisnummer' view='catalog'/> \
+                                </pid:locAtt> \
+                        </pid:handle> \
+                    </pid:UpsertPidRequest> \
+                </soapenv:Body> \
+            </soapenv:Envelope>"
+    else
+        soapenv="<?xml version='1.0' encoding='UTF-8'?>  \
+            <soapenv:Envelope xmlns:soapenv='http://schemas.xmlsoap.org/soap/envelope/' xmlns:pid='http://pid.socialhistoryservices.org/'>  \
+                <soapenv:Body> \
+                    <pid:UpsertPidRequest> \
+                        <pid:na>$na</pid:na> \
+                        <pid:handle> \
+                            <pid:pid>$objid</pid:pid> \
+                            <pid:locAtt> \
+                                    <pid:location weight='1' href='$catalog/$archiveID/ArchiveContentList#$Inventarisnummer'/> \
+                                    <pid:location weight='0' href='$catalog/$archiveID/ArchiveContentList#$Inventarisnummer' view='catalog'/> \
+                                    <pid:location weight='0' href='$or/mets/$objid' view='mets'/> \
+                                    <pid:location weight='0' href='$or/pdf/$objid' view='pdf'/> \
+                                    <pid:location weight='0' href='$or/file/master/$pid' view='master'/> \
+                                    <pid:location weight='0' href='$or/file/level1/$pid' view='level1'/> \
+                                    <pid:location weight='0' href='$or/file/level2/$pid' view='level2'/> \
+                                    <pid:location weight='0' href='$or/file/level3/$pid' view='level3'/> \
+                                </pid:locAtt> \
+                        </pid:handle> \
+                    </pid:UpsertPidRequest> \
+                </soapenv:Body> \
+            </soapenv:Envelope>"
+    fi
 
 
     echo "Sending $objid" >> $log
@@ -114,7 +134,11 @@ do
         echo $soapenv >> $log
         cat $file >> $log
     fi
+done < $file_concordancetable
 
+
+if [ ! -z "$last_pid" ]
+then
     # The main archival ID
 	# This will bind to the catalog as well.
 	pid="$na/$archiveID"
@@ -149,12 +173,9 @@ do
 		echo "Error from PID webservice: $rc">>$log
 		echo $soapenv >> $log
 	fi
+fi
 
-done < $file_concordancetable
 
 
 echo "I think we are done...">>$log
-
 exit 0
-
-

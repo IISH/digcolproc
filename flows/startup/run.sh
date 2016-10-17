@@ -29,34 +29,32 @@ hotfolders=$(eval "echo \$$key")
 
 for hotfolder in $hotfolders
 do
-	if [ ! -d "$hotfolder" ] ; then
-		key=$flow"_share"
-		share=$(eval "echo \$$key")
-		net use $share
-	fi
-
-    for na in $hotfolder/*
-    do
-        for offloader in $na/*
+	if [ -d "$hotfolder" ]
+	then
+        for na in $hotfolder/*
         do
-			if [ -d $offloader ] ; then
-			    if [ -z "$archivalID" ]
-			    then
-			        for fileset in $offloader/*
-			        do
-			            if [ -d $fileset ]
-			            then
-			                echo $(date)>"${fileset}/${event}"
-			            fi
-			        done
-			    else
-			        fileset="${offloader}/${archivalID}"
-			        mkdir -p "$fileset"
-			        echo $(date)>"${fileset}/${event}"
-			    fi
-			fi
-		done
-	done
+            for offloader in $na/*
+            do
+                if [ -d $offloader ]
+                then
+                    if [ -z "$archivalID" ]
+                    then
+                        for fileset in $offloader/*
+                        do
+                            if [ -d $fileset ]
+                            then
+                                echo $(date)>"${fileset}/${event}"
+                            fi
+                        done
+                    else
+                        fileset="${offloader}/${archivalID}"
+                        mkdir -p "$fileset"
+                        echo $(date)>"${fileset}/${event}"
+                    fi
+                fi
+            done
+        done
+    fi
 done
 
 exit 0

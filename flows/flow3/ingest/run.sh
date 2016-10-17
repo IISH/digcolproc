@@ -16,13 +16,14 @@
 source "${DIGCOLPROC_HOME}setup.sh" $0 "$@"
 source ../call_api_status.sh
 pid=$na/$archiveID
+TASK_ID=$STAGINGAREA
 
 
 
 #-----------------------------------------------------------------------------------------------------------------------
 # Commence job. Tell what we are doing
 #-----------------------------------------------------------------------------------------------------------------------
-call_api_status $pid $STAGINGAREA $RUNNING
+call_api_status $pid $TASK_ID $RUNNING
 
 
 
@@ -31,7 +32,7 @@ call_api_status $pid $STAGINGAREA $RUNNING
 #-----------------------------------------------------------------------------------------------------------------------
 file_instruction=$fileSet/instruction.xml
 if [ -f "$file_instruction" ] ; then
-    exit_error "$pid" $STAGINGAREA "Instruction already present: ${file_instruction}. This may indicate the SIP is staged \
+    exit_error "$pid" $TASK_ID "Instruction already present: ${file_instruction}. This may indicate the SIP is staged \
     or the ingest is already in progress."
 fi
 
@@ -53,7 +54,7 @@ profile=$work/profile.droid
 droid --recurse -p $profile --profile-resources $fileSet>>$log
 rc=$?
 if [[ $rc != 0 ]] ; then
-    exit_error "$pid" $STAGINGAREA "Droid profiling threw an error."
+    exit_error "$pid" $TASK_ID "Droid profiling threw an error."
 fi
 
 
@@ -65,10 +66,10 @@ profile_csv=$profile.csv
 droid -p $profile --export-file $profile_csv >> $log
 rc=$?
 if [[ $rc != 0 ]] ; then
-    exit_error "$pid" $STAGINGAREA "Droid reporting threw an error."
+    exit_error "$pid" $TASK_ID "Droid reporting threw an error."
 fi
 if [ ! -f $profile_csv ] ; then
-	exit_error "$pid" $STAGINGAREA "Unable to create a droid profile: ${profile_csv}"
+	exit_error "$pid" $TASK_ID "Unable to create a droid profile: ${profile_csv}"
 fi
 
 
@@ -80,7 +81,7 @@ profile_extended_csv=$profile.extended.csv
 python ${DIGCOLPROC_HOME}/util/droid_extend_csv.py --sourcefile $profile_csv --targetfile $profile_extended_csv --na $na --fileset $fileSet >> $log
 rc=$?
 if [[ $rc != 0 ]] ; then
-	exit_error "$pid" $STAGINGAREA "Failed to extend the droid report with a PID and md5 checksum."
+	exit_error "$pid" $TASK_ID "Got error ${rc}. Failed to extend the droid report with a PID and md5 checksum."
 fi
 
 
@@ -92,10 +93,10 @@ manifest=${fileSet}/manifest.xml
 python ${DIGCOLPROC_HOME}/util/droid_to_mets.py --sourcefile $profile_extended_csv --targetfile $manifest --objid "$pid"
 rc=$?
 if [[ $rc != 0 ]] ; then
-    exit_error "$pid" $STAGINGAREA "Failed to create a mets document."
+    exit_error "$pid" $TASK_ID "Failed to create a mets document."
 fi
 if [ ! -f $manifest ] ; then
-    exit_error "$pid" $STAGINGAREA "Failed to find a mets file at ${manifest}"
+    exit_error "$pid" $TASK_ID "Failed to find a mets file at ${manifest}"
 fi
 
 
@@ -109,16 +110,28 @@ echo "\"\",\"1\",\"file:/${archiveID}/\",\"/${archiveID}/manifest.xml\",\"manife
 
 
 #-----------------------------------------------------------------------------------------------------------------------
-# Produce instruction from the report.
+# Do we have to make a package? If so ,we expect there is a marker.file.
 #-----------------------------------------------------------------------------------------------------------------------
-work_instruction=$work/instruction.xml
-python ${DIGCOLPROC_HOME}/util/droid_to_instruction.py -s $profile_extended_csv -t $work_instruction --objid "$pid" --access "$flow_access" --submission_date "$datestamp" --autoIngestValidInstruction "$flow_autoIngestValidInstruction" --deleteCompletedInstruction "$flow_deleteCompletedInstruction" --label "$archiveID $flow_client" --action "add" --notificationEMail "$flow_notificationEMail" --plan "InstructionPackage" >> $log
-rc=$?
-if [[ $rc != 0 ]] ; then
-    exit_error "$pid" $STAGINGAREA "Failed to create an instruction."
-fi
-if [ ! -f $work_instruction ] ; then
-    exit_error "$pid" $STAGINGAREA "Failed to find an instruction at ${file_instruction}"
+if [ -f "${work_base}/package.name" ]
+then
+    source ../package.sh
+    pack
+    instruction
+    move_dir
+    work_instruction="dummy"
+else
+    #-----------------------------------------------------------------------------------------------------------------------
+    # Produce instruction from the report.
+    #-----------------------------------------------------------------------------------------------------------------------
+    work_instruction=$work/instruction.xml
+    python ${DIGCOLPROC_HOME}/util/droid_to_instruction.py -s $profile_extended_csv -t $work_instruction --objid "$pid" --access "$flow_access" --submission_date "$datestamp" --autoIngestValidInstruction "$flow_autoIngestValidInstruction" --deleteCompletedInstruction "$flow_deleteCompletedInstruction" --label "$archiveID $flow_client" --action "add" --notificationEMail "$flow_notificationEMail" --plan "InstructionPackage" >> $log
+    rc=$?
+    if [[ $rc != 0 ]] ; then
+        exit_error "$pid" $TASK_ID "Failed to create an instruction."
+    fi
+    if [ ! -f $work_instruction ] ; then
+        exit_error "$pid" $TASK_ID "Failed to find an instruction at ${file_instruction}"
+    fi
 fi
 
 
@@ -131,7 +144,7 @@ ftp_script=${ftp_script_base}.files.txt
 bash ${DIGCOLPROC_HOME}util/ftp.sh "$ftp_script" "mirror --reverse --delete --verbose --exclude-glob *.md5 ${fileSet} /${archiveID}" "$flow_ftp_connection" "$log"
 rc=$?
 if [[ $rc != 0 ]] ; then
-    exit_error "$pid" $STAGINGAREA "FTP error with uploading the files."
+    exit_error "$pid" $TASK_ID "FTP error with uploading the files."
 fi
 
 
@@ -144,43 +157,17 @@ ftp_script=$ftp_script_base.instruction.txt
 bash ${DIGCOLPROC_HOME}util/ftp.sh "$ftp_script" "put -O /${archiveID} ${file_instruction}" "$flow_ftp_connection" "$log"
 rc=$?
 if [[ $rc != 0 ]] ; then
-    exit_error "$pid" $STAGINGAREA "FTP error with uploading the object repository instruction."
+    exit_error "$pid" $TASK_ID "FTP error with uploading the object repository instruction."
 fi
 
-
-#-----------------------------------------------------------------------------------------------------------------------
-# Bind the PID
-#-----------------------------------------------------------------------------------------------------------------------
-soapenv="<?xml version='1.0' encoding='UTF-8'?>  \
-		<soapenv:Envelope xmlns:soapenv='http://schemas.xmlsoap.org/soap/envelope/' xmlns:pid='http://pid.socialhistoryservices.org/'>  \
-			<soapenv:Body> \
-				<pid:UpsertPidRequest> \
-					<pid:na>$na</pid:na> \
-					<pid:handle> \
-						<pid:pid>$pid</pid:pid> \
-						<pid:locAtt> \
-								<pid:location weight='1' href='$or/metadata/$pid'/> \
-								<pid:location weight='0' href='$or/file/master/$pid' view='master'/> \
-							</pid:locAtt> \
-					</pid:handle> \
-				</pid:UpsertPidRequest> \
-			</soapenv:Body> \
-		</soapenv:Envelope>"
-echo "Binding pid ${pid} with ${soapenv}" >> $log
-rc=$?
-wget -O /dev/null --header="Content-Type: text/xml" \
-    --header="Authorization: oauth $pidwebserviceKey" --post-data "$soapenv" \
-    --no-check-certificate $pidwebserviceEndpoint
-if [[ $rc != 0 ]] ; then
-    exit_error "$pid" $STAGINGAREA "The submission to the object repository succeeded. However we failed to bind the pid to the url of the manifest."
-fi
 
 
 #-----------------------------------------------------------------------------------------------------------------------
 # End job
 #-----------------------------------------------------------------------------------------------------------------------
 echo "Done. ALl went well at this side." >> $log
-call_api_status $pid $STAGINGAREA $FINISHED
+call_api_status $pid $TASK_ID $FINISHED
+
 
 
 #-----------------------------------------------------------------------------------------------------------------------
@@ -188,32 +175,23 @@ call_api_status $pid $STAGINGAREA $FINISHED
 #-----------------------------------------------------------------------------------------------------------------------
 echo "Waiting for instruction to be completely processed by the SOR." >> $log
 call_api_status $pid $SOR $REQUESTED
-running_confirmed=false
 while true
 do
-    sor_status_code=$(python ${DIGCOLPROC_HOME}/util/instruction_status.py --pid "$pid" --token "$flow_access_token")
-    rc=$?
+    call_api_status $pid $SOR $RUNNING
 
-    if [[ $rc == 0 ]] ; then
-        if [ "$running_confirmed" = false ] ; then
-            call_api_status $pid $SOR $RUNNING
-            running_confirmed=true
-        fi
-
-        if [[ $sor_status_code -eq 700 ]] ; then
-            exit_error "$pid" $SOR "There were problems processing the instruction."
-        elif [[ $sor_status_code -eq 900 ]] ; then
-            call_api_status $pid $SOR $FINISHED
-            break
-        fi
+    url="${or}/${na}/instruction/status?pid=${pid}&access_token=${flow_access_token}"
+    sor_status_code=$(python ${DIGCOLPROC_HOME}/util/instruction_status.py --url "$url")
+    if [ "$sor_status_code" == "InstructionIngest900" ]
+    then
+        call_api_status $pid $SOR $FINISHED
+        break
     fi
-
     sleep 15m
 done
 
 
-#-----------------------------------------------------------------------------------------------------------------------
-# TODO: Attempt to start the removal procedure automatically
-#-----------------------------------------------------------------------------------------------------------------------
-#source ../remove/run.sh
+
+call_api_status $pid $CLEANUP $REQUESTED
+
+
 exit 0

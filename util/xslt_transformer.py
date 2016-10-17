@@ -13,16 +13,15 @@ from lxml import etree
 
 
 def parse_ead(xml_file, xsl_file, result_file, parameters):
-    xml_tree = etree.parse(xml_file)
     xsl_tree = etree.parse(xsl_file)
     transform = etree.XSLT(xsl_tree)
-    result = transform(xml_tree)
+    result = transform(etree.parse(xml_file))
     if result_file:
         f = open(result_file, 'w')
         f.write(str(result))
         f.close()
     else:
-        print(str(result))
+        sys.stdout.write(str(result))
 
 def usage():
     print('Usage: xslt_transformer.py --xml_file=[source XML file] --xsl_file=[stylesheet] --result_file=[output file] --param_name value')
