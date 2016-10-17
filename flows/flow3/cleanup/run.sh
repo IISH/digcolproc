@@ -50,3 +50,8 @@ then
     exit_error "$pid" $TASK_ID "Error ${rc}: unable to cleanup ${fileSet}. The extraction reported problems."
 fi
 
+
+
+echo "I think we are done for today." >> "$log"
+exit 0
+

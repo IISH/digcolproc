@@ -161,33 +161,6 @@ if [[ $rc != 0 ]] ; then
 fi
 
 
-#-----------------------------------------------------------------------------------------------------------------------
-# Bind the PID
-#-----------------------------------------------------------------------------------------------------------------------
-soapenv="<?xml version='1.0' encoding='UTF-8'?>  \
-		<soapenv:Envelope xmlns:soapenv='http://schemas.xmlsoap.org/soap/envelope/' xmlns:pid='http://pid.socialhistoryservices.org/'>  \
-			<soapenv:Body> \
-				<pid:UpsertPidRequest> \
-					<pid:na>$na</pid:na> \
-					<pid:handle> \
-						<pid:pid>$pid</pid:pid> \
-						<pid:locAtt> \
-								<pid:location weight='1' href='$or/metadata/$pid'/> \
-								<pid:location weight='0' href='$or/file/master/$pid' view='master'/> \
-							</pid:locAtt> \
-					</pid:handle> \
-				</pid:UpsertPidRequest> \
-			</soapenv:Body> \
-		</soapenv:Envelope>"
-echo "Binding pid ${pid} with ${soapenv}" >> $log
-rc=$?
-wget -O /dev/null --header="Content-Type: text/xml" \
-    --header="Authorization: oauth $pidwebserviceKey" --post-data "$soapenv" \
-    --no-check-certificate $pidwebserviceEndpoint
-if [[ $rc != 0 ]] ; then
-    exit_error "$pid" $TASK_ID "The submission to the object repository succeeded. However we failed to bind the pid to the url of the manifest."
-fi
-
 
 #-----------------------------------------------------------------------------------------------------------------------
 # End job
@@ -196,12 +169,12 @@ echo "Done. ALl went well at this side." >> $log
 call_api_status $pid $TASK_ID $FINISHED
 
 
+
 #-----------------------------------------------------------------------------------------------------------------------
 # Monitor instruction process
 #-----------------------------------------------------------------------------------------------------------------------
 echo "Waiting for instruction to be completely processed by the SOR." >> $log
 call_api_status $pid $SOR $REQUESTED
-running_confirmed=false
 while true
 do
     call_api_status $pid $SOR $RUNNING
@@ -211,10 +184,14 @@ do
     if [ "$sor_status_code" == "InstructionIngest900" ]
     then
         call_api_status $pid $SOR $FINISHED
-        exit 0
+        break
     fi
     sleep 15m
 done
+
+
+
+call_api_status $pid $CLEANUP $REQUESTED
 
 
 exit 0
