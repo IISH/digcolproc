@@ -177,8 +177,8 @@ echo "Waiting for instruction to be completely processed by the SOR." >> $log
 call_api_status $pid $SOR $REQUESTED
 while true
 do
+    sleep 15m
     call_api_status $pid $SOR $RUNNING
-
     url="${or}/${na}/instruction/status?pid=${pid}&access_token=${flow_access_token}"
     sor_status_code=$(python ${DIGCOLPROC_HOME}/util/instruction_status.py --url "$url")
     if [ "$sor_status_code" == "InstructionIngest900" ]
@@ -186,12 +186,7 @@ do
         call_api_status $pid $SOR $FINISHED
         break
     fi
-    sleep 15m
 done
-
-
-
-call_api_status $pid $CLEANUP $REQUESTED
 
 
 exit 0
