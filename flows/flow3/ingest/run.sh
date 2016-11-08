@@ -141,7 +141,7 @@ fi
 #-----------------------------------------------------------------------------------------------------------------------
 ftp_script_base=${work}/ftp.$archiveID.$datestamp
 ftp_script=${ftp_script_base}.files.txt
-bash ${DIGCOLPROC_HOME}util/ftp.sh "$ftp_script" "mirror --reverse --delete --verbose --exclude-glob *.md5 ${fileSet} /${archiveID}" "$flow_ftp_connection" "$log"
+bash ${DIGCOLPROC_HOME}util/ftp.sh "$ftp_script" "mirror --reverse --delete --verbose --exclude instruction.xml --exclude-glob *.md5 ${fileSet} /${archiveID}" "$flow_ftp_connection" "$log"
 rc=$?
 if [[ $rc != 0 ]] ; then
     exit_error "$pid" $TASK_ID "FTP error with uploading the files."
@@ -152,7 +152,10 @@ fi
 #-----------------------------------------------------------------------------------------------------------------------
 # Upload the instruction
 #-----------------------------------------------------------------------------------------------------------------------
-mv $work_instruction $file_instruction
+if [ -f "$work_instruction" ]
+then
+    mv $work_instruction $file_instruction
+fi
 ftp_script=$ftp_script_base.instruction.txt
 bash ${DIGCOLPROC_HOME}util/ftp.sh "$ftp_script" "put -O /${archiveID} ${file_instruction}" "$flow_ftp_connection" "$log"
 rc=$?
