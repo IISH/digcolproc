@@ -191,7 +191,7 @@ def test_file_existence_and_headers(items, line, header_columns, droid, basepath
 
                 if droid_file_path == file_path:
                     found_file = True
-                    found_mimetype = file[Droid.MIME_TYPE]
+                    found_mimetype = file[Droid.MIME_TYPE].split(',')[0]
 
                     # Text related files have different validation
                     if column_name in header_columns[TEXT_COLUMN_NAME]:
@@ -216,7 +216,7 @@ def test_file_existence_and_headers(items, line, header_columns, droid, basepath
                 reader = csv.reader(csvfile, delimiter=',', quotechar='"')
                 for file in reader:
                     if file[Droid.FILE_PATH] == master_path:
-                        master_file_type = file[Droid.MIME_TYPE]
+                        master_file_type = file[Droid.MIME_TYPE].split(',')[0]
                         level1_file_type = found_mimetype
 
                         if master_file_type in CONTENT_TYPE_ALTERNATIVES:
