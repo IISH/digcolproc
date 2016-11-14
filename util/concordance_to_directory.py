@@ -13,7 +13,8 @@ from exceptions import ValueError, OSError
 
 
 CONTENT_TYPE_ALTERNATIVES = {
-    'application/mxf': 'video/mxf'
+    'application/mxf': 'video/mxf',
+    'application/mp4': 'video/mp4'
 }
 
 
