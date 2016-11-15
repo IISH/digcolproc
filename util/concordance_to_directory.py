@@ -13,7 +13,8 @@ from exceptions import ValueError, OSError
 
 
 CONTENT_TYPE_ALTERNATIVES = {
-    'application/mxf': 'video/mxf'
+    'application/mxf': 'video/mxf',
+    'application/mp4': 'video/mp4'
 }
 
 
@@ -108,7 +109,7 @@ def determine_use_for(parent_dir, file_path_master, file_path_level1, droid):
         for file in reader:
             path = file[Droid.FILE_PATH].strip()
             if path == full_path_master or path == full_path_level1:
-                mime_type = file[Droid.MIME_TYPE]
+                mime_type = file[Droid.MIME_TYPE].split(',')[0]
                 if mime_type in CONTENT_TYPE_ALTERNATIVES:
                     mime_type = CONTENT_TYPE_ALTERNATIVES[mime_type]
                 type = mime_type.split('/')[0]
