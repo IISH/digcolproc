@@ -187,7 +187,7 @@ do
     if [ "$sor_status_code" == "InstructionIngest900" ]
     then
         call_api_status $pid $SOR $FINISHED
-        break
+        exit 0
     fi
 done
 
