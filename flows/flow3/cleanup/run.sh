@@ -47,7 +47,6 @@ fi
 cd ../extract
 source extract.sh
 rc=$?
-cd ../cleanup
 rsync -r --delete "$empty_folder/" "$fileSet"
 
 if [[ $rc != 0 ]] # This should never happen as the extract procedure exits when an error occurs.
@@ -60,6 +59,7 @@ fi
 #-----------------------------------------------------------------------------------------------------------------------
 # Remove the fileSet
 #-----------------------------------------------------------------------------------------------------------------------
+cd ../cleanup
 fileSet="$original_fileSet"
 rsync -r --delete "$empty_folder/" "$fileSet"
 
