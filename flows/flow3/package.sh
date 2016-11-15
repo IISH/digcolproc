@@ -109,7 +109,7 @@ function instruction {
     #-------------------------------------------------------------------------------------------------------------------
     # We have a valid ARCHIVE. Create the SIP.
     #-------------------------------------------------------------------------------------------------------------------
-    file_instruction="${PACKAGE_DIR}/instruction.xml"
+    file_insn="${PACKAGE_DIR}/instruction.xml"
     echo "<instruction
         xmlns='http://objectrepository.org/instruction/1.0/'
         access='$flow_access'
@@ -120,16 +120,16 @@ function instruction {
         notificationEMail='$flow_notificationEMail'
         plan='StagingfileIngestMaster,StagingfileBindPIDs'
         objid='$OBJID'
-        >" > $file_instruction
+        >" > $file_insn
 
     for file in "$PACKAGE_DIR/"*.rar
     do
-        stagingfile "$file" >> "$file_instruction"
+        stagingfile "$file" >> "$file_insn"
     done
 
-    manifest "${PACKAGE_DIR}/manifest.xml" >> "$file_instruction"
+    manifest "${PACKAGE_DIR}/manifest.xml" >> "$file_insn"
 
-    echo "</instruction>" >> "$file_instruction"
+    echo "</instruction>" >> "$file_insn"
 }
 
 
@@ -166,7 +166,7 @@ function pack {
         if [[ $rc != 0 ]]
         then
             echo "Error ${rc}. Unable to copy manifest for the packaging." >> $log
-            exit_error "$pid" "$TASK_ID" "Failed to find an instruction at ${file_instruction}"
+            exit_error "$pid" "$TASK_ID" "Failed to find an manifest at ${manifest}"
         fi
 }
 

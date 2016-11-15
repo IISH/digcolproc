@@ -29,27 +29,39 @@ call_api_status $pid $TASK_ID $RUNNING
 #-----------------------------------------------------------------------------------------------------------------------
 # Create a dummy fileset
 #-----------------------------------------------------------------------------------------------------------------------
-fileSet="${work}/cleanup"
+empty_folder="/tmp/empty"
+mkdir -p "$empty_folder"
+
+original_fileSet="$fileSet"
+fileSet="${work}/package"
 if [ -d "$fileSet" ]
 then
-    rm -rf "$fileSet"
+    rsync -r --delete "$empty_folder/" "$fileSet"
 fi
-mkdir "$fileSet"
 
 
 
 #-----------------------------------------------------------------------------------------------------------------------
 # Extract
 #-----------------------------------------------------------------------------------------------------------------------
-source ../extract/extract.sh
+cd ../extract
+source extract.sh
 rc=$?
-rm -rf "$fileSet"
+rsync -r --delete "$empty_folder/" "$fileSet"
 
 if [[ $rc != 0 ]] # This should never happen as the extract procedure exits when an error occurs.
 then
     exit_error "$pid" $TASK_ID "Error ${rc}: unable to cleanup ${fileSet}. The extraction reported problems."
 fi
 
+
+
+#-----------------------------------------------------------------------------------------------------------------------
+# Remove the fileSet
+#-----------------------------------------------------------------------------------------------------------------------
+cd ../cleanup
+fileSet="$original_fileSet"
+rsync -r --delete "$empty_folder/" "$fileSet"
 
 
 echo "I think we are done for today." >> "$log"
