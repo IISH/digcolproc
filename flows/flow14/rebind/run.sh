@@ -44,7 +44,7 @@ then
     echo "Unable to create ${file_concordancetable}">>$log
     exit 1
 fi
-echo "" > "$file_concordancetable"
+echo "" >> "$file_concordancetable"
 
 
 #-----------------------------------------------------------------------------------------------------------------------
