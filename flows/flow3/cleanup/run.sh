@@ -34,10 +34,7 @@ mkdir -p "$empty_folder"
 
 original_fileSet="$fileSet"
 fileSet="${work}/package"
-if [ -d "$fileSet" ]
-then
-    rsync -r --delete "$empty_folder/" "$fileSet"
-fi
+rsync -r --delete "$empty_folder/" "$fileSet"
 
 
 
@@ -61,7 +58,9 @@ fi
 #-----------------------------------------------------------------------------------------------------------------------
 cd ../cleanup
 fileSet="$original_fileSet"
+echo "Removing ${fileSet}"
 rsync -r --delete "$empty_folder/" "$fileSet"
+rm -rf "$fileSet"
 
 
 echo "I think we are done for today." >> "$log"

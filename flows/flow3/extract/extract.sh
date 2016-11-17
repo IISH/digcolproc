@@ -30,7 +30,7 @@ fi
 # Get each file mentioned in the manifest.
 #-----------------------------------------------------------------------------------------------------------------------
 url_from_manifest="${work}/url_from_manifest.txt"
-python ${DIGCOLPROC_HOME}/util/xslt_transformer.py --xml_file="$manifest_file" --xsl_file="url_from_manifest.xsl" >> "$url_from_manifest"
+python ${DIGCOLPROC_HOME}/util/xslt_transformer.py --xml_file="$manifest_file" --xsl_file="url_from_manifest.xsl" > "$url_from_manifest"
 rc=$?
 if [[ $rc != 0 ]]
 then
@@ -96,3 +96,5 @@ if [[ $rc != 0 ]]
 then
     exit_error "$pid" $TASK_ID "Error ${rc}: validation returned an error. See the log for details."
 fi
+
+echo "All folders and files accounted for and valid." >> "$log"
