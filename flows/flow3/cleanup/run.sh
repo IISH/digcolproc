@@ -59,8 +59,12 @@ fi
 cd ../cleanup
 fileSet="$original_fileSet"
 echo "Removing ${fileSet}"
+message="${work}/message.txt"
+echo "Cleanup OK for ${fileSet}">"$message"
+/usr/bin/sendmail --body "$message" --from "$flow_client" --to "$flow_notificationEMail" --subject "Completed ${archiveID}" --mail_relay "$mail_relay" --mail_user "$mail_user" --mail_password "$mail_password" >> $log
 rsync -r --delete "$empty_folder/" "$fileSet"
 rm -rf "$fileSet"
+
 
 
 
