@@ -37,6 +37,7 @@ cd "$flow_run_folder"
 # E.g. /flow3/10622/offloader-3/BULK12345/ingest.txt
 #-----------------------------------------------------------------------------------------------------------------------
 trigger=$2
+trigger_content=$(cat "$trigger")
 rm -f "$trigger"
 
 
