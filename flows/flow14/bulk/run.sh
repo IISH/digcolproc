@@ -10,6 +10,11 @@
 
 source "${DIGCOLPROC_HOME}setup.sh" $0 "$@"
 
+if [ -z "$trigger_content" ]
+then
+    echo "Error: expected an event in bulk.txt"
+    exit 1
+fi
 
 for folder in "${fileSet}"/*
 do
@@ -30,3 +35,5 @@ done
 
 
 echo "I think we are done for today." >> $log
+
+exit 0
