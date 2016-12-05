@@ -12,9 +12,12 @@ source "${DIGCOLPROC_HOME}setup.sh" $0 "$@"
 
 if [ -z "$trigger_content" ]
 then
-    echo "Error: expected an event in bulk.txt"
+    echo "Error: expected an event in bulk.txt" >> $log
     exit 1
 fi
+
+org_owner=$(stat -c %u $fileSet)
+org_group=$(stat -c %g $fileSet)
 
 for folder in "${fileSet}"/*
 do
@@ -30,6 +33,8 @@ do
         # Now add the command
         to="${fs_parent}/$(basename $folder)"
         touch "${to}/${trigger_content}"
+
+        chown -R $org_owner:$org_group "$to"
     fi
 done
 
