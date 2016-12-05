@@ -16,6 +16,16 @@ then
     exit 1
 fi
 
+filename="${trigger_content%.*}"
+available="${flow_base}/${filename}"
+if [ ! -d "$available" ]
+then
+    echo "Error: ${trigger_content} is not a valid event." >> $log
+    exit 1
+fi
+
+
+
 org_owner=$(stat -c %u $fileSet)
 org_group=$(stat -c %g $fileSet)
 

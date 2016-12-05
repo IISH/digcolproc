@@ -22,7 +22,7 @@ source "${DIGCOLPROC_HOME}config.sh"
 
 #-----------------------------------------------------------------------------------------------------------------------
 # flow_run_folder
-# Gets the parent folder of the application run.sh script.
+# Sets the parent folder of the application run.sh script.
 # E.g. /usr/bin/digcolproc/flows/flow3/ingest/
 # We enter the command path where we have the run.sh file
 #-----------------------------------------------------------------------------------------------------------------------
@@ -66,6 +66,15 @@ archiveID=$(basename $fileSet)
 # E.g. /flow3/10622/offloader-3
 #-----------------------------------------------------------------------------------------------------------------------
 fs_parent=$(dirname $fileSet)
+
+
+
+#-----------------------------------------------------------------------------------------------------------------------
+# flow_base
+# The base folder for all flows.
+# E.g. /usr/bin/digcolproc/flows/flow3/
+#-----------------------------------------------------------------------------------------------------------------------
+flow_base=$(dirname $flow_run_folder)
 
 
 
