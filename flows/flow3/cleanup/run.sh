@@ -34,7 +34,7 @@ mkdir -p "$empty_folder"
 
 original_fileSet="$fileSet"
 fileSet="${work}/package/${archiveID}"
-fs_parent=$fileSet
+fs_parent="${work}/package"
 rsync -r --delete "$empty_folder/" "$fileSet"
 
 
