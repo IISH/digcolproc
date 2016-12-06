@@ -34,6 +34,7 @@ mkdir -p "$empty_folder"
 
 original_fileSet="$fileSet"
 fileSet="${work}/package"
+fs_parent=$fs_parent
 rsync -r --delete "$empty_folder/" "$fileSet"
 
 
@@ -58,6 +59,7 @@ fi
 #-----------------------------------------------------------------------------------------------------------------------
 cd ../cleanup
 fileSet="$original_fileSet"
+fs_parent=$(dirname $fileSet)
 echo "Removing ${fileSet}"
 message="${work}/message.txt"
 echo "Cleanup OK for ${fileSet}">"$message"
