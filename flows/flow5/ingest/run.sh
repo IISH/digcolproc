@@ -22,7 +22,8 @@ fi
 rm $work/done.txt
 
 # Harvest and create a list of updates. We harvest everything from the last 5 days.
-from=$(groovy -e "def format = 'yyyy-MM-dd' ; def date = Date.parse(format, '$datestamp').minus(5) ; print(date.format(format))")
+# Note that we take the folder format as the datestamp.
+from=$(groovy -e "def format = 'yyyy-MM-dd' ; def date = Date.parse(format, '$archiveID').minus(5) ; print(date.format(format))")
 file_access=$work/access.txt
 groovy ${DIGCOLPROC_HOME}util/oai2harvester.groovy -na $na -baseURL $oai -verb ListRecords -set $flow5_set -from $from -metadataPrefix marcxml > $file_access
 
