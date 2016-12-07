@@ -12,6 +12,9 @@ import os
 import sys
 
 
+IGNORE = ['instruction.xml', 'manifest.xml']
+
+
 def parse_file(fs_parent, file):
     errors = 0
     with open(file, 'rb') as csvfile:
@@ -19,6 +22,10 @@ def parse_file(fs_parent, file):
         for items in reader:
             type, filename, expected_md5 = items
             file = fs_parent + '/' + filename
+            name = os.path.basename(filename)
+            if name in IGNORE:
+                print('Ignore...  ' + file)
+                continue
             if type == 'D':
                 if os.path.isdir(file):
                     print 'OK... ' + file
