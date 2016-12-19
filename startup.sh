@@ -5,11 +5,28 @@
 # Iterates over all application folders and starts the run.sh routine.
 
 
-source "${DIGCOLPROC_HOME}config.sh"
+# No not run if we already are...
+if (( $(pgrep -c "startup.sh") == 1 ))
+then
+    echo "Self"
+else
+    echo "Already running" >> "/var/log/digcolproc/event.log"
+    exit 0
+fi
 
+
+source "${DIGCOLPROC_HOME}config.sh"
 for flow in ${DIGCOLPROC_HOME}flows/* # Find all potential script folders in /flows/
 do
     flow_folder=$(basename $flow)
+#
+    # limit the number of processes per flow
+    #if (( $(pgrep -c "$flow_folder") > 4 ))
+    #then
+    #    echo "Too many active flows of type ${flow_folder}"
+    #    exit 0
+    #fi
+
     for run_folder in $flow/*
     do
         run_script=$run_folder/run.sh # See if there is a /flows/flow[n]/run.sh file
