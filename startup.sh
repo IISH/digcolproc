@@ -5,12 +5,16 @@
 # Iterates over all application folders and starts the run.sh routine.
 
 
+datestamp=$(date +"%Y-%m-%d")
+time=$(date +"%H")
+
+
 # No not run if we already are...
 if (( $(pgrep -c "startup.sh") == 1 ))
 then
     echo "Self"
 else
-    echo "Already running" >> "/var/log/digcolproc/event.log"
+    echo "${datestamp}T${time}: Already running" >> "/var/log/digcolproc/event.log"
     exit 0
 fi
 
@@ -22,7 +26,7 @@ do
     # limit the number of processes to three per flow
     if (($(ps ax | grep -c "/flows/${flow_folder}/") > 4 ))
     then
-        echo "Too many active flows of type ${flow_folder}" >> "/var/log/digcolproc/event.log"
+        echo "${datestamp}T${time}: Too many active flows of type ${flow_folder}" >> "/var/log/digcolproc/event.log"
         exit 0
     fi
 
@@ -53,8 +57,6 @@ do
                                     trigger="$fileSet/$(basename $run_folder).txt"
                                     echo $trigger
                                     if [ -f "$trigger" ] ; then
-                                        datestamp=$(date +"%Y-%m-%d")
-                                        time=$(date +"%H")
                                         echo "${datestamp}T${time} ${run_script} \"${trigger}\" \"${fileSet}\"" >> "/var/log/digcolproc/event.log"
                                         $run_script "$trigger" >> "/var/log/digcolproc/$(basename $run_folder)-$(basename $fileSet)-${datestamp}T${time}.log" 2>&2 &
                                     fi
