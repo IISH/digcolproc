@@ -19,13 +19,12 @@ source "${DIGCOLPROC_HOME}config.sh"
 for flow in ${DIGCOLPROC_HOME}flows/* # Find all potential script folders in /flows/
 do
     flow_folder=$(basename $flow)
-#
-    # limit the number of processes per flow
-    #if (( $(pgrep -c "$flow_folder") > 4 ))
-    #then
-    #    echo "Too many active flows of type ${flow_folder}"
-    #    exit 0
-    #fi
+    # limit the number of processes to three per flow
+    if (($(ps ax | grep -c "/flows/${flow_folder}/") > 4 ))
+    then
+        echo "Too many active flows of type ${flow_folder}"
+        exit 0
+    fi
 
     for run_folder in $flow/*
     do
