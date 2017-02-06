@@ -28,7 +28,7 @@ class SorInstruction {
     }
 
     void start() {
-        def defaultAccess = getCustom(new File(orAttributes.fileSet, '.access.txt'))
+        def defaultAccess = getCustom(new File(orAttributes.fileSet, '.access.txt'), orAttributes.access)
 
         final fileSetFolder = new File(orAttributes.fileSet)
         def file = new File(fileSetFolder, "instruction.xml")
@@ -56,13 +56,13 @@ class SorInstruction {
                         }
                         String _md5 = generateMD5(file_master)
                         String _objid = orAttributes.na + '/' + orAttributes.archivalID + "." + split[1]
-                        def _access = getCustom(new File(file_master.parentFile, '.access.txt'))
+                        def _access = getCustom(new File(file_master.parentFile, '.access.txt'), defaultAccess)
                         stagingfile
                                 {
                                     pid(split[5])
                                     location(split[2])
                                     md5(_md5)
-                                    (_access) ? access(_access) : access(defaultAccess)
+                                    access(_access)
                                     objid(_objid)
                                     seq(split[4])
                                 }
@@ -74,13 +74,13 @@ class SorInstruction {
         if (files == 0) file.delete()
     }
 
-    private String getCustom(File file) {
+    private String getCustom(File file, String defaultAccess) {
         if (file.exists()) {
             file.eachLine {
                 return it.trim()
             }
         }
-        orAttributes.access
+        defaultAccess
     }
 
     // taken from http://snipplr.com/view/8308/
