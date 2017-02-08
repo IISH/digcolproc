@@ -24,7 +24,7 @@ for flow in ${DIGCOLPROC_HOME}flows/* # Find all potential script folders in /fl
 do
     flow_folder=$(basename $flow)
     # limit the number of processes to three per flow
-    if (($(ps ax | grep -c "/flows/${flow_folder}/") > 4 ))
+    if (($(ps ax | grep -c "/flows/${flow_folder}/") > 2 ))
     then
         echo "${datestamp}T${time}: Too many active flows of type ${flow_folder}" >> "/var/log/digcolproc/event.log"
         exit 0
