@@ -48,8 +48,11 @@ while IFS=  read -r -d $'\0'; do
     f=$(basename "$f")
     if [[ ! "$f" =~ $regex_filename ]]
     then
-        let "error_number++"
-        echo "Error ${error_number}: File is ${f} but expect ${regex_filename}" >> $log
+        if [[ $f != ".access.txt" ]]
+        then
+            let "error_number++"
+            echo "Error ${error_number}: File is ${f} but expect ${regex_filename}" >> $log
+        fi
     fi
 done < <(find ${fileSet} -type f -print0)
 if [[ $error_number == 0 ]]
