@@ -41,8 +41,11 @@ while IFS=  read -r -d $'\0'; do
     foldername="$(basename "$(dirname "$f")")"
     if [[ $foldername == $archiveID ]]
     then
-        let "error_number++"
-        echo "Error ${error_number}: File not within a use case folder: ${f}" >> $log
+        if [[ $(basename "$f") != ".access.txt" ]]
+        then
+            let "error_number++"
+            echo "Error ${error_number}: File not within a use case folder: ${f}" >> $log
+        fi
     fi
 
     f=$(basename "$f")
