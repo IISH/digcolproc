@@ -30,6 +30,7 @@ do
         exit 0
     fi
 
+    no_proc=$(ps ax | grep -c "/flows/${flow_folder}/")
     for run_folder in $flow/*
     do
         run_script=$run_folder/run.sh # See if there is a /flows/flow[n]/run.sh file
@@ -56,7 +57,8 @@ do
                                 if [ -d "$fileSet" ] ; then
                                     trigger="$fileSet/$(basename $run_folder).txt"
                                     echo $trigger
-                                    if [ -f "$trigger" ] ; then
+                                    if [[ -f "$trigger" && $no_proc < 3 ]] ; then
+                                        ((no_proc++))
                                         echo "${datestamp}T${time} ${run_script} \"${trigger}\" \"${fileSet}\"" >> "/var/log/digcolproc/event.log"
                                         $run_script "$trigger" >> "/var/log/digcolproc/$(basename $run_folder)-$(basename $fileSet)-${datestamp}T${time}.log" 2>&2 &
                                     fi
