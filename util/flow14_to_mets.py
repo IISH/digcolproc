@@ -182,9 +182,9 @@ def create_filesec(xl, file_groups):
 def create_structmap_physical(xl, file_refs):
     xl.elem('structMap', {'TYPE': 'physical'}).elem('div')
 
-    seq_nr = 0
+    seq_nr = -1
     found_files = []
-    while seq_nr == 0 or found_files:
+    while seq_nr == -1 or seq_nr == 0 or found_files:
         seq_nr += 1
         found_files = []
 
@@ -227,6 +227,9 @@ def get_file_groups(file_refs):
 
             group_file_refs = [file_ref for file_ref in file_refs_left
                                if file_ref.level == level and file_ref.master_use == use and not file_ref.textLayer]
+
+            # TODO: Use this line to fix failed merges with use 'archive application'
+            # use = use if first_file_ref.master_use != 'archive application' else 'archive image'
 
             # Determine the use attribute of a derivative based on the master use and the derivative level
             if level != 'master':
