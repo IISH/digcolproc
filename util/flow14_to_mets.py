@@ -284,11 +284,13 @@ def get_file_refs(droid):
                         file_ref.language = language
                     head, tail = split(head)
 
-                file_refs.append(file_ref)
-                id_counter += 1
+                # Prevent against duplicate file references
+                if not any(fr.pid == file_ref.pid and fr.level == file_ref.level for fr in file_refs):
+                    file_refs.append(file_ref)
+                    id_counter += 1
 
-                if not file_ref.textLayer:  # Text layers don't have derivatives, so skip
-                    id_counter = add_derivatives_for_master(file_ref, file_refs, id_counter)
+                    if not file_ref.textLayer:  # Text layers don't have derivatives, so skip
+                        id_counter = add_derivatives_for_master(file_ref, file_refs, id_counter)
 
     return file_refs
 
