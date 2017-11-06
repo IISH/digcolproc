@@ -32,16 +32,21 @@ fi
 
 #-----------------------------------------------------------------------------------------------------------------------
 # Determine access value, default is 'open'
+# When we check for an access file... use the parent folder also.
 #-----------------------------------------------------------------------------------------------------------------------
-access_file=$fileSet/.access.txt
-if [ -f "$access_file" ] ; then
-	access=$(<"$access_file")
-fi
+for folder in "$fileSet" $(dirname "$fileSet")
+do
+    access_file="${folder}/.access.txt"
+    if [ -f "$access_file" ]
+    then
+        access=$(<"$access_file")
+        break
+    fi
+done
 if [ -z "$access" ] ; then
   access="open"
   echo "$access" > ${fileSet}/.access.txt
 fi
-
 
 
 #-----------------------------------------------------------------------------------------------------------------------
