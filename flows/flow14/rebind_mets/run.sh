@@ -54,24 +54,11 @@ while read line
 do
     IFS=, read Inventarisnummer <<< "$line"
 
-    for seq in 2 1 -1 # Check sequence 2 first, then 1 and then -1. A -1 will just take the first file reference.
-    do
-        mets_item="${or}/file/master/${na}/${archiveID}.${Inventarisnummer}/${seq}" # e.g. http://disseminate.objectrepository.org/file/master/10622/ARCH00720.1/2
-        file_item="${work}/${archiveID}.${Inventarisnummer}.xml"
-        wget -O "$file_item" "$mets_item"
-        pid=$(python ${DIGCOLPROC_HOME}/util/xslt_transformer.py --xml_file="$mets_item" --xsl_file="get_item_pid.xsl")
-        rc=$?
-        rm "$file_item"
-        if [[ $rc != 0 ]]
-        then
-            continue
-        fi
-        if [ -z "$pid" ]
-        then
-            continue
-        fi
-        break # We got our PID
-    done
+    mets_item="${or}/file/master/${na}/${archiveID}.${Inventarisnummer}" # e.g. http://disseminate.objectrepository.org/file/master/10622/ARCH00720.1
+    file_item="${work}/${archiveID}.${Inventarisnummer}.xml"
+    wget -O "$file_item" "$mets_item"
+    pid=$(python ${DIGCOLPROC_HOME}/util/xslt_transformer.py --xml_file="$mets_item" --xsl_file="get_item_pid.xsl")
+    rm "$file_item"
 
     if [ -z "$pid" ]
     then
