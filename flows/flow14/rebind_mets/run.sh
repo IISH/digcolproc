@@ -56,7 +56,7 @@ do
 
     mets_item="${or}/file/master/${na}/${archiveID}.${Inventarisnummer}" # e.g. http://disseminate.objectrepository.org/file/master/10622/ARCH00720.1
     file_item="${work}/${archiveID}.${Inventarisnummer}.xml"
-    wget -O "$file_item" "$mets_item"
+    wget --no-check-certificate -O "$file_item" "$mets_item"
     pid=$(python ${DIGCOLPROC_HOME}/util/xslt_transformer.py --xml_file="$mets_item" --xsl_file="get_item_pid.xsl")
     rm "$file_item"
 
